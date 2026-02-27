@@ -661,10 +661,22 @@
 <script>
   const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/rag-category-chat";
 
-  // URL 파라미터에서 api_key 읽기 (register.html에서 넘어온 경우)
+  // API 키 로드: sessionStorage 우선, URL 파라미터는 fallback 후 즉시 제거
   const urlParams = new URLSearchParams(window.location.search);
-  const API_KEY = urlParams.get('api_key') || null;
-  const USER_NAME = urlParams.get('name') || '';
+  const urlKey  = urlParams.get('api_key');
+  const urlName = urlParams.get('name') || '';
+
+  // URL에 키가 있으면 sessionStorage로 이전 후 URL에서 즉시 제거
+  if (urlKey) {
+    sessionStorage.setItem('rag_api_key', urlKey);
+    if (urlName) sessionStorage.setItem('rag_user_name', urlName);
+    // 브라우저 히스토리에서 키 제거 (뒤로가기해도 URL에 키 없음)
+    const cleanUrl = window.location.pathname;
+    history.replaceState(null, '', cleanUrl);
+  }
+
+  const API_KEY   = sessionStorage.getItem('rag_api_key') || null;
+  const USER_NAME = sessionStorage.getItem('rag_user_name') || urlName;
 
   // API 키 없으면 등록 페이지로 안내
   if (!API_KEY) {

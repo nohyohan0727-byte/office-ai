@@ -636,9 +636,14 @@
     document.getElementById('resExpiry').textContent = data.expires_at || '-';
     document.getElementById('resApiKey').textContent = data.api_key;
 
-    // 데모 링크 (API키 파라미터 포함)
-    document.getElementById('demoLink').href =
-      `demo.html?api_key=${encodeURIComponent(data.api_key)}&name=${encodeURIComponent(data.name)}`;
+    // 데모 링크 - sessionStorage로 키 전달 (URL 노출 방지)
+    document.getElementById('demoLink').onclick = function(e) {
+      e.preventDefault();
+      sessionStorage.setItem('rag_api_key', data.api_key);
+      sessionStorage.setItem('rag_user_name', data.name);
+      window.location.href = 'demo.html';
+    };
+    document.getElementById('demoLink').href = 'demo.html';
   }
 
   function copyApiKey() {
