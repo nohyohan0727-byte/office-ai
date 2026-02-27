@@ -23,7 +23,7 @@
                 <span>무료 상담 신청 시 <span class="highlight">문서 1개 자동화 무료 서비스</span> 제공!</span>
             </div>
             <div class="event-actions">
-                <a href="#contact" class="event-btn">지금 신청하기</a>
+                <a href="index2.html" class="event-btn">무료 진단 받기 →</a>
                 <button class="event-close" onclick="closeEventBanner()">×</button>
             </div>
         </div>
@@ -418,6 +418,38 @@
         </div>
     </section>
 
+    <!-- Bridge to Landing Page -->
+    <section class="section bridge-section">
+        <div class="container">
+            <div class="bridge-inner">
+                <div class="bridge-left">
+                    <span class="bridge-eyebrow">지금 이 페이지를 읽고 계신 분께</span>
+                    <h2 class="bridge-title">
+                        어떤 자동화부터 시작해야 할지<br>
+                        아직 감이 안 잡히신다면
+                    </h2>
+                    <p class="bridge-desc">
+                        모든 걸 한 번에 할 필요 없습니다.<br>
+                        지금 가장 시간이 낭비되는 업무 하나만 골라<br>
+                        <strong>10분 안에 방향을 잡아드립니다.</strong>
+                    </p>
+                    <div class="bridge-points">
+                        <span>✔ 비용 없음</span>
+                        <span>✔ 강요 없음</span>
+                        <span>✔ 10분 완료</span>
+                    </div>
+                </div>
+                <div class="bridge-right">
+                    <a href="index2.html" class="bridge-cta-btn">
+                        <span class="bridge-btn-label">무료 진단 페이지로 이동</span>
+                        <span class="bridge-btn-arrow">→</span>
+                    </a>
+                    <p class="bridge-cta-sub">이름·연락처만 남기면 담당자가 먼저 연락드립니다</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Services Section -->
     <section id="services" class="section services-section">
         <div class="container">
@@ -597,6 +629,12 @@
         </div>
     </div>
 
+    <!-- Floating CTA Button -->
+    <a href="index2.html" class="floating-cta" id="floatingCta">
+        <span class="floating-icon">💬</span>
+        <span class="floating-text">무료 상담 신청</span>
+    </a>
+
     <!-- Footer -->
     <footer>
         <div class="container footer-content">
@@ -679,6 +717,16 @@
             document.getElementById('eventPopup').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeEventPopup();
+                }
+            });
+
+            // Floating CTA: 300px 스크롤 후 표시
+            const floatingCta = document.getElementById('floatingCta');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 300) {
+                    floatingCta.classList.add('visible');
+                } else {
+                    floatingCta.classList.remove('visible');
                 }
             });
         });

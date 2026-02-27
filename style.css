@@ -1603,4 +1603,148 @@ footer {
     
     .nav-links { display: none; } /* Mobile Menu would need JS */
     .demo-cta-inner { flex-direction: column; gap: 2.5rem; }
+    .bridge-inner { flex-direction: column; gap: 2rem; text-align: center; }
+    .bridge-points { justify-content: center; }
+    .bridge-right { width: 100%; }
+    .bridge-cta-btn { width: 100%; justify-content: center; }
+}
+
+/* ── Bridge Section ── */
+.bridge-section {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    border-top: 1px solid rgba(99, 102, 241, 0.2);
+    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.bridge-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 3rem;
+    padding: 1rem 0;
+}
+
+.bridge-left { flex: 1; }
+
+.bridge-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #a5b4fc;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.bridge-title {
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 900;
+    line-height: 1.35;
+    margin-bottom: 1rem;
+    color: #f8fafc;
+}
+
+.bridge-desc {
+    color: #94a3b8;
+    font-size: 0.97rem;
+    line-height: 1.8;
+    margin-bottom: 1.2rem;
+}
+
+.bridge-desc strong { color: #f8fafc; }
+
+.bridge-points {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+}
+
+.bridge-points span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #a5b4fc;
+}
+
+.bridge-right {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.bridge-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    text-decoration: none;
+    padding: 1.1rem 2.2rem;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    box-shadow: 0 0 32px rgba(99, 102, 241, 0.45);
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+.bridge-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 44px rgba(99, 102, 241, 0.6);
+}
+
+.bridge-btn-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.bridge-cta-btn:hover .bridge-btn-arrow {
+    transform: translateX(4px);
+}
+
+.bridge-cta-sub {
+    font-size: 0.78rem;
+    color: #64748b;
+    text-align: center;
+}
+
+/* ── Floating CTA Button ── */
+.floating-cta {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    text-decoration: none;
+    padding: 0.85rem 1.4rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.5);
+    z-index: 999;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.floating-cta.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.floating-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 32px rgba(99, 102, 241, 0.65);
+}
+
+.floating-icon { font-size: 1rem; }
+.floating-text { white-space: nowrap; }
+
+@media (max-width: 480px) {
+    .floating-cta { bottom: 1.2rem; right: 1.2rem; padding: 0.75rem 1.1rem; font-size: 0.82rem; }
 }
