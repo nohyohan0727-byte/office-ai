@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>서류 자동화 무료 진단 | Office AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #080d18;
+      --bg2:     #0e1525;
+      --bg3:     #151e30;
+      --bg4:     #1c2840;
+      --blue:    #3b82f6;
+      --purple:  #8b5cf6;
+      --red:     #ef4444;
+      --orange:  #f97316;
+      --green:   #22c55e;
+      --amber:   #f59e0b;
+      --text:    #f1f5f9;
+      --dim:     #94a3b8;
+      --dim2:    #64748b;
+      --border:  rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --grad:    linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --grad-red: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--grad-red);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.84rem;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      letter-spacing: 0.02em;
+    }
+    .topbar-dot { opacity: 0.6; margin: 0 0.5rem; }
+
+    /* ── Section layout ── */
+    .sec { padding: 5.5rem 0; }
+    .sec + .sec { border-top: 1px solid var(--border); }
+    .sec-bg2 { background: var(--bg2); }
+    .sec-bg3 { background: var(--bg3); }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 1rem;
+    }
+    .tag.red   { color: var(--red); }
+    .tag.green { color: var(--green); }
+    .tag.amber { color: var(--amber); }
+    .tag.purple{ color: var(--purple); }
+
+    h2.ttl {
+      font-size: clamp(1.65rem, 4.5vw, 2.4rem);
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 1.1rem;
+    }
+    h2.ttl em { font-style:normal; color: var(--red); }
+    h2.ttl mark {
+      background: none;
+      font-style: normal;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    p.desc {
+      color: var(--dim);
+      font-size: 1rem;
+      line-height: 1.85;
+      margin-bottom: 2rem;
+    }
+    p.desc strong { color: var(--text); }
+
+    /* ── CTA Buttons ── */
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 1.05rem 2.2rem;
+      border-radius: 50px;
+      font-size: 1.02rem;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform 0.18s, box-shadow 0.18s;
+      letter-spacing: 0.01em;
+    }
+    .cta:hover { transform: translateY(-2px); }
+    .cta-blue {
+      background: var(--grad);
+      color: #fff;
+      box-shadow: 0 0 28px rgba(59,130,246,0.35);
+    }
+    .cta-blue:hover { box-shadow: 0 0 40px rgba(59,130,246,0.55); }
+    .cta-red {
+      background: var(--grad-red);
+      color: #fff;
+      box-shadow: 0 0 28px rgba(239,68,68,0.3);
+    }
+    .cta-red:hover { box-shadow: 0 0 40px rgba(239,68,68,0.5); }
+    .cta-ghost {
+      background: transparent;
+      border: 1.5px solid rgba(59,130,246,0.5);
+      color: #93c5fd;
+    }
+    .cta-ghost:hover { border-color: var(--blue); color: var(--blue); }
+    .cta-wrap { text-align: center; padding: 0.5rem 0; }
+    .cta-note {
+      font-size: 0.78rem;
+      color: var(--dim2);
+      margin-top: 0.75rem;
+      text-align: center;
+    }
+    .cta-pills {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .cta-pills span {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #60a5fa;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 5.5rem 1.5rem 4rem;
+      text-align: center;
+      background:
+        radial-gradient(ellipse 90% 50% at 50% -5%, rgba(59,130,246,0.14) 0%, transparent 65%),
+        var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.35);
+      color: #fca5a5;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.38rem 1.1rem;
+      border-radius: 50px;
+      margin-bottom: 1.8rem;
+      letter-spacing: 0.04em;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: var(--grad-red);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-hook {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+      line-height: 1.6;
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--dim);
+      margin-bottom: 2.8rem;
+      line-height: 1.8;
+    }
+    .hero-sub strong { color: var(--text); }
+
+    /* ── 손실 카운터 스트립 ── */
+    .loss-strip {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin: 3rem 0 0;
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .loss-item {
+      flex: 1;
+      padding: 1.4rem 1rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .loss-item:last-child { border-right: none; }
+    .loss-num {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--red);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .loss-label { font-size: 0.78rem; color: var(--dim); line-height: 1.4; }
+
+    /* ── Pain checklist ── */
+    .pain-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin: 1.8rem 0 2.2rem;
+    }
+    .pain-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.3rem;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--red);
+      border-radius: 0 12px 12px 0;
+      font-size: 0.96rem;
+      font-weight: 500;
+      transition: border-color 0.2s;
+    }
+    .pain-list li:hover { border-left-color: var(--orange); }
+    .pain-x { color: var(--red); font-weight: 900; flex-shrink: 0; }
+    .pain-box {
+      margin: 2rem 0 2.5rem;
+      padding: 1.4rem 1.8rem;
+      background: rgba(239,68,68,0.07);
+      border: 1px solid rgba(239,68,68,0.22);
+      border-radius: 14px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fca5a5;
+      line-height: 1.7;
+    }
+
+    /* ── 손실 카드 ── */
+    .loss-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .loss-card {
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem;
+    }
+    .loss-card-icon { font-size: 1.8rem; margin-bottom: 0.7rem; }
+    .loss-card h4 { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .loss-card p  { font-size: 0.82rem; color: var(--dim); line-height: 1.6; }
+    .loss-warn {
+      padding: 1.2rem 1.6rem;
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.22);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fcd34d;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Before / After ── */
+    .ba-wrap {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+      margin: 2rem 0 2.5rem;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border2);
+    }
+    .ba-col { padding: 1.6rem 1.4rem; }
+    .ba-col.before { background: rgba(239,68,68,0.06); }
+    .ba-col.after  { background: rgba(34,197,94,0.06); }
+    .ba-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg4);
+      padding: 0 0.8rem;
+      font-size: 1.4rem;
+      color: var(--dim2);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .ba-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+    .ba-col.before .ba-label { color: var(--red); }
+    .ba-col.after  .ba-label { color: var(--green); }
+    .ba-list { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+    .ba-list li { font-size: 0.9rem; line-height: 1.5; }
+    .ba-col.before .ba-list li { color: var(--dim); }
+    .ba-col.after  .ba-list li { color: var(--text); font-weight: 600; }
+    .ba-stat {
+      display: inline-block;
+      background: var(--grad);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.15rem 0.55rem;
+      border-radius: 50px;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+    .ba-summary {
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      margin: 1.5rem 0 2.5rem;
+      padding: 1.2rem;
+      background: var(--bg4);
+      border-radius: 12px;
+      border: 1px solid var(--border2);
+    }
+
+    /* ── 차별점 ── */
+    .diff-badge {
+      display: inline-block;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.28);
+      color: #93c5fd;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.3rem 0.9rem;
+      border-radius: 50px;
+      margin-bottom: 1.5rem;
+    }
+    .feat-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin: 1.8rem 0 2rem;
+    }
+    .feat-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      font-size: 0.97rem;
+      font-weight: 600;
+    }
+    .feat-list li::before {
+      content: '✔';
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.7rem;
+      height: 1.7rem;
+      background: rgba(59,130,246,0.18);
+      border-radius: 50%;
+      color: #60a5fa;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+    }
+    .feat-sub { font-size: 0.82rem; color: var(--dim); font-weight: 400; margin-left: 0.3rem; }
+    .verdict {
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 800;
+      padding: 1.3rem;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.08));
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 12px;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+
+    /* ── 신뢰 ── */
+    .trust-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .trust-row {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+    }
+    .trust-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .trust-row h4 { font-size: 0.94rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .trust-row p  { font-size: 0.83rem; color: var(--dim); line-height: 1.65; }
+
+    /* ── Urgency ── */
+    .urgency-sec {
+      background: linear-gradient(180deg, #12050a 0%, #0e0d18 100%);
+      border-top: 1px solid rgba(239,68,68,0.18);
+    }
+    .quota-box {
+      background: rgba(239,68,68,0.07);
+      border: 1px solid rgba(239,68,68,0.22);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .quota-box h3 { font-size: 1rem; font-weight: 800; color: #fca5a5; margin-bottom: 1.2rem; }
+    .quota-bar-bg {
+      background: rgba(255,255,255,0.07);
+      border-radius: 50px;
+      height: 12px;
+      overflow: hidden;
+      margin-bottom: 0.7rem;
+    }
+    .quota-bar-fill {
+      height: 100%;
+      border-radius: 50px;
+      background: var(--grad-red);
+      width: 70%;
+      animation: quota-pulse 2s ease-in-out infinite;
+    }
+    @keyframes quota-pulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+    .quota-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--dim);
+    }
+    .quota-remain { color: #fca5a5; font-weight: 700; }
+
+    /* ── Final ── */
+    .final-sec {
+      padding: 7rem 1.5rem;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 110%, rgba(59,130,246,0.18) 0%, transparent 65%), var(--bg);
+    }
+    .final-sec h2 {
+      font-size: clamp(1.9rem, 5vw, 3rem);
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+    .final-sec h2 mark {
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-style: normal;
+    }
+    .final-sec p { color: var(--dim); margin-bottom: 2.5rem; font-size: 1rem; }
+    .guarantee-pills {
+      display: flex;
+      justify-content: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
+    }
+    .guarantee-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 50px;
+      padding: 0.4rem 1rem;
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #86efac;
+    }
+
+    /* ── Form ── */
+    .form-sec {
+      background: var(--bg2);
+      padding: 5.5rem 1.5rem;
+    }
+    .form-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .form-row label {
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--dim);
+    }
+    .form-row input,
+    .form-row select {
+      background: var(--bg4);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-row input:focus,
+    .form-row select:focus { border-color: var(--blue); }
+    .form-submit {
+      background: var(--grad);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      padding: 1.05rem;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(59,130,246,0.3);
+      transition: transform 0.18s, box-shadow 0.18s;
+      font-family: inherit;
+    }
+    .form-submit:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(59,130,246,0.5); }
+    .form-note { text-align: center; font-size: 0.78rem; color: var(--dim2); }
+
+    /* ── Testimonials ── */
+    .review-card {
+      background: var(--bg4);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.2rem;
+    }
+    .review-ba {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .review-ba-col { padding: 1.3rem 1.4rem; }
+    .review-ba-col.b { border-right: 1px solid var(--border); }
+    .review-ba-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.6rem;
+    }
+    .review-ba-col.b .review-ba-label { color: var(--red); }
+    .review-ba-col.a .review-ba-label { color: var(--green); }
+    .review-ba-col p { font-size: 0.88rem; line-height: 1.65; }
+    .review-ba-col.b p { color: var(--dim); }
+    .review-meta {
+      padding: 0.9rem 1.4rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .review-who { font-size: 0.85rem; font-weight: 700; }
+    .review-who span { font-size: 0.75rem; font-weight: 400; color: var(--dim); margin-left: 0.5rem; }
+    .review-result {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #86efac;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.22);
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.78rem;
+      color: var(--dim2);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 580px) {
+      .loss-strip { flex-direction: column; }
+      .loss-item  { border-right: none; border-bottom: 1px solid var(--border); }
+      .loss-item:last-child { border-bottom: none; }
+      .loss-cards { grid-template-columns: 1fr; }
+      .ba-wrap { grid-template-columns: 1fr; }
+      .ba-arrow { padding: 0.5rem; writing-mode: horizontal-tb; transform: rotate(90deg); }
+      .review-ba { grid-template-columns: 1fr; }
+      .review-ba-col.b { border-right: none; border-bottom: 1px solid var(--border); }
+      .guarantee-pills { gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 상단 긴박감 바 -->
+<div class="topbar">
+  🔥 3월 한정<span class="topbar-dot">|</span>무료 자동화 진단 선착순 10개 기업<span class="topbar-dot">|</span>지금 신청 시 당일 연락
+</div>
+
+<!-- ① HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-badge">🏢 중소기업 서류 자동화 전문</div>
+    <h1>서류 때문에<br>아직도 <em>야근</em>하십니까?</h1>
+    <p class="hero-hook">
+      대표님의 시간은 회사에서 가장 비싼 자원입니다.<br>
+      그 시간이 지금, 서류에 소모되고 있습니다.
+    </p>
+    <p class="hero-sub">
+      견적서·사업계획서·인증 서류…<br>
+      <strong>더 이상 사람이 직접 붙잡고 있을 필요가 없습니다.</strong>
+    </p>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta cta-blue">10분 무료 자동화 진단받기 →</a>
+      <p class="cta-note">이름·연락처만 남기면 담당자가 먼저 연락드립니다</p>
+    </div>
+
+    <!-- 손실 수치 스트립 -->
+    <div class="loss-strip">
+      <div class="loss-item">
+        <div class="loss-num">월 40h+</div>
+        <div class="loss-label">서류에 낭비되는<br>평균 시간</div>
+      </div>
+      <div class="loss-item">
+        <div class="loss-num">90%</div>
+        <div class="loss-label">문서 작성 시간<br>단축 가능</div>
+      </div>
+      <div class="loss-item">
+        <div class="loss-num">10분</div>
+        <div class="loss-label">진단으로 방향<br>확인 가능</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ② 체크리스트 -->
+<section class="sec sec-bg2">
+  <div class="wrap">
+    <span class="tag red">해당 여부 확인</span>
+    <h2 class="ttl">이런 상태라면<br>이미 <em>자동화가 필요한 회사</em>입니다</h2>
+    <ul class="pain-list">
+      <li><span class="pain-x">✗</span> 사업계획서 하나에 2~3일이 사라진다</li>
+      <li><span class="pain-x">✗</span> 거래처마다 견적서를 처음부터 다시 만든다</li>
+      <li><span class="pain-x">✗</span> KS / ISO 인증 준비 때마다 야근이 당연해졌다</li>
+      <li><span class="pain-x">✗</span> 핵심 직원 한 명 나가면 문서 체계가 흔들린다</li>
+      <li><span class="pain-x">✗</span> 결국 대표가 직접 문서를 검토하고 수정한다</li>
+    </ul>
+    <div class="pain-box">
+      하나라도 해당된다면<br>
+      이미 <strong style="color:#fff;">매달 수십 시간의 손실이 쌓이고 있는 상태</strong>입니다.
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta cta-red">우리 회사 자동화 가능성 확인하기 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ③ 방치 손실 -->
+<section class="sec">
+  <div class="wrap">
+    <span class="tag amber">방치하면</span>
+    <h2 class="ttl">자동화를 미루면<br>계속 <em>쌓이는 손실</em></h2>
+    <p class="desc">
+      서류 업무는 회사를 성장시키는 일이 아닙니다.<br>
+      그런데 <strong>가장 많은 시간을 잡아먹고 있습니다.</strong>
+    </p>
+    <div class="loss-cards">
+      <div class="loss-card">
+        <div class="loss-card-icon">💸</div>
+        <h4>반복 인건비 증가</h4>
+        <p>같은 업무에 더 많은 인력·시간·비용이 투입됩니다.</p>
+      </div>
+      <div class="loss-card">
+        <div class="loss-card-icon">🔁</div>
+        <h4>잦은 실수와 재작업</h4>
+        <p>사람이 반복하면 오탈자·누락·버전 충돌이 반복됩니다.</p>
+      </div>
+      <div class="loss-card">
+        <div class="loss-card-icon">⏳</div>
+        <h4>대표 의사결정 시간 감소</h4>
+        <p>가장 비싼 자원이 서류 검토에 소모됩니다.</p>
+      </div>
+      <div class="loss-card">
+        <div class="loss-card-icon">🚫</div>
+        <h4>성장 업무 집중 불가</h4>
+        <p>영업·전략·채용 대신 문서 처리에 발목이 잡힙니다.</p>
+      </div>
+    </div>
+    <div class="loss-warn">
+      ⚠️ 지금 이 순간에도 손실은 조용히 쌓이고 있습니다.
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta cta-blue">이 손실, 이번 달 안에 끊어내세요 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ④ Before / After -->
+<section class="sec sec-bg2">
+  <div class="wrap">
+    <span class="tag green">도입 효과</span>
+    <h2 class="ttl">도입하면<br>이렇게 <mark>달라집니다</mark></h2>
+    <div class="ba-wrap">
+      <div class="ba-col before">
+        <div class="ba-label">BEFORE — 지금까지</div>
+        <ul class="ba-list">
+          <li>서류 작성에 며칠 소요</li>
+          <li>같은 내용 반복 입력</li>
+          <li>심사 때마다 야근</li>
+          <li>담당자 바뀌면 처음부터</li>
+          <li>대표가 직접 수정</li>
+        </ul>
+      </div>
+      <div class="ba-arrow">→</div>
+      <div class="ba-col after">
+        <div class="ba-label">AFTER — 도입 후</div>
+        <ul class="ba-list">
+          <li>문서 작성 시간 <span class="ba-stat">최대 90%↓</span></li>
+          <li>원클릭 자동 생성</li>
+          <li>심사 대응 체계화</li>
+          <li>누구든 같은 품질 유지</li>
+          <li>대표는 최종 확인만</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ba-summary">
+      사람보다 빠르고, 틀리는 일도 없습니다.
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta cta-blue">무료 자동화 진단 신청하기 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ 차별점 -->
+<section class="sec">
+  <div class="wrap">
+    <div class="diff-badge">Office AI 차별점</div>
+    <h2 class="ttl">단순 AI 챗봇이<br>아닙니다</h2>
+    <p class="desc">
+      KS 심사 실무 경험을 기반으로<br>
+      현장에서 실제 쓰는 문서 구조를 자동화했습니다.<br>
+      <strong>이론이 아닌 현장 중심 설계입니다.</strong>
+    </p>
+    <ul class="feat-list">
+      <li>견적서 자동 생성<span class="feat-sub">— 고객 정보 입력만으로 3분 완성</span></li>
+      <li>사업계획서 초안<span class="feat-sub">— 정부지원 양식 그대로 10분 출력</span></li>
+      <li>세금계산서 자동화<span class="feat-sub">— 거래 내역 → 국세청 양식 즉시 발행</span></li>
+      <li>KS / ISO 인증 문서<span class="feat-sub">— 심사 규격 학습된 비서가 직접 작성</span></li>
+    </ul>
+    <div class="verdict">
+      "현장에서 겪은 불편함을 직접 풀었습니다.<br>
+      KS 심사위원 출신 대표가 설계한 시스템입니다."
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ 고객 후기 -->
+<section class="sec sec-bg2">
+  <div class="wrap">
+    <span class="tag green">실제 도입 후기</span>
+    <h2 class="ttl">쓰는 분들의<br><mark>도입 전/후 이야기</mark></h2>
+    <p class="desc">화려한 소개보다 실제 경험이 낫습니다.</p>
+
+    <div class="review-card">
+      <div class="review-ba">
+        <div class="review-ba-col b">
+          <div class="review-ba-label">BEFORE</div>
+          <p>KS 정기심사 때마다 팀 전체가 2주 야근했어요. 서류 챙기다 본업 못 할 정도였죠.</p>
+        </div>
+        <div class="review-ba-col a">
+          <div class="review-ba-label">AFTER</div>
+          <p>이번 심사는 <strong>3일</strong>에 끝냈습니다. AI 비서가 매뉴얼 초안을 뽑아주니 팀원들이 검토만 했어요.</p>
+        </div>
+      </div>
+      <div class="review-meta">
+        <div class="review-who">제조업 품질팀장<span>직원 28명 · KS Q 8001</span></div>
+        <div class="review-result">심사 준비 2주 → 3일</div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-ba">
+        <div class="review-ba-col b">
+          <div class="review-ba-label">BEFORE</div>
+          <p>정부지원 공고 나올 때마다 마감에 쫓겼어요. 사업계획서 하나에 대표가 닷새는 붙어 있었습니다.</p>
+        </div>
+        <div class="review-ba-col a">
+          <div class="review-ba-label">AFTER</div>
+          <p>초안을 <strong>당일</strong>에 받고 다음 날 검토·제출했습니다. 예전엔 엄두 못 냈던 공고에 지원하고 있어요.</p>
+        </div>
+      </div>
+      <div class="review-meta">
+        <div class="review-who">IT 스타트업 대표<span>직원 11명 · 정부지원 다수</span></div>
+        <div class="review-result">계획서 5일 → 당일</div>
+      </div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-ba">
+        <div class="review-ba-col b">
+          <div class="review-ba-label">BEFORE</div>
+          <p>신입이 들어오면 제가 2주는 옆에 붙어서 견적서 양식부터 거래처 조건까지 하나하나 가르쳤어요.</p>
+        </div>
+        <div class="review-ba-col a">
+          <div class="review-ba-label">AFTER</div>
+          <p>이제 신입이 AI 비서한테 먼저 물어봐요. <strong>첫 주부터 혼자 견적서를 처리</strong>하더라고요.</p>
+        </div>
+      </div>
+      <div class="review-meta">
+        <div class="review-who">유통업 영업팀장<span>직원 19명 · 거래처 60곳+</span></div>
+        <div class="review-result">신입 적응 2주 → 3일</div>
+      </div>
+    </div>
+
+    <div class="cta-wrap" style="margin-top:2rem;">
+      <a href="#contact" class="cta cta-blue">우리 회사도 가능한지 확인하기 →</a>
+      <p class="cta-note">효과 없으면 그 자리에서 말씀드립니다</p>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ 왜 무료인가 -->
+<section class="sec">
+  <div class="wrap">
+    <span class="tag">상담이 무료인 이유</span>
+    <h2 class="ttl">효과 없는 도입,<br>권하지 않습니다</h2>
+    <p class="desc">모든 기업에 자동화가 맞는 건 아닙니다.<br>그래서 먼저 맞는지부터 확인해드립니다. <strong>비용 없이.</strong></p>
+    <div class="trust-grid">
+      <div class="trust-row">
+        <div class="trust-icon">🎯</div>
+        <div>
+          <h4>안 맞으면 그 자리에서 말씀드립니다</h4>
+          <p>효과가 불명확한 상황에서 계약을 권하지 않습니다. 솔직한 평가가 장기 신뢰라고 생각합니다.</p>
+        </div>
+      </div>
+      <div class="trust-row">
+        <div class="trust-icon">⚡</div>
+        <div>
+          <h4>PT 없습니다. 바로 본론만 합니다</h4>
+          <p>현재 업무 구조를 파악하고, 자동화 가능 항목과 예상 효과를 10분 안에 짚어드립니다.</p>
+        </div>
+      </div>
+      <div class="trust-row">
+        <div class="trust-icon">🔒</div>
+        <div>
+          <h4>먼저 도움이 되어야 거래가 됩니다</h4>
+          <p>그 순서를 지킵니다. 강요 영업 없습니다. 그러니 상담은 비용 없이 진행합니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑧ 긴박감 -->
+<section class="sec urgency-sec">
+  <div class="wrap">
+    <span class="tag red">마감 임박</span>
+    <h2 class="ttl">이번 달 상담은<br><em>10개 기업만 진행합니다</em></h2>
+    <p class="desc">
+      품질 있는 상담을 위해 월 10건으로 제한합니다.<br>
+      현재 상담 대기 기업이 있습니다.<br>
+      <strong>결정이 늦을수록, 손실만 더 쌓입니다.</strong>
+    </p>
+    <div class="quota-box">
+      <h3>⏰ 이번 달 잔여 상담 슬롯</h3>
+      <div class="quota-bar-bg"><div class="quota-bar-fill"></div></div>
+      <div class="quota-row">
+        <span>이번 달 10건 기준</span>
+        <span class="quota-remain"><span id="remainSlot">3</span>건 남음 — 조기 마감 가능</span>
+      </div>
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta cta-red">이번 달 슬롯, 지금 선점하세요 →</a>
+      <p class="cta-note">10분 상담 · 비용 없음 · 강요 없음</p>
+    </div>
+  </div>
+</section>
+
+<!-- ⑨ Final CTA -->
+<section class="final-sec">
+  <div class="wrap">
+    <h2>내일도 똑같이<br>서류 앞에 앉아 계실 건가요?<br><mark>오늘 결정하면 내일이 달라집니다.</mark></h2>
+    <p>지금 신청하시면 담당자가 먼저 연락드립니다.</p>
+    <div class="guarantee-pills">
+      <span class="guarantee-pill">✔ 비용 없음</span>
+      <span class="guarantee-pill">✔ 부담 없음</span>
+      <span class="guarantee-pill">✔ 강요 없음</span>
+      <span class="guarantee-pill">✔ 10분 완료</span>
+    </div>
+    <a href="#contact" class="cta cta-blue" style="font-size:1.1rem; padding:1.2rem 2.8rem;">
+      🚀 지금 무료 자동화 상담 신청하기
+    </a>
+  </div>
+</section>
+
+<!-- ⑩ 상담 폼 -->
+<section class="form-sec" id="contact">
+  <div class="wrap">
+    <span class="tag">상담 신청</span>
+    <h2 class="ttl" style="margin-bottom:0.5rem;">지금 신청하시면<br>담당자가 먼저 연락드립니다</h2>
+    <p class="desc" style="margin-bottom:2rem;">아래 정보만 남겨주세요. 24시간 내 연락드리며, 상담 전 어떤 비용도 없습니다.</p>
+    <form class="form-inner" name="office-ai-v3" method="POST" data-netlify="true">
+      <input type="hidden" name="form-name" value="office-ai-v3">
+      <div class="form-row">
+        <label>회사명 *</label>
+        <input type="text" name="company" placeholder="예: (주)대한산업" required>
+      </div>
+      <div class="form-row">
+        <label>담당자 성함 *</label>
+        <input type="text" name="name" placeholder="홍길동" required>
+      </div>
+      <div class="form-row">
+        <label>연락처 *</label>
+        <input type="tel" name="phone" placeholder="010-0000-0000" required>
+      </div>
+      <div class="form-row">
+        <label>가장 시간이 많이 걸리는 업무</label>
+        <select name="pain">
+          <option value="business-plan">사업계획서 / 정부지원 서류</option>
+          <option value="estimate">견적서 / 세금계산서</option>
+          <option value="certification">KS / ISO 인증 서류</option>
+          <option value="contract">계약서 / 내부 문서</option>
+          <option value="onboarding">신입 교육 / 업무 인수인계</option>
+          <option value="etc">기타 반복 업무</option>
+        </select>
+      </div>
+      <button type="submit" class="form-submit">🚀 무료 진단 신청하기</button>
+      <p class="form-note">비용 없음 · 영업 강요 없음 · 24시간 내 연락</p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Office AI · <a href="index.html">홈으로</a> · 제이케이네트웍스 대표 노진광 · 010-3127-4528</p>
+</footer>
+
+<script>
+  // 잔여 슬롯 계산
+  const start = new Date('2026-02-01').getTime();
+  const consumed = Math.min(7, Math.floor((Date.now() - start) / (86400000 * 4)));
+  const remain = Math.max(1, 10 - consumed);
+  document.getElementById('remainSlot').textContent = remain;
+
+  // 폼 포커스
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('focus', () => el.style.borderColor = '#3b82f6');
+    el.addEventListener('blur',  () => el.style.borderColor = 'rgba(255,255,255,0.12)');
+  });
+
+  // 손실 수치 카운트업
+  function countUp(el, target, suffix, duration) {
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start = Math.min(start + step, target);
+      el.textContent = Math.floor(start) + suffix;
+      if (start >= target) clearInterval(timer);
+    }, 16);
+  }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const nums = e.target.querySelectorAll('.loss-num');
+        if (nums[0]) { countUp(nums[0], 40, 'h+', 1200); }
+        if (nums[1]) { countUp(nums[1], 90, '%', 1000); }
+        if (nums[2]) { nums[2].textContent = '10분'; }
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  const strip = document.querySelector('.loss-strip');
+  if (strip) observer.observe(strip);
+</script>
+</body>
+</html>
