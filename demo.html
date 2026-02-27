@@ -416,6 +416,70 @@
       font-weight: 700;
     }
 
+    /* Source document cards */
+    .source-docs {
+      margin-top: 0.85rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .source-docs-label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .source-file-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .source-file-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(59,130,246,0.07);
+      border: 1px solid rgba(59,130,246,0.22);
+      border-radius: 6px;
+      padding: 0.38rem 0.7rem;
+      font-size: 0.78rem;
+      color: #93c5fd;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+      max-width: 100%;
+    }
+
+    .source-file-card:hover {
+      background: rgba(59,130,246,0.18);
+      border-color: rgba(59,130,246,0.5);
+      color: #bfdbfe;
+    }
+
+    .source-file-card.downloading {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .source-file-card .src-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 240px;
+    }
+
+    .source-file-card .src-dl {
+      font-size: 0.65rem;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+
     .resp-refs {
       margin-top: 0.9rem;
       padding-top: 0.6rem;
@@ -902,7 +966,7 @@
     if (w) w.remove();
   }
 
-  function addMessage(text, type, tokensRemaining) {
+  function addMessage(text, type, tokensRemaining, sources) {
     removeWelcome();
 
     const div = document.createElement('div');
@@ -917,6 +981,9 @@
 
     if (type === 'bot') {
       bubble.innerHTML = formatBotResponse(text);
+      if (sources && sources.length > 0) {
+        bubble.appendChild(renderSources(sources));
+      }
     } else if (type === 'error') {
       bubble.innerHTML = text.replace(/\n/g, '<br>');
     } else {
@@ -941,6 +1008,100 @@
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     return div;
+  }
+
+  function renderSources(sources) {
+    const wrap = document.createElement('div');
+    wrap.className = 'source-docs';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'source-docs-label';
+    labelEl.innerHTML = '📎 참조된 내부 문서';
+    wrap.appendChild(labelEl);
+
+    const cards = document.createElement('div');
+    cards.className = 'source-file-cards';
+
+    sources.forEach(src => {
+      const card = document.createElement('a');
+      card.className = 'source-file-card';
+      card.href = '#';
+      card.title = `${src.filename} 다운로드`;
+      card.innerHTML = `
+        <span class="file-icon">${getFileIcon(src.filename)}</span>
+        <span class="src-name">${src.filename}</span>
+        <span class="src-dl">⬇</span>
+      `;
+      card.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (!card.classList.contains('downloading')) {
+          downloadSourceFile(src, card);
+        }
+      });
+      cards.appendChild(card);
+    });
+
+    wrap.appendChild(cards);
+    return wrap;
+  }
+
+  const DOWNLOAD_URL = "https://jknetworks.app.n8n.cloud/webhook/file-download";
+
+  async function downloadSourceFile(src, cardEl) {
+    cardEl.classList.add('downloading');
+    cardEl.querySelector('.src-dl').textContent = '⏳';
+
+    try {
+      const res = await fetch(DOWNLOAD_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          api_key: API_KEY,
+          filename: src.filename,
+          tableName: src.tableName || ''
+        })
+      });
+
+      if (!res.ok) throw new Error(`서버 오류 (${res.status})`);
+
+      const data = await res.json();
+
+      if (data.downloadUrl) {
+        window.open(data.downloadUrl, '_blank');
+      } else if (data.fileContent) {
+        const blob = b64toBlob(data.fileContent, data.mimeType || 'application/octet-stream');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = src.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        throw new Error('다운로드 URL을 받지 못했습니다.');
+      }
+
+      cardEl.querySelector('.src-dl').textContent = '✅';
+    } catch (err) {
+      cardEl.querySelector('.src-dl').textContent = '❌';
+      alert(`다운로드 실패: ${err.message}`);
+    } finally {
+      cardEl.classList.remove('downloading');
+      setTimeout(() => { cardEl.querySelector('.src-dl').textContent = '⬇'; }, 3000);
+    }
+  }
+
+  function b64toBlob(b64Data, contentType) {
+    const byteChars = atob(b64Data);
+    const byteArrays = [];
+    for (let i = 0; i < byteChars.length; i += 512) {
+      const slice = byteChars.slice(i, i + 512);
+      const byteNumbers = new Array(slice.length);
+      for (let j = 0; j < slice.length; j++) byteNumbers[j] = slice.charCodeAt(j);
+      byteArrays.push(new Uint8Array(byteNumbers));
+    }
+    return new Blob(byteArrays, { type: contentType });
   }
 
   function showTyping() {
@@ -1008,7 +1169,7 @@
       }
 
       if (data.success) {
-        addMessage(data.response, 'bot', data.tokens_remaining);
+        addMessage(data.response, 'bot', data.tokens_remaining, data.sources || []);
       } else {
         addMessage(`오류: ${data.message || '알 수 없는 오류가 발생했습니다.'}`, 'error');
       }
