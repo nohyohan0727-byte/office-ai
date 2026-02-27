@@ -948,6 +948,22 @@ h1, h2, h3 {
     color: var(--text-dim);
 }
 
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.profile-photo:hover {
+    transform: scale(1.05);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
 .role {
     color: var(--primary);
     font-weight: 600;
@@ -1469,7 +1485,16 @@ footer {
     }
     .solution-wrapper { flex-direction: column; }
     .about-wrapper { flex-direction: column; padding: 2rem; }
-    .about-image { flex: auto; width: 100%; }
+    .about-image { 
+        flex: auto; 
+        width: 100%; 
+        max-width: 250px;
+        margin: 0 auto 2rem;
+    }
+    
+    .profile-photo {
+        border-radius: 16px;
+    }
     
     .nav-links { display: none; } /* Mobile Menu would need JS */
     .demo-cta-inner { flex-direction: column; gap: 2.5rem; }
