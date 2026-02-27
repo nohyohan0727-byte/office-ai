@@ -297,6 +297,54 @@
     .num-total { color: #a5b4fc; }
     .num-success { color: #6ee7b7; }
     .num-error { color: #fca5a5; }
+
+    /* ── 카테고리 미선택 경고 ── */
+    .select-required {
+      border-color: #f59e0b !important;
+    }
+    .required-badge {
+      font-size: 11px;
+      color: #f59e0b;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 4px;
+      padding: 2px 7px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* ── 기타 직접 입력 영역 ── */
+    #customCategorySection {
+      display: none;
+      margin-top: 14px;
+      padding: 16px;
+      background: rgba(102,126,234,0.06);
+      border: 1px dashed rgba(102,126,234,0.35);
+      border-radius: 10px;
+    }
+    #customCategorySection .custom-title {
+      font-size: 12px;
+      color: #a5b4fc;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #customCategorySection .form-row { margin-top: 0; }
+
+    /* ── 업로드 가능 상태 표시 ── */
+    #readyIndicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 14px;
+    }
+    #readyIndicator .check { font-size: 14px; }
+    #readyIndicator .ready { color: #6ee7b7; }
+    #readyIndicator .not-ready { color: #64748b; }
   </style>
 </head>
 <body>
@@ -340,8 +388,9 @@
       <div class="section-title">⚙️ 업로드 설정</div>
       <div class="form-row">
         <div class="form-group">
-          <label>카테고리 (RAG 테이블)</label>
-          <select id="categorySelect">
+          <label>카테고리 (RAG 테이블) <span class="required-badge">필수</span></label>
+          <select id="categorySelect" onchange="onCategoryChange()" class="select-required">
+            <option value="">── 카테고리를 선택해주세요 ──</option>
             <option value="documents_admin_upload|admin_general|일반 업무 문서">📋 일반 업무 문서</option>
             <option value="documents_ks_certification|ks_certification|KS 인증 문서">🏆 KS 인증 문서</option>
             <option value="documents_business|business|비즈니스 문서">💼 비즈니스 문서</option>
@@ -349,11 +398,32 @@
             <option value="documents_company_a|company_a|회사문서 A">🏢 회사문서 A</option>
             <option value="documents_company_b|company_b|회사문서 B">🏢 회사문서 B</option>
             <option value="documents_company_c|company_c|회사문서 C">🏢 회사문서 C</option>
+            <option value="__custom__|custom|기타">✏️ 기타 (직접 입력)</option>
           </select>
         </div>
         <div class="form-group">
           <label>프로젝트명 (선택)</label>
           <input type="text" id="projectNameInput" placeholder="예: 2026년 KS 심사 자료" />
+        </div>
+      </div>
+
+      <!-- 기타 직접 입력 영역 -->
+      <div id="customCategorySection">
+        <div class="custom-title">✏️ 새 카테고리 직접 입력</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>카테고리명 <span class="required-badge">필수</span></label>
+            <input type="text" id="customCategoryName" placeholder="예: 법무 문서"
+              oninput="checkUploadReady()" />
+          </div>
+          <div class="form-group">
+            <label>RAG 테이블명 <span class="required-badge">필수</span></label>
+            <input type="text" id="customTableName" placeholder="예: documents_legal"
+              oninput="onTableNameInput()" />
+            <div style="font-size:11px;color:#64748b;margin-top:5px;">
+              영문·숫자·밑줄만 사용 · <code style="color:#a5b4fc;">documents_</code> 로 시작 권장
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -376,6 +446,14 @@
       </div>
       <input type="file" id="fileInput" multiple accept=".pdf,.txt,.docx,.doc,.md,.csv,.xlsx,.xls,.pptx,.ppt,.hwp" />
       <div id="fileList"></div>
+    </div>
+
+    <!-- 준비 상태 표시 -->
+    <div id="readyIndicator">
+      <span class="check not-ready" id="checkCategory">⬜</span>
+      <span id="labelCategory" style="margin-right:16px;">카테고리 선택</span>
+      <span class="check not-ready" id="checkFiles">⬜</span>
+      <span id="labelFiles">파일 선택</span>
     </div>
 
     <!-- 업로드 버튼 -->
@@ -426,6 +504,85 @@
     document.getElementById('mainScreen').style.display = 'block';
   }
 
+  // ── 카테고리 ──────────────────────────────────────
+  function onCategoryChange() {
+    const val = document.getElementById('categorySelect').value;
+    const customSection = document.getElementById('customCategorySection');
+    const selectEl = document.getElementById('categorySelect');
+
+    if (val === '__custom__') {
+      customSection.style.display = 'block';
+      selectEl.classList.remove('select-required');
+    } else if (val === '') {
+      customSection.style.display = 'none';
+      selectEl.classList.add('select-required');
+    } else {
+      customSection.style.display = 'none';
+      selectEl.classList.remove('select-required');
+    }
+    checkUploadReady();
+  }
+
+  function onTableNameInput() {
+    // 테이블명 자동 정리: 영문·숫자·밑줄만 허용, 소문자 변환
+    const el = document.getElementById('customTableName');
+    el.value = el.value.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    checkUploadReady();
+  }
+
+  function getCategoryValues() {
+    const val = document.getElementById('categorySelect').value;
+    if (val === '__custom__') {
+      const name = document.getElementById('customCategoryName').value.trim();
+      const table = document.getElementById('customTableName').value.trim();
+      return { tableName: table, projectId: table || 'custom', projectLabel: name };
+    }
+    if (!val) return null;
+    const parts = val.split('|');
+    return { tableName: parts[0], projectId: parts[1], projectLabel: parts[2] };
+  }
+
+  function isCategoryReady() {
+    const val = document.getElementById('categorySelect').value;
+    if (!val) return false;
+    if (val === '__custom__') {
+      const name = document.getElementById('customCategoryName').value.trim();
+      const table = document.getElementById('customTableName').value.trim();
+      return name.length > 0 && table.length > 0;
+    }
+    return true;
+  }
+
+  function checkUploadReady() {
+    const catOk = isCategoryReady();
+    const fileOk = selectedFiles.length > 0;
+
+    // 카테고리 체크 표시
+    const checkCat = document.getElementById('checkCategory');
+    const labelCat = document.getElementById('labelCategory');
+    if (catOk) {
+      checkCat.textContent = '✅'; checkCat.className = 'check ready';
+      const cat = getCategoryValues();
+      labelCat.textContent = cat ? cat.projectLabel : '카테고리 선택';
+    } else {
+      checkCat.textContent = '⬜'; checkCat.className = 'check not-ready';
+      labelCat.textContent = '카테고리 선택';
+    }
+
+    // 파일 체크 표시
+    const checkFile = document.getElementById('checkFiles');
+    const labelFile = document.getElementById('labelFiles');
+    if (fileOk) {
+      checkFile.textContent = '✅'; checkFile.className = 'check ready';
+      labelFile.textContent = `파일 ${selectedFiles.length}개 선택됨`;
+    } else {
+      checkFile.textContent = '⬜'; checkFile.className = 'check not-ready';
+      labelFile.textContent = '파일 선택';
+    }
+
+    document.getElementById('uploadBtn').disabled = !(catOk && fileOk);
+  }
+
   // ── 파일 선택 ─────────────────────────────────────
   let selectedFiles = [];
 
@@ -459,7 +616,7 @@
 
   function renderFileList() {
     const list = document.getElementById('fileList');
-    document.getElementById('uploadBtn').disabled = selectedFiles.length === 0;
+    checkUploadReady();
 
     if (selectedFiles.length === 0) { list.innerHTML = ''; return; }
 
@@ -492,13 +649,20 @@
 
   async function startUpload() {
     if (isUploading || selectedFiles.length === 0) return;
+
+    // 카테고리 유효성 검사
+    if (!isCategoryReady()) {
+      document.getElementById('categorySelect').classList.add('select-required');
+      document.getElementById('categorySelect').focus();
+      return;
+    }
+
     isUploading = true;
 
-    const catRaw = document.getElementById('categorySelect').value.split('|');
-    const tableName = catRaw[0];
-    const projectId = catRaw[1];
-    const defaultProjectName = catRaw[2];
-    const projectName = document.getElementById('projectNameInput').value.trim() || defaultProjectName;
+    const cat = getCategoryValues();
+    const tableName = cat.tableName;
+    const projectId = cat.projectId;
+    const projectName = document.getElementById('projectNameInput').value.trim() || cat.projectLabel;
 
     const files = [...selectedFiles];
     selectedFiles = [];
