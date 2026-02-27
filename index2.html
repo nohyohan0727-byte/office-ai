@@ -510,7 +510,118 @@
   </div>
 </section>
 
-<!-- ⑤ 왜 무료인가 -->
+<!-- ⑤ LIVE DEMO -->
+<section class="demo-section" style="background:var(--bg); border-top:1px solid var(--border);">
+  <div class="wrap">
+    <span class="sec-label" style="color:#8b5cf6;">Live Demo</span>
+    <h2 class="sec-title">말보다 직접 써보세요<br><span style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">지금 바로 체험 가능합니다</span></h2>
+    <p class="sec-desc">
+      KS 인증 심사 정보, 프로젝트 문서, 업무 노하우를 학습한<br>
+      RAG 시스템에 직접 질문해보세요.<br>
+      <strong style="color:var(--text)">회원가입 없이 바로 체험 가능합니다.</strong>
+    </p>
+
+    <!-- 데모 미리보기 카드 -->
+    <div class="demo-preview" style="
+      background:var(--bg3);
+      border:1px solid rgba(139,92,246,0.3);
+      border-radius:16px;
+      overflow:hidden;
+      margin-bottom:2.5rem;
+      box-shadow:0 0 40px rgba(139,92,246,0.1);
+    ">
+      <!-- 가상 브라우저 헤더 -->
+      <div style="
+        background:#1a1f2e;
+        padding:0.75rem 1rem;
+        display:flex;
+        align-items:center;
+        gap:0.5rem;
+        border-bottom:1px solid var(--border);
+      ">
+        <span style="width:10px;height:10px;background:#ef4444;border-radius:50%;display:inline-block;"></span>
+        <span style="width:10px;height:10px;background:#f59e0b;border-radius:50%;display:inline-block;"></span>
+        <span style="width:10px;height:10px;background:#22c55e;border-radius:50%;display:inline-block;"></span>
+        <span style="
+          flex:1;
+          background:rgba(255,255,255,0.05);
+          border-radius:6px;
+          padding:0.3rem 0.8rem;
+          font-size:0.75rem;
+          color:var(--dim);
+          margin-left:0.5rem;
+        ">🏆 KS 인증 RAG 시스템 (검색 증강 생성)</span>
+      </div>
+      <!-- 대화 미리보기 -->
+      <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1rem;">
+        <div style="
+          align-self:flex-start;
+          max-width:85%;
+          background:rgba(59,130,246,0.12);
+          border:1px solid rgba(59,130,246,0.2);
+          border-radius:0 12px 12px 12px;
+          padding:0.9rem 1.1rem;
+          font-size:0.9rem;
+        ">
+          <div style="font-size:0.72rem;font-weight:700;color:#60a5fa;margin-bottom:0.4rem;">🏆 RAG 시스템</div>
+          안녕하세요! 사내 문서 기반으로 질문에 답변해 드립니다. KS 인증, 업무 문서, 프로젝트 자료 등 무엇이든 질문하세요.
+        </div>
+        <div style="
+          align-self:flex-end;
+          max-width:80%;
+          background:rgba(139,92,246,0.15);
+          border:1px solid rgba(139,92,246,0.25);
+          border-radius:12px 0 12px 12px;
+          padding:0.9rem 1.1rem;
+          font-size:0.9rem;
+        ">
+          <div style="font-size:0.72rem;font-weight:700;color:#a78bfa;margin-bottom:0.4rem;">담당자</div>
+          KS Q 8001 인증 갱신할 때 준비해야 할 서류가 뭐죠?
+        </div>
+        <div style="
+          align-self:flex-start;
+          max-width:90%;
+          background:rgba(59,130,246,0.12);
+          border:1px solid rgba(59,130,246,0.2);
+          border-radius:0 12px 12px 12px;
+          padding:0.9rem 1.1rem;
+          font-size:0.9rem;
+          line-height:1.7;
+        ">
+          <div style="font-size:0.72rem;font-weight:700;color:#60a5fa;margin-bottom:0.4rem;">🏆 RAG 시스템</div>
+          사내 심사 매뉴얼 기준, 갱신 시 필요한 서류는 <strong>품질매뉴얼, 절차서, 내부심사 보고서</strong> 등 총 7종입니다. 각 서류별 작성 포인트도 안내해 드릴까요?
+          <span style="display:inline-block;width:8px;height:1em;background:#3b82f6;border-radius:2px;animation:blink 1s step-end infinite;vertical-align:middle;"></span>
+        </div>
+      </div>
+      <style>
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+      </style>
+    </div>
+
+    <!-- 체험 가능 카테고리 -->
+    <div style="
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.6rem;
+      justify-content:center;
+      margin-bottom:2rem;
+    ">
+      <span style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:50px;padding:0.35rem 0.9rem;font-size:0.82rem;font-weight:600;color:#93c5fd;">🏆 KS 인증 Q&amp;A</span>
+      <span style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:50px;padding:0.35rem 0.9rem;font-size:0.82rem;font-weight:600;color:#93c5fd;">📋 비즈니스 문서</span>
+      <span style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:50px;padding:0.35rem 0.9rem;font-size:0.82rem;font-weight:600;color:#93c5fd;">🔧 기술 규격</span>
+      <span style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:50px;padding:0.35rem 0.9rem;font-size:0.82rem;font-weight:600;color:#93c5fd;">📁 업무 노하우</span>
+    </div>
+
+    <div class="cta-wrap">
+      <a href="register.html" class="cta-btn" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6);">
+        🤖 RAG 시스템 무료 체험하기 →
+      </a>
+      <p class="cta-sub">이름·이메일만 입력하면 즉시 체험 · 비용 없음</p>
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ 왜 무료인가 -->
 <section class="free-section">
   <div class="wrap">
     <span class="sec-label">Why Free</span>
