@@ -355,7 +355,7 @@
     <div class="logo">🔐</div>
     <h2>관리자 로그인</h2>
     <p>문서 업로드 관리자 페이지입니다</p>
-    <input type="password" id="pwInput" placeholder="관리자 비밀번호" />
+    <input type="password" id="pwInput" placeholder="관리자 키를 입력하세요" />
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-error" id="loginError">비밀번호가 올바르지 않습니다.</div>
   </div>
@@ -469,31 +469,61 @@
 
 <script>
   // ── 설정 ──────────────────────────────────────────
-  const ADMIN_PASSWORD = "jknetworks2026!";
   const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/admin-upload";
+  let ADMIN_KEY = '';  // 서버에서 검증 - HTML에 키 없음
 
   // ── 로그인 ────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
-    if (sessionStorage.getItem('admin_auth') === 'ok') showMain();
+    const savedKey = sessionStorage.getItem('admin_key');
+    if (savedKey) {
+      ADMIN_KEY = savedKey;
+      showMain();
+    }
     document.getElementById('pwInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
     });
   });
 
-  function doLogin() {
-    const pw = document.getElementById('pwInput').value;
-    if (pw === ADMIN_PASSWORD) {
-      sessionStorage.setItem('admin_auth', 'ok');
+  async function doLogin() {
+    const key = document.getElementById('pwInput').value.trim();
+    if (!key) return;
+
+    const loginBtn = document.querySelector('.login-btn');
+    const errorEl = document.getElementById('loginError');
+    loginBtn.disabled = true;
+    loginBtn.textContent = '검증 중...';
+    errorEl.style.display = 'none';
+
+    try {
+      // 서버(n8n)에 키 검증 — 빈 파일 아닌 실제 요청으로 확인
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_key: key, _validate_only: true })
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('invalid');
+      }
+
+      // 성공 (200 또는 기타) → 키 저장 후 진입
+      ADMIN_KEY = key;
+      sessionStorage.setItem('admin_key', key);
       showMain();
-    } else {
-      document.getElementById('loginError').style.display = 'block';
+    } catch (e) {
+      errorEl.textContent = '관리자 키가 올바르지 않습니다.';
+      errorEl.style.display = 'block';
       document.getElementById('pwInput').value = '';
       document.getElementById('pwInput').focus();
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = '로그인';
     }
   }
 
   function doLogout() {
-    sessionStorage.removeItem('admin_auth');
+    ADMIN_KEY = '';
+    sessionStorage.removeItem('admin_key');
     document.getElementById('mainScreen').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('pwInput').value = '';
@@ -704,6 +734,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            admin_key: ADMIN_KEY,
             fileContent: base64,
             filename: file.name,
             mimeType: file.type || 'application/octet-stream',
@@ -714,6 +745,12 @@
             projectName
           })
         });
+
+        // 인증 실패 시 로그아웃
+        if (res.status === 401 || res.status === 403) {
+          doLogout();
+          throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
+        }
 
         const data = await res.json();
 
