@@ -807,7 +807,7 @@
             admin_key: ADMIN_KEY,
             fileContent: base64,
             filename: file.name,
-            mimeType: file.type || 'application/octet-stream',
+            mimeType: file.type || (file.name.endsWith('.hwp') ? 'application/x-hwp' : 'application/octet-stream'),
             uploadId,
             timestamp: new Date().toISOString(),
             tableName,
@@ -822,7 +822,16 @@
           throw new Error('인증이 만료되었습니다. 다시 로그인해주세요.');
         }
 
-        const data = await res.json();
+        // 빈 응답 또는 JSON 파싱 실패 방어 처리
+        let data = {};
+        const rawText = await res.text();
+        if (rawText) {
+          try { data = JSON.parse(rawText); } catch (_) {
+            throw new Error(`서버 응답 파싱 실패: ${rawText.slice(0, 100)}`);
+          }
+        } else {
+          throw new Error(`서버가 빈 응답을 반환했습니다 (HTTP ${res.status}) — n8n 워크플로우를 확인하세요.`);
+        }
 
         if (res.ok && data.success) {
           successCount++;
