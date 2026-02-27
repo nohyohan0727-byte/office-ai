@@ -16,7 +16,7 @@
 
 ```
 개발 환경 (로컬)               버전 관리                 배포 환경
-C:\work\office-ai   →  git push  →  GitHub   →  webhook  →  Netlify  →  office-ai.app
+C:\dev\office-ai    →  git push  →  GitHub   →  webhook  →  Netlify  →  office-ai.app
                                 nohyohan0727-byte/office-ai          elaborate-cendol-e22a61
 ```
 
@@ -49,7 +49,7 @@ C:\work\office-ai   →  git push  →  GitHub   →  webhook  →  Netlify  →
 # index.html 또는 style.css 편집
 
 # 2. 변경사항 확인
-cd C:/work/office-ai
+cd C:/dev/office-ai
 git status
 git diff
 
@@ -102,7 +102,7 @@ curl -X POST "https://api.netlify.com/build_hooks/69a0fa07e63f66c3cb45ca56"
 # remote URL에 토큰 포함 방식으로 재설정
 git remote set-url origin "https://nohyohan0727-byte:YOUR_PAT@github.com/nohyohan0727-byte/office-ai.git"
 ```
-> PAT는 `C:\work\ai work\program\vscode\.env` 파일의 `GITHUB_PAT` 참고
+> PAT는 `C:\dev\my-dev-workspace\.env` 파일의 `GITHUB_TOKEN` 참고
 
 ### Netlify 배포가 안 될 때
 1. https://app.netlify.com/sites/elaborate-cendol-e22a61/deploys 에서 오류 로그 확인
@@ -119,7 +119,7 @@ git log --oneline
 ## API 키 / 자격증명 관리
 
 모든 토큰은 `.env` 파일에서 관리:
-- **위치**: `C:\work\ai work\program\vscode\.env`
-- `GITHUB_PAT` - GitHub Personal Access Token
+- **위치**: `C:\dev\my-dev-workspace\.env`
+- `GITHUB_TOKEN` - GitHub Personal Access Token
 - `NETLIFY_TOKEN` - Netlify API Token
-- `NETLIFY_SITE_ID` - 사이트 ID
+- `NETLIFY_SITE_ID` - 사이트 ID (`7b9d2cad-0a57-4d30-bbdf-54f80848ce94`)
