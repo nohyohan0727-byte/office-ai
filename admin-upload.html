@@ -333,6 +333,24 @@
     }
     #customCategorySection .form-row { margin-top: 0; }
 
+    /* ── 카테고리 로딩 상태 ── */
+    .cat-loading {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cat-loading .mini-spinner {
+      width: 10px; height: 10px;
+      border: 2px solid rgba(100,116,139,0.3);
+      border-top-color: #64748b;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
     /* ── 업로드 가능 상태 표시 ── */
     #readyIndicator {
       display: flex;
@@ -391,15 +409,21 @@
           <label>카테고리 (RAG 테이블) <span class="required-badge">필수</span></label>
           <select id="categorySelect" onchange="onCategoryChange()" class="select-required">
             <option value="">── 카테고리를 선택해주세요 ──</option>
-            <option value="documents_admin_upload|admin_general|일반 업무 문서">📋 일반 업무 문서</option>
-            <option value="documents_ks_certification|ks_certification|KS 인증 문서">🏆 KS 인증 문서</option>
-            <option value="documents_business|business|비즈니스 문서">💼 비즈니스 문서</option>
-            <option value="documents_technical|technical|기술 문서">🔧 기술 문서</option>
-            <option value="documents_company_a|company_a|회사문서 A">🏢 회사문서 A</option>
-            <option value="documents_company_b|company_b|회사문서 B">🏢 회사문서 B</option>
-            <option value="documents_company_c|company_c|회사문서 C">🏢 회사문서 C</option>
+            <optgroup label="기본 카테고리">
+              <option value="documents_admin_upload|admin_general|일반 업무 문서">📋 일반 업무 문서</option>
+              <option value="documents_ks_certification|ks_certification|KS 인증 문서">🏆 KS 인증 문서</option>
+              <option value="documents_business|business|비즈니스 문서">💼 비즈니스 문서</option>
+              <option value="documents_technical|technical|기술 문서">🔧 기술 문서</option>
+              <option value="documents_company_a|company_a|회사문서 A">🏢 회사문서 A</option>
+              <option value="documents_company_b|company_b|회사문서 B">🏢 회사문서 B</option>
+              <option value="documents_company_c|company_c|회사문서 C">🏢 회사문서 C</option>
+            </optgroup>
+            <optgroup label="이전 업로드 카테고리" id="prevOptGroup">
+              <!-- 구글시트에서 동적 로드 -->
+            </optgroup>
             <option value="__custom__|custom|기타">✏️ 기타 (직접 입력)</option>
           </select>
+          <div id="catLoadStatus"></div>
         </div>
         <div class="form-group">
           <label>프로젝트명 (선택)</label>
@@ -532,6 +556,50 @@
   function showMain() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainScreen').style.display = 'block';
+    loadCategoriesFromSheets();  // 구글시트에서 카테고리 동적 로드
+  }
+
+  // ── 구글시트에서 카테고리 동적 로드 ──────────────────
+  const CATEGORIES_URL = "https://jknetworks.app.n8n.cloud/webhook/admin-categories";
+
+  async function loadCategoriesFromSheets() {
+    const statusEl = document.getElementById('catLoadStatus');
+    const group = document.getElementById('prevOptGroup');
+    group.innerHTML = '';
+
+    statusEl.innerHTML = '<div class="cat-loading"><div class="mini-spinner"></div> 이전 업로드 카테고리 불러오는 중...</div>';
+
+    try {
+      const res = await fetch(CATEGORIES_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_key: ADMIN_KEY })
+      });
+
+      if (!res.ok) { statusEl.innerHTML = ''; return; }
+
+      const data = await res.json();
+      const cats = data.categories || [];
+
+      if (cats.length === 0) {
+        statusEl.innerHTML = '<div class="cat-loading" style="color:#475569;">이전 업로드 카테고리 없음</div>';
+        setTimeout(() => { statusEl.innerHTML = ''; }, 2000);
+        return;
+      }
+
+      cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = `${c.tableName}|${c.tableName}|${c.label}`;
+        opt.textContent = `📁 ${c.label}`;
+        group.appendChild(opt);
+      });
+
+      statusEl.innerHTML = `<div class="cat-loading" style="color:#6ee7b7;">✓ 카테고리 ${cats.length}개 로드됨</div>`;
+      setTimeout(() => { statusEl.innerHTML = ''; }, 2000);
+
+    } catch {
+      statusEl.innerHTML = '';
+    }
   }
 
   // ── 카테고리 ──────────────────────────────────────
@@ -693,6 +761,8 @@
     const tableName = cat.tableName;
     const projectId = cat.projectId;
     const projectName = document.getElementById('projectNameInput').value.trim() || cat.projectLabel;
+    const isCustomCat = document.getElementById('categorySelect').value === '__custom__|custom|기타';
+    const customLabel = isCustomCat ? document.getElementById('customCategoryName').value.trim() : null;
 
     const files = [...selectedFiles];
     selectedFiles = [];
@@ -758,6 +828,10 @@
           successCount++;
           logEl.className = 'log-item success';
           logEl.innerHTML = `<span class="log-icon">✅</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 완료 · ${formatSize(data.fileSize || file.size)} · 테이블: ${data.tableName || tableName}</div></div>`;
+          // 커스텀 카테고리 첫 성공 시 드롭다운 갱신
+          if (isCustomCat && customLabel && successCount === 1) {
+            loadCategoriesFromSheets();
+          }
         } else {
           throw new Error(data.message || `HTTP ${res.status}`);
         }
