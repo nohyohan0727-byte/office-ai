@@ -390,6 +390,7 @@
       .speed-compare { flex-direction: column; }
       .speed-arrow { justify-content: center; transform: rotate(90deg); }
       .hero h1 { font-size: 1.9rem; }
+      .review-grid { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -629,7 +630,194 @@
   </div>
 </section>
 
-<!-- ⑥ LIVE DEMO -->
+<!-- ⑥ 고객 후기 -->
+<section style="background:var(--bg2); border-top:1px solid var(--border); padding:5rem 0;">
+  <div class="wrap">
+    <span class="sec-label" style="color:#22c55e;">도입 후기</span>
+    <h2 class="sec-title">실제로 쓰는 분들의<br><span style="color:#22c55e;">도입 전/후 이야기</span></h2>
+    <p class="sec-desc">화려한 소개보다 실제 경험이 낫습니다.</p>
+
+    <!-- 후기 카드 목록 -->
+    <div style="display:flex; flex-direction:column; gap:1.5rem; margin-top:2rem;">
+
+      <!-- 후기 1: KS 인증 -->
+      <div style="
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:16px;
+        overflow:hidden;
+      ">
+        <div style="
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:0;
+        ">
+          <div style="padding:1.5rem; border-right:1px solid var(--border);">
+            <div style="font-size:0.72rem; font-weight:700; color:#ef4444; letter-spacing:0.08em; margin-bottom:0.8rem;">BEFORE</div>
+            <p style="font-size:0.9rem; color:var(--dim); line-height:1.7;">
+              KS 정기심사 때마다 팀 전체가 2주 동안 야근했어요. 서류 챙기다 본업을 못 할 정도였죠. 심사 끝나면 탈진 상태였습니다.
+            </p>
+          </div>
+          <div style="padding:1.5rem; background:rgba(34,197,94,0.04);">
+            <div style="font-size:0.72rem; font-weight:700; color:#22c55e; letter-spacing:0.08em; margin-bottom:0.8rem;">AFTER</div>
+            <p style="font-size:0.9rem; color:var(--text); line-height:1.7;">
+              이번 심사는 <strong>3일</strong>에 끝냈습니다. 매뉴얼 초안을 AI 비서가 뽑아주니까 팀원들이 검토만 했어요. 야근 한 번 없었습니다.
+            </p>
+          </div>
+        </div>
+        <div style="
+          padding:1rem 1.5rem;
+          border-top:1px solid var(--border);
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:0.5rem;
+        ">
+          <div>
+            <span style="font-size:0.88rem; font-weight:700; color:var(--text);">제조업 품질팀장</span>
+            <span style="font-size:0.78rem; color:var(--dim); margin-left:0.6rem;">직원 28명 · KS Q 8001 인증</span>
+          </div>
+          <div style="
+            background:rgba(34,197,94,0.12);
+            border:1px solid rgba(34,197,94,0.25);
+            border-radius:50px;
+            padding:0.3rem 0.9rem;
+            font-size:0.8rem;
+            font-weight:700;
+            color:#86efac;
+          ">서류 준비 2주 → 3일</div>
+        </div>
+      </div>
+
+      <!-- 후기 2: 사업계획서 -->
+      <div style="
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:16px;
+        overflow:hidden;
+      ">
+        <div style="
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:0;
+        ">
+          <div style="padding:1.5rem; border-right:1px solid var(--border);">
+            <div style="font-size:0.72rem; font-weight:700; color:#ef4444; letter-spacing:0.08em; margin-bottom:0.8rem;">BEFORE</div>
+            <p style="font-size:0.9rem; color:var(--dim); line-height:1.7;">
+              정부지원사업 공고 나올 때마다 마감일에 쫓겼어요. 사업계획서 하나에 대표가 닷새는 기본으로 붙어 있었습니다.
+            </p>
+          </div>
+          <div style="padding:1.5rem; background:rgba(34,197,94,0.04);">
+            <div style="font-size:0.72rem; font-weight:700; color:#22c55e; letter-spacing:0.08em; margin-bottom:0.8rem;">AFTER</div>
+            <p style="font-size:0.9rem; color:var(--text); line-height:1.7;">
+              초안을 <strong>당일</strong>에 받고, 다음 날 검토·수정해서 제출했습니다. 예전엔 엄두도 못 냈던 공고에 지원하고 있어요.
+            </p>
+          </div>
+        </div>
+        <div style="
+          padding:1rem 1.5rem;
+          border-top:1px solid var(--border);
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:0.5rem;
+        ">
+          <div>
+            <span style="font-size:0.88rem; font-weight:700; color:var(--text);">IT 스타트업 대표</span>
+            <span style="font-size:0.78rem; color:var(--dim); margin-left:0.6rem;">직원 11명 · 정부지원사업 다수 지원</span>
+          </div>
+          <div style="
+            background:rgba(34,197,94,0.12);
+            border:1px solid rgba(34,197,94,0.25);
+            border-radius:50px;
+            padding:0.3rem 0.9rem;
+            font-size:0.8rem;
+            font-weight:700;
+            color:#86efac;
+          ">계획서 작성 5일 → 1일</div>
+        </div>
+      </div>
+
+      <!-- 후기 3: 견적서 + 직원 교육 -->
+      <div style="
+        background:var(--bg3);
+        border:1px solid var(--border);
+        border-radius:16px;
+        overflow:hidden;
+      ">
+        <div style="
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:0;
+        ">
+          <div style="padding:1.5rem; border-right:1px solid var(--border);">
+            <div style="font-size:0.72rem; font-weight:700; color:#ef4444; letter-spacing:0.08em; margin-bottom:0.8rem;">BEFORE</div>
+            <p style="font-size:0.9rem; color:var(--dim); line-height:1.7;">
+              신입이 들어오면 제가 2주는 옆에 붙어 있어야 했어요. 견적서 양식부터 거래처 조건까지 하나하나 다 가르쳤거든요.
+            </p>
+          </div>
+          <div style="padding:1.5rem; background:rgba(34,197,94,0.04);">
+            <div style="font-size:0.72rem; font-weight:700; color:#22c55e; letter-spacing:0.08em; margin-bottom:0.8rem;">AFTER</div>
+            <p style="font-size:0.9rem; color:var(--text); line-height:1.7;">
+              요즘은 신입이 AI 비서한테 먼저 물어봐요. <strong>첫 주부터 혼자 견적서를 처리</strong>하더라고요. 저는 최종 확인만 합니다.
+            </p>
+          </div>
+        </div>
+        <div style="
+          padding:1rem 1.5rem;
+          border-top:1px solid var(--border);
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:0.5rem;
+        ">
+          <div>
+            <span style="font-size:0.88rem; font-weight:700; color:var(--text);">유통업 영업팀장</span>
+            <span style="font-size:0.78rem; color:var(--dim); margin-left:0.6rem;">직원 19명 · 거래처 60곳 이상</span>
+          </div>
+          <div style="
+            background:rgba(34,197,94,0.12);
+            border:1px solid rgba(34,197,94,0.25);
+            border-radius:50px;
+            padding:0.3rem 0.9rem;
+            font-size:0.8rem;
+            font-weight:700;
+            color:#86efac;
+          ">신입 적응 2주 → 3일</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 총평 문구 -->
+    <div style="
+      margin-top:2.5rem;
+      padding:1.8rem;
+      background:linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.06));
+      border:1px solid rgba(34,197,94,0.2);
+      border-radius:14px;
+      text-align:center;
+    ">
+      <p style="font-size:1.05rem; font-weight:700; color:var(--text); line-height:1.7; margin-bottom:0.4rem;">
+        공통점은 하나입니다.
+      </p>
+      <p style="font-size:1rem; color:var(--dim); line-height:1.8;">
+        처음엔 "우리 회사에도 될까?" 반신반의했지만<br>
+        <strong style="color:var(--text)">도입 후 한 달 안에 효과를 체감</strong>했다는 것입니다.
+      </p>
+    </div>
+
+    <div class="cta-wrap" style="margin-top:2.5rem;">
+      <a href="#contact" class="cta-btn">우리 회사도 가능한지 확인하기 →</a>
+      <p class="cta-sub">효과 없으면 그 자리에서 말씀드립니다</p>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ LIVE DEMO -->
 <section class="demo-section" style="background:var(--bg); border-top:1px solid var(--border);">
   <div class="wrap">
     <span class="sec-label" style="color:#8b5cf6;">Live Demo</span>
