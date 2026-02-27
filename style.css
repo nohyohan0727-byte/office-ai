@@ -433,6 +433,10 @@ h1, h2, h3 {
 .service-card {
     position: relative;
     padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 520px;
+    justify-content: space-between;
 }
 
 .service-card.featured {
@@ -488,6 +492,10 @@ h1, h2, h3 {
 .service-features {
     list-style: none;
     margin-bottom: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .service-features li {
@@ -496,6 +504,14 @@ h1, h2, h3 {
     margin-bottom: 1rem;
     font-size: 0.95rem;
     color: var(--text-dim);
+    align-items: flex-start;
+}
+
+.service-card .btn-outline,
+.service-card .btn-primary {
+    margin-top: auto;
+    align-self: stretch;
+    text-align: center;
 }
 
 .service-features li i {
@@ -979,6 +995,11 @@ footer {
     
     .grid-3 { grid-template-columns: 1fr; }
     .grid-4 { grid-template-columns: 1fr; }
+    
+    .service-card {
+        min-height: auto;
+        padding: 2rem 1.5rem;
+    }
     .automation-grid { 
         grid-template-columns: 1fr; 
         gap: 2rem;
