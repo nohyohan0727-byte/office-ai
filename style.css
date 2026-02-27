@@ -570,13 +570,13 @@ h1, h2, h3 {
 
 /* Navbar */
 .navbar {
-    position: fixed;
+    position: sticky;
     top: 0;
     left: 0;
     width: 100%;
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.92);
     backdrop-filter: blur(10px);
-    z-index: 1000;
+    z-index: 1001;
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
@@ -622,7 +622,7 @@ h1, h2, h3 {
 
 /* Hero Section */
 .hero {
-    padding-top: 140px;
+    padding-top: 80px;
     padding-bottom: 100px;
     position: relative;
     overflow: hidden;
