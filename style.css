@@ -608,6 +608,104 @@ footer {
     font-size: 0.9rem;
 }
 
+/* Demo CTA Section */
+.demo-cta-section {
+    background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(139,92,246,0.06) 100%);
+    border-top: 1px solid rgba(59,130,246,0.15);
+    border-bottom: 1px solid rgba(59,130,246,0.15);
+}
+
+.demo-cta-inner {
+    display: flex;
+    align-items: center;
+    gap: 5rem;
+}
+
+.demo-cta-text {
+    flex: 1;
+}
+
+.demo-cta-text .section-title {
+    margin-top: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.demo-cta-text .section-desc {
+    margin-bottom: 1.8rem;
+}
+
+.demo-features {
+    list-style: none;
+    margin-bottom: 2.5rem;
+}
+
+.demo-features li {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    margin-bottom: 0.6rem;
+    padding-left: 0.2rem;
+}
+
+.demo-features li::first-letter {
+    color: var(--primary);
+}
+
+.btn-demo {
+    display: inline-block;
+    padding: 0.9rem 2.2rem;
+    background: var(--gradient-main);
+    color: white;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s;
+    box-shadow: 0 0 25px rgba(59,130,246,0.3);
+}
+
+.btn-demo:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 40px rgba(59,130,246,0.5);
+}
+
+.demo-cta-preview {
+    flex: 1;
+}
+
+.demo-preview-card {
+    cursor: default;
+}
+
+.demo-preview-title {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.typing-demo .typing-text {
+    color: var(--text-white);
+    font-size: 0.9rem;
+}
+
+.demo-cta-btn-wrap {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    text-align: center;
+}
+
+.demo-start-link {
+    color: var(--primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.demo-start-link:hover {
+    opacity: 0.7;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .hero-title { font-size: 2.2rem; }
@@ -621,4 +719,5 @@ footer {
     .about-image { flex: auto; width: 100%; }
     
     .nav-links { display: none; } /* Mobile Menu would need JS */
+    .demo-cta-inner { flex-direction: column; gap: 2.5rem; }
 }
