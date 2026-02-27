@@ -494,17 +494,17 @@ h1, h2, h3 {
 .hero-event-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
-    margin-top: 2.2rem;
-    margin-bottom: 2.2rem;
-    padding: 0.85rem 1.6rem;
-    background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(220,38,38,0.08) 100%);
-    border: 1px solid rgba(239,68,68,0.45);
+    gap: 0.9rem;
+    margin-top: 1.6rem;
+    margin-bottom: 0;
+    padding: 1.05rem 2rem;
+    background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.10) 100%);
+    border: 1.5px solid rgba(239,68,68,0.55);
     border-radius: 50px;
     text-decoration: none;
     color: #fca5a5;
-    font-size: 0.88rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 700;
     transition: background 0.2s, border-color 0.2s, transform 0.2s;
     animation: hero-event-pulse 3s ease-in-out infinite;
 }
@@ -524,9 +524,9 @@ h1, h2, h3 {
 .hero-event-badge {
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff;
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     font-weight: 800;
-    padding: 0.2rem 0.65rem;
+    padding: 0.28rem 0.8rem;
     border-radius: 50px;
     letter-spacing: 0.03em;
     flex-shrink: 0;
@@ -534,7 +534,7 @@ h1, h2, h3 {
 
 .hero-event-text {
     color: #fca5a5;
-    font-size: 0.88rem;
+    font-size: 1rem;
 }
 
 .hero-event-arrow {
