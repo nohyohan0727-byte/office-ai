@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>무료 체험 신청 - Office AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.4);
+      --gradient-main: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --text-white: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .reg-header {
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      color: var(--text-white);
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+    }
+    .back-btn svg { width: 16px; height: 16px; }
+
+    .header-divider { width: 1px; height: 20px; background: var(--border); }
+
+    .header-logo { font-size: 1rem; font-weight: 700; color: var(--text-dim); }
+    .header-logo span { color: var(--primary); }
+
+    /* Main */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+    }
+
+    .reg-container {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* Step 1: Form */
+    .reg-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+    }
+
+    .reg-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--gradient-main);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .reg-card h2 {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .reg-card .subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    /* Benefits */
+    .benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      padding: 1rem 1.2rem;
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 10px;
+    }
+
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+    }
+
+    .benefit-item span:first-child { font-size: 1rem; }
+
+    /* Form */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    .form-group input {
+      padding: 11px 14px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text-white);
+      transition: border-color 0.2s;
+    }
+
+    .form-group input::placeholder { color: #475569; }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .form-group input.error { border-color: var(--error); }
+
+    .field-error {
+      font-size: 0.78rem;
+      color: #f87171;
+      display: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--gradient-main);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-banner {
+      display: none;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #f87171;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    /* Step 2: Success */
+    .success-card {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    .success-icon {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .success-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-card .welcome-msg {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .user-info {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label { color: var(--text-dim); }
+    .info-value { color: var(--text-white); font-weight: 500; }
+
+    /* API Key box */
+    .api-key-section {
+      background: rgba(59, 130, 246, 0.06);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 12px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .api-key-label {
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+    }
+
+    .api-key-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+    }
+
+    .api-key-value {
+      flex: 1;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      color: var(--text-white);
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 6px;
+      color: var(--primary);
+      padding: 0.3rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+
+    .copy-btn:hover { background: rgba(59,130,246,0.25); }
+    .copy-btn.copied { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); color: #22c55e; }
+
+    .api-key-warning {
+      font-size: 0.78rem;
+      color: #f59e0b;
+      margin-top: 0.6rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      text-align: left;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .demo-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 13px;
+      background: var(--gradient-main);
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .demo-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    .home-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 11px;
+      background: transparent;
+      color: var(--text-dim);
+      text-decoration: none;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover {
+      color: var(--text-white);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* Privacy note */
+    .privacy-note {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #475569;
+      margin-top: 1.2rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 1.5rem 1rem; align-items: flex-start; }
+      .reg-card, .success-card { padding: 1.8rem 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="reg-header">
+    <div class="header-left">
+      <a href="index.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        메인으로
+      </a>
+      <div class="header-divider"></div>
+      <div class="header-logo">office-ai<span>.app</span></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="reg-container">
+
+      <!-- Step 1: 가입 폼 -->
+      <div class="reg-card" id="regForm">
+        <div class="reg-icon">🚀</div>
+        <h2>무료 체험 시작하기</h2>
+        <p class="subtitle">이름과 이메일만 입력하면<br>바로 AI를 체험할 수 있습니다.</p>
+
+        <div class="benefits">
+          <div class="benefit-item">
+            <span>🏆</span>
+            <span>KS 인증 · 비즈니스 · 기술문서 AI 체험</span>
+          </div>
+          <div class="benefit-item">
+            <span>💬</span>
+            <span>1,000 토큰 무료 제공 (30일)</span>
+          </div>
+          <div class="benefit-item">
+            <span>🔑</span>
+            <span>개인 API 키 자동 발급</span>
+          </div>
+        </div>
+
+        <form id="registerForm" onsubmit="handleSubmit(event)">
+          <div class="form-group">
+            <label for="nameInput">이름</label>
+            <input type="text" id="nameInput" placeholder="홍길동" autocomplete="name">
+            <span class="field-error" id="nameError">이름을 입력해 주세요.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="emailInput">이메일</label>
+            <input type="email" id="emailInput" placeholder="example@company.com" autocomplete="email">
+            <span class="field-error" id="emailError">올바른 이메일 주소를 입력해 주세요.</span>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <div class="spinner" id="spinner"></div>
+            <span id="submitText">무료로 시작하기 →</span>
+          </button>
+
+          <div class="error-banner" id="errorBanner"></div>
+        </form>
+
+        <p class="privacy-note">
+          입력하신 정보는 서비스 제공 목적으로만 사용되며<br>제3자에게 제공되지 않습니다.
+        </p>
+      </div>
+
+      <!-- Step 2: 성공 화면 -->
+      <div class="success-card" id="successCard">
+        <div class="success-icon">✅</div>
+        <h2>가입 완료!</h2>
+        <p class="welcome-msg" id="welcomeMsg">환영합니다.<br>아래 API 키로 AI를 체험하세요.</p>
+
+        <div class="user-info" id="userInfo">
+          <div class="info-row">
+            <span class="info-label">이름</span>
+            <span class="info-value" id="resName">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">이메일</span>
+            <span class="info-value" id="resEmail">-</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">무료 토큰</span>
+            <span class="info-value" id="resTokens">1,000</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">만료일</span>
+            <span class="info-value" id="resExpiry">-</span>
+          </div>
+        </div>
+
+        <div class="api-key-section">
+          <div class="api-key-label">🔑 나의 API 키</div>
+          <div class="api-key-box">
+            <span class="api-key-value" id="resApiKey">-</span>
+            <button class="copy-btn" id="copyBtn" onclick="copyApiKey()">복사</button>
+          </div>
+          <p class="api-key-warning">
+            <span>⚠️</span>
+            <span>이 키는 지금만 표시됩니다. 안전한 곳에 저장해 두세요.</span>
+          </p>
+        </div>
+
+        <div class="action-buttons">
+          <a href="#" class="demo-btn" id="demoLink">
+            🤖 지금 바로 AI 체험하기
+          </a>
+          <a href="index.html" class="home-btn">
+            ← 홈으로 돌아가기
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+<script>
+  const REGISTER_URL = "https://jknetworks.app.n8n.cloud/webhook/rag-register";
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const nameEl = document.getElementById('nameInput');
+    const emailEl = document.getElementById('emailInput');
+    const nameErr = document.getElementById('nameError');
+    const emailErr = document.getElementById('emailError');
+    const errorBanner = document.getElementById('errorBanner');
+
+    // 초기화
+    nameEl.classList.remove('error');
+    emailEl.classList.remove('error');
+    nameErr.style.display = 'none';
+    emailErr.style.display = 'none';
+    errorBanner.style.display = 'none';
+
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+
+    // 유효성 검사
+    let hasError = false;
+    if (!name) {
+      nameEl.classList.add('error');
+      nameErr.style.display = 'block';
+      hasError = true;
+    }
+    if (!email || !email.includes('@')) {
+      emailEl.classList.add('error');
+      emailErr.style.display = 'block';
+      hasError = true;
+    }
+    if (hasError) return;
+
+    // 로딩 상태
+    setLoading(true);
+
+    try {
+      const res = await fetch(REGISTER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showSuccess(data);
+      } else {
+        showError(data.message || '가입 처리 중 오류가 발생했습니다.');
+      }
+    } catch (err) {
+      showError('서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function setLoading(loading) {
+    const btn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const text = document.getElementById('submitText');
+    btn.disabled = loading;
+    spinner.style.display = loading ? 'block' : 'none';
+    text.textContent = loading ? '처리 중...' : '무료로 시작하기 →';
+  }
+
+  function showError(msg) {
+    const banner = document.getElementById('errorBanner');
+    banner.textContent = msg;
+    banner.style.display = 'block';
+  }
+
+  function showSuccess(data) {
+    // 폼 숨기기
+    document.getElementById('regForm').style.display = 'none';
+
+    // 성공 카드 표시
+    const card = document.getElementById('successCard');
+    card.style.display = 'block';
+
+    // 정보 채우기
+    document.getElementById('welcomeMsg').innerHTML =
+      `<strong>${data.name}</strong>님, 환영합니다!<br>아래 API 키로 AI를 체험하세요.`;
+    document.getElementById('resName').textContent = data.name;
+    document.getElementById('resEmail').textContent = data.email;
+    document.getElementById('resTokens').textContent =
+      (data.tokens_total || 1000).toLocaleString() + ' 토큰';
+    document.getElementById('resExpiry').textContent = data.expires_at || '-';
+    document.getElementById('resApiKey').textContent = data.api_key;
+
+    // 데모 링크 (API키 파라미터 포함)
+    document.getElementById('demoLink').href =
+      `demo.html?api_key=${encodeURIComponent(data.api_key)}&name=${encodeURIComponent(data.name)}`;
+  }
+
+  function copyApiKey() {
+    const key = document.getElementById('resApiKey').textContent;
+    const btn = document.getElementById('copyBtn');
+
+    navigator.clipboard.writeText(key).then(() => {
+      btn.textContent = '복사됨 ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '복사';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // 폴백: 선택
+      const range = document.createRange();
+      range.selectNode(document.getElementById('resApiKey'));
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
+  }
+</script>
+</body>
+</html>

@@ -660,7 +660,11 @@
 
 <script>
   const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/rag-chat";
-  const API_KEY = "rag_OfficeAI2026Demo9kXmPv";
+
+  // URL 파라미터에서 api_key 읽기 (register.html에서 넘어온 경우)
+  const urlParams = new URLSearchParams(window.location.search);
+  const API_KEY = urlParams.get('api_key') || "rag_OfficeAI2026Demo9kXmPv";
+  const USER_NAME = urlParams.get('name') || '';
 
   // 카테고리 설정
   const CATEGORIES = {
@@ -769,6 +773,11 @@
   const messagesEl = document.getElementById('messages');
   const inputEl = document.getElementById('messageInput');
   const sendBtn = document.getElementById('sendBtn');
+
+  // 이름이 URL 파라미터로 넘어온 경우 표시
+  if (USER_NAME) {
+    document.getElementById('headerSub').textContent = `${USER_NAME}님 · 카테고리를 선택하고 질문하세요`;
+  }
 
   inputEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
