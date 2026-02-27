@@ -469,6 +469,7 @@
         </div>
       </div>
       <input type="file" id="fileInput" multiple accept=".pdf,.txt,.docx,.doc,.md,.csv,.xlsx,.xls,.pptx,.ppt,.hwp" />
+      <p style="margin:0.4rem 0 0; font-size:0.78rem; color:#f87171;">⚠️ HWP 파일은 PDF로 변환 후 업로드해주세요 (한글 → 파일 → 다른 이름으로 저장 → PDF)</p>
       <div id="fileList"></div>
     </div>
 
@@ -791,6 +792,15 @@
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const logEl = logItems[i];
+
+      // HWP 파일은 n8n 문서 파서가 지원하지 않으므로 사전 차단
+      if (file.name.toLowerCase().endsWith('.hwp')) {
+        errorCount++;
+        logEl.className = 'log-item error';
+        logEl.innerHTML = `<span class="log-icon">⚠️</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">HWP 형식은 지원하지 않습니다. 한글에서 <strong>PDF로 저장</strong> 후 다시 업로드해주세요. (파일 → 다른 이름으로 저장 → PDF)</div></div>`;
+        updateSummary(files.length, successCount, errorCount);
+        continue;
+      }
 
       // 업로드 중 상태
       logEl.className = 'log-item uploading';
