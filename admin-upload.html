@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 문서 업로드 · Office AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── 로그인 화면 ── */
+    #loginScreen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-box {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .login-box .logo { font-size: 40px; margin-bottom: 12px; }
+    .login-box h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .login-box p { font-size: 13px; color: #64748b; margin-bottom: 28px; }
+
+    .login-box input {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #e2e8f0;
+      font-size: 15px;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      letter-spacing: 4px;
+    }
+    .login-box input:focus { border-color: #667eea; }
+
+    .login-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .login-btn:hover { opacity: 0.9; }
+
+    .login-error {
+      color: #fc8181;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* ── 메인 화면 ── */
+    #mainScreen { display: none; }
+
+    header {
+      background: #1a1f2e;
+      border-bottom: 1px solid #2d3748;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .header-left .icon { font-size: 24px; }
+    .header-left h1 { font-size: 18px; font-weight: 700; }
+    .header-left span { font-size: 12px; color: #667eea; background: rgba(102,126,234,0.15); padding: 3px 10px; border-radius: 20px; }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #2d3748;
+      color: #94a3b8;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .logout-btn:hover { border-color: #fc8181; color: #fc8181; }
+
+    .main-content {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    /* ── 설정 섹션 ── */
+    .section {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .form-group select,
+    .form-group input[type="text"] {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group select:focus,
+    .form-group input[type="text"]:focus { border-color: #667eea; }
+
+    /* ── 드래그 드롭 영역 ── */
+    #dropZone {
+      border: 2px dashed #2d3748;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+    }
+    #dropZone:hover, #dropZone.dragover {
+      border-color: #667eea;
+      background: rgba(102,126,234,0.06);
+    }
+    #dropZone .drop-icon { font-size: 42px; margin-bottom: 12px; }
+    #dropZone .drop-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    #dropZone .drop-sub { font-size: 13px; color: #64748b; margin-bottom: 16px; }
+    #dropZone .drop-types {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    #dropZone .type-badge {
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    #fileInput { display: none; }
+
+    /* ── 파일 목록 ── */
+    #fileList { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+
+    .file-item {
+      background: #0f1117;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .file-item .file-icon { font-size: 22px; flex-shrink: 0; }
+    .file-item .file-info { flex: 1; min-width: 0; }
+    .file-item .file-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-item .file-size { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .file-item .file-remove {
+      background: none;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .file-item .file-remove:hover { color: #fc8181; }
+
+    /* ── 업로드 버튼 ── */
+    #uploadBtn {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    #uploadBtn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    #uploadBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── 결과 로그 ── */
+    #resultLog {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .log-item {
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .log-item.pending { background: rgba(100,116,139,0.15); border: 1px solid #2d3748; color: #94a3b8; }
+    .log-item.uploading { background: rgba(102,126,234,0.1); border: 1px solid rgba(102,126,234,0.3); color: #a5b4fc; }
+    .log-item.success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: #6ee7b7; }
+    .log-item.error { background: rgba(252,129,129,0.1); border: 1px solid rgba(252,129,129,0.3); color: #fca5a5; }
+
+    .log-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .log-content .log-name { font-weight: 600; margin-bottom: 3px; }
+    .log-content .log-detail { font-size: 12px; opacity: 0.8; }
+
+    /* 스피너 */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(165,180,252,0.3);
+      border-top-color: #a5b4fc;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 상태 요약 ── */
+    #summary {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      text-align: center;
+    }
+    .summary-num { font-size: 28px; font-weight: 700; }
+    .summary-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .num-total { color: #a5b4fc; }
+    .num-success { color: #6ee7b7; }
+    .num-error { color: #fca5a5; }
+  </style>
+</head>
+<body>
+
+<!-- ── 로그인 화면 ── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo">🔐</div>
+    <h2>관리자 로그인</h2>
+    <p>문서 업로드 관리자 페이지입니다</p>
+    <input type="password" id="pwInput" placeholder="관리자 비밀번호" />
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="loginError">비밀번호가 올바르지 않습니다.</div>
+  </div>
+</div>
+
+<!-- ── 메인 화면 ── -->
+<div id="mainScreen">
+  <header>
+    <div class="header-left">
+      <span class="icon">📁</span>
+      <h1>문서 업로드</h1>
+      <span>관리자</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+  </header>
+
+  <div class="main-content">
+
+    <!-- 요약 -->
+    <div id="summary">
+      <div class="summary-grid">
+        <div><div class="summary-num num-total" id="sumTotal">0</div><div class="summary-label">전체</div></div>
+        <div><div class="summary-num num-success" id="sumSuccess">0</div><div class="summary-label">성공</div></div>
+        <div><div class="summary-num num-error" id="sumError">0</div><div class="summary-label">실패</div></div>
+      </div>
+    </div>
+
+    <!-- 설정 -->
+    <div class="section">
+      <div class="section-title">⚙️ 업로드 설정</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>카테고리 (RAG 테이블)</label>
+          <select id="categorySelect">
+            <option value="documents_admin_upload|admin_general|일반 업무 문서">📋 일반 업무 문서</option>
+            <option value="documents_ks_certification|ks_certification|KS 인증 문서">🏆 KS 인증 문서</option>
+            <option value="documents_business|business|비즈니스 문서">💼 비즈니스 문서</option>
+            <option value="documents_technical|technical|기술 문서">🔧 기술 문서</option>
+            <option value="documents_company_a|company_a|회사문서 A">🏢 회사문서 A</option>
+            <option value="documents_company_b|company_b|회사문서 B">🏢 회사문서 B</option>
+            <option value="documents_company_c|company_c|회사문서 C">🏢 회사문서 C</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>프로젝트명 (선택)</label>
+          <input type="text" id="projectNameInput" placeholder="예: 2026년 KS 심사 자료" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 파일 드롭 -->
+    <div class="section">
+      <div class="section-title">📂 파일 선택</div>
+      <div id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="drop-icon">☁️</div>
+        <div class="drop-title">파일을 드래그하거나 클릭해서 선택</div>
+        <div class="drop-sub">한 번에 여러 파일 업로드 가능</div>
+        <div class="drop-types">
+          <span class="type-badge">PDF</span>
+          <span class="type-badge">TXT</span>
+          <span class="type-badge">DOCX</span>
+          <span class="type-badge">MD</span>
+          <span class="type-badge">CSV</span>
+          <span class="type-badge">XLSX</span>
+        </div>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".pdf,.txt,.docx,.doc,.md,.csv,.xlsx,.xls,.pptx,.ppt,.hwp" />
+      <div id="fileList"></div>
+    </div>
+
+    <!-- 업로드 버튼 -->
+    <button id="uploadBtn" onclick="startUpload()" disabled>
+      <span>📤</span> 업로드 시작
+    </button>
+
+    <!-- 결과 로그 -->
+    <div id="resultLog"></div>
+
+  </div>
+</div>
+
+<script>
+  // ── 설정 ──────────────────────────────────────────
+  const ADMIN_PASSWORD = "jknetworks2026!";
+  const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/admin-upload";
+
+  // ── 로그인 ────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('admin_auth') === 'ok') showMain();
+    document.getElementById('pwInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  function doLogin() {
+    const pw = document.getElementById('pwInput').value;
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem('admin_auth', 'ok');
+      showMain();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('pwInput').value = '';
+      document.getElementById('pwInput').focus();
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem('admin_auth');
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('pwInput').value = '';
+  }
+
+  function showMain() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display = 'block';
+  }
+
+  // ── 파일 선택 ─────────────────────────────────────
+  let selectedFiles = [];
+
+  document.getElementById('fileInput').addEventListener('change', e => {
+    addFiles(Array.from(e.target.files));
+    e.target.value = '';
+  });
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    addFiles(Array.from(e.dataTransfer.files));
+  });
+
+  function addFiles(files) {
+    files.forEach(f => {
+      if (!selectedFiles.find(x => x.name === f.name && x.size === f.size)) {
+        selectedFiles.push(f);
+      }
+    });
+    renderFileList();
+  }
+
+  function removeFile(idx) {
+    selectedFiles.splice(idx, 1);
+    renderFileList();
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('fileList');
+    document.getElementById('uploadBtn').disabled = selectedFiles.length === 0;
+
+    if (selectedFiles.length === 0) { list.innerHTML = ''; return; }
+
+    list.innerHTML = selectedFiles.map((f, i) => `
+      <div class="file-item">
+        <span class="file-icon">${getFileIcon(f.name)}</span>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-size">${formatSize(f.size)}</div>
+        </div>
+        <button class="file-remove" onclick="removeFile(${i})" title="제거">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function getFileIcon(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    const icons = { pdf: '📄', txt: '📝', docx: '📘', doc: '📘', md: '📑', csv: '📊', xlsx: '📊', xls: '📊', pptx: '📙', ppt: '📙', hwp: '📃' };
+    return icons[ext] || '📄';
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  // ── 업로드 ────────────────────────────────────────
+  let isUploading = false;
+
+  async function startUpload() {
+    if (isUploading || selectedFiles.length === 0) return;
+    isUploading = true;
+
+    const catRaw = document.getElementById('categorySelect').value.split('|');
+    const tableName = catRaw[0];
+    const projectId = catRaw[1];
+    const defaultProjectName = catRaw[2];
+    const projectName = document.getElementById('projectNameInput').value.trim() || defaultProjectName;
+
+    const files = [...selectedFiles];
+    selectedFiles = [];
+    renderFileList();
+
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('resultLog').innerHTML = '';
+
+    // 요약 초기화
+    const summary = document.getElementById('summary');
+    summary.style.display = 'block';
+    let successCount = 0, errorCount = 0;
+    updateSummary(files.length, 0, 0);
+
+    // 각 파일 로그 항목 생성
+    const logItems = files.map((f, i) => {
+      const el = document.createElement('div');
+      el.className = 'log-item pending';
+      el.id = `log-${i}`;
+      el.innerHTML = `<span class="log-icon">⏳</span><div class="log-content"><div class="log-name">${f.name}</div><div class="log-detail">대기 중...</div></div>`;
+      document.getElementById('resultLog').appendChild(el);
+      return el;
+    });
+
+    // 순차 업로드
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const logEl = logItems[i];
+
+      // 업로드 중 상태
+      logEl.className = 'log-item uploading';
+      logEl.innerHTML = `<div class="spinner"></div><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 중...</div></div>`;
+
+      try {
+        const base64 = await fileToBase64(file);
+        const uploadId = `upload_${Date.now()}_${i}`;
+
+        const res = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileContent: base64,
+            filename: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            uploadId,
+            timestamp: new Date().toISOString(),
+            tableName,
+            projectId,
+            projectName
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          successCount++;
+          logEl.className = 'log-item success';
+          logEl.innerHTML = `<span class="log-icon">✅</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 완료 · ${formatSize(data.fileSize || file.size)} · 테이블: ${data.tableName || tableName}</div></div>`;
+        } else {
+          throw new Error(data.message || `HTTP ${res.status}`);
+        }
+      } catch (err) {
+        errorCount++;
+        logEl.className = 'log-item error';
+        logEl.innerHTML = `<span class="log-icon">❌</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">실패: ${err.message}</div></div>`;
+      }
+
+      updateSummary(files.length, successCount, errorCount);
+    }
+
+    isUploading = false;
+    document.getElementById('uploadBtn').disabled = false;
+  }
+
+  function updateSummary(total, success, error) {
+    document.getElementById('sumTotal').textContent = total;
+    document.getElementById('sumSuccess').textContent = success;
+    document.getElementById('sumError').textContent = error;
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+</script>
+</body>
+</html>
