@@ -14,6 +14,21 @@
 </head>
 
 <body>
+    <!-- March Event Banner -->
+    <div class="event-banner" id="eventBanner">
+        <div class="container event-banner-content">
+            <div class="event-icon">🎉</div>
+            <div class="event-text">
+                <strong>3월 특별 이벤트</strong>
+                <span>무료 상담 신청 시 <span class="highlight">문서 1개 자동화 무료 서비스</span> 제공!</span>
+            </div>
+            <div class="event-actions">
+                <a href="#contact" class="event-btn">지금 신청하기</a>
+                <button class="event-close" onclick="closeEventBanner()">×</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container nav-container">
@@ -540,6 +555,42 @@
         </div>
     </section>
 
+    <!-- Event Popup Modal -->
+    <div class="event-popup-overlay" id="eventPopup">
+        <div class="event-popup">
+            <button class="popup-close" onclick="closeEventPopup()">×</button>
+            <div class="popup-header">
+                <div class="popup-icon">🎁</div>
+                <h3>3월 특별 이벤트</h3>
+                <p class="popup-subtitle">지금 무료 상담 신청하시면</p>
+            </div>
+            <div class="popup-content">
+                <div class="popup-offer">
+                    <div class="offer-badge">무료</div>
+                    <h4>문서 1개 자동화 서비스</h4>
+                    <ul class="offer-list">
+                        <li>✅ 견적서, 계약서, 제안서 중 선택</li>
+                        <li>✅ 전문 AI가 10분 내 완성</li>
+                        <li>✅ 회사 양식에 맞춤 제작</li>
+                        <li>✅ PDF/Excel 파일로 제공</li>
+                    </ul>
+                </div>
+                <div class="popup-timer">
+                    <span class="timer-label">이벤트 종료까지</span>
+                    <div class="timer-display" id="eventTimer">
+                        <span id="days">00</span>일 
+                        <span id="hours">00</span>시간 
+                        <span id="minutes">00</span>분
+                    </div>
+                </div>
+            </div>
+            <div class="popup-actions">
+                <a href="#contact" class="popup-btn-primary" onclick="closeEventPopup()">무료 상담 신청하기</a>
+                <button class="popup-btn-secondary" onclick="closeEventPopup()">나중에 하기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <div class="container footer-content">
@@ -550,6 +601,76 @@
 
     <script>
         lucide.createIcons();
+        
+        // Event Banner Functions
+        function closeEventBanner() {
+            const banner = document.getElementById('eventBanner');
+            banner.style.transform = 'translateY(-100%)';
+            banner.style.opacity = '0';
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 300);
+            
+            // Save to localStorage
+            localStorage.setItem('eventBannerClosed', 'true');
+        }
+        
+        // Event Popup Functions
+        function showEventPopup() {
+            const popup = document.getElementById('eventPopup');
+            popup.classList.add('show');
+        }
+        
+        function closeEventPopup() {
+            const popup = document.getElementById('eventPopup');
+            popup.classList.remove('show');
+            
+            // Save to localStorage
+            localStorage.setItem('eventPopupClosed', 'true');
+        }
+        
+        // Event Timer
+        function updateEventTimer() {
+            const endDate = new Date('2024-03-31 23:59:59');
+            const now = new Date();
+            const diff = endDate - now;
+            
+            if (diff > 0) {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById('days').textContent = days.toString().padStart(2, '0');
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            } else {
+                document.getElementById('eventTimer').textContent = '이벤트 종료';
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if banner was closed
+            if (localStorage.getItem('eventBannerClosed') === 'true') {
+                document.getElementById('eventBanner').style.display = 'none';
+            }
+            
+            // Show popup after 3 seconds if not closed before
+            if (localStorage.getItem('eventPopupClosed') !== 'true') {
+                setTimeout(showEventPopup, 3000);
+            }
+            
+            // Update timer every minute
+            updateEventTimer();
+            setInterval(updateEventTimer, 60000);
+            
+            // Close popup when clicking overlay
+            document.getElementById('eventPopup').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEventPopup();
+                }
+            });
+        });
     </script>
 </body>
 
