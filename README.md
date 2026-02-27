@@ -11,11 +11,13 @@
 ```
 office-ai/
 ├── index.html                    # 메인 홈페이지 (단일 페이지)
+├── demo.html                     # KS AI 체험 데모 페이지
 ├── style.css                     # 반응형 스타일시트
 ├── business_plan.md              # 비즈니스 플랜 문서
 ├── create_ppt.py                 # PPT 생성 스크립트
 ├── Office_AI_Business_Plan.pptx  # 비즈니스 플랜 (v1)
 ├── Office_AI_Business_Plan_v2.pptx # 비즈니스 플랜 (v2)
+├── DEPLOY.md                     # 배포 가이드
 ├── .gitignore                    # Git 제외 목록
 └── README.md                     # 이 파일
 ```

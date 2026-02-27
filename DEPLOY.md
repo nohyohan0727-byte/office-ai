@@ -8,6 +8,7 @@
 | 2026-02-03 | Netlify 수동 배포로 office-ai.app 호스팅 시작 |
 | 2026-02-27 | GitHub 저장소 생성 및 코드 연결 |
 | 2026-02-27 | Netlify + GitHub 자동 배포 파이프라인 구성 완료 |
+| 2026-02-27 | **demo.html AI 응답 가독성 대폭 개선** - formatBotResponse 함수 추가, 줄바꿈/포맷팅/스타일링 적용 |
 
 ---
 
