@@ -695,7 +695,10 @@
               무료 등록하고 시작하기 →
             </a>
             <div style="font-size:12px;color:#64748b;">회원가입 없음 · 카드 불필요 · 즉시 사용 가능</div>
-            <div style="font-size:12px;color:#64748b;margin-top:8px;">문의: 제이케이네트웍스 대표 노진광 📞 010-3127-4528</div>
+            <div style="font-size:12px;color:#64748b;margin-top:8px;">
+                문의: 제이케이네트웍스 대표 노진광
+                <a href="tel:010-3127-4528" style="color:#60a5fa;text-decoration:none;font-weight:700;">📞 010-3127-4528</a>
+            </div>
           </div>`;
       }
       // 입력창 비활성화
@@ -914,6 +917,8 @@
 
     if (type === 'bot') {
       bubble.innerHTML = formatBotResponse(text);
+    } else if (type === 'error') {
+      bubble.innerHTML = text.replace(/\n/g, '<br>');
     } else {
       bubble.textContent = text;
     }
@@ -988,7 +993,7 @@
         if (res.status === 401 || res.status === 403) {
           const msg = data.message || '';
           if (msg.includes('No tokens remaining') || msg.includes('tokens')) {
-            addMessage(`사용 가능한 토큰이 모두 소진되었습니다.\n\n토큰 추가 구매 문의:\n📞 제이케이네트웍스 대표 노진광\n010-3127-4528`, 'error');
+            addMessage(`사용 가능한 토큰이 모두 소진되었습니다.\n\n토큰 추가 구매 문의:\n제이케이네트웍스 대표 노진광\n<a href="tel:010-3127-4528" style="color:#60a5fa;font-weight:700;">📞 010-3127-4528</a>`, 'error');
           } else if (msg.includes('expired')) {
             addMessage(`API 키가 만료되었습니다.\n새로운 키 발급은 관리자에게 문의해 주세요.`, 'error');
           } else if (msg.includes('inactive')) {
