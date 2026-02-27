@@ -281,6 +281,7 @@ h1, h2, h3 {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 2rem;
+    align-items: stretch;
 }
 
 .card {
@@ -435,18 +436,19 @@ h1, h2, h3 {
     padding: 2.5rem 2rem;
     display: flex;
     flex-direction: column;
-    min-height: 520px;
+    height: 100%;
     justify-content: space-between;
 }
 
 .service-card.featured {
     border-color: var(--primary);
     background: linear-gradient(180deg, rgba(59,130,246,0.05) 0%, var(--bg-card) 50%);
-    transform: scale(1.05);
+    transform: scale(1.02);
+    z-index: 2;
 }
 
 .service-card.featured:hover {
-    transform: scale(1.05) translateY(-5px);
+    transform: scale(1.02) translateY(-5px);
 }
 
 .recommand-badge {
@@ -477,6 +479,7 @@ h1, h2, h3 {
     margin-bottom: 2rem;
     padding-bottom: 2rem;
     border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
 }
 
 .service-header h3 {
@@ -496,6 +499,7 @@ h1, h2, h3 {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    min-height: 200px;
 }
 
 .service-features li {
@@ -512,6 +516,7 @@ h1, h2, h3 {
     margin-top: auto;
     align-self: stretch;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .service-features li i {
