@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>서류 자동화 무료 상담 | Office AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --bg2: #111827;
+      --bg3: #1e2535;
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --accent: #f59e0b;
+      --red: #ef4444;
+      --text: #f1f5f9;
+      --dim: #94a3b8;
+      --border: rgba(255,255,255,0.07);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    /* ── Layout ── */
+    .wrap { max-width: 720px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+      text-align: center;
+      padding: 0.65rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar span { opacity: 0.9; margin: 0 0.5rem; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 5rem 1.5rem 4rem;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,130,246,0.18) 0%, transparent 70%);
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #fca5a5;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      margin-bottom: 1.6rem;
+      letter-spacing: 0.05em;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 1rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-lead {
+      font-size: 1.15rem;
+      color: var(--dim);
+      max-width: 500px;
+      margin: 0 auto 0.8rem;
+    }
+    .hero-lead strong { color: var(--text); }
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--dim);
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── CTA Button ── */
+    .cta-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 1rem 2.4rem;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 0 30px rgba(59,130,246,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 44px rgba(59,130,246,0.55);
+    }
+    .cta-btn.red {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow: 0 0 30px rgba(239,68,68,0.35);
+    }
+    .cta-btn.red:hover { box-shadow: 0 0 44px rgba(239,68,68,0.5); }
+    .cta-wrap { text-align: center; padding: 1rem 0 0.5rem; }
+    .cta-sub {
+      font-size: 0.8rem;
+      color: var(--dim);
+      margin-top: 0.75rem;
+    }
+
+    /* ── Section base ── */
+    section { padding: 5rem 0; }
+    section + section { border-top: 1px solid var(--border); }
+    .sec-label {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+    .sec-title {
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 900;
+      line-height: 1.35;
+      margin-bottom: 1.2rem;
+    }
+    .sec-title em {
+      font-style: normal;
+      color: #ef4444;
+    }
+    .sec-desc {
+      color: var(--dim);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+
+    /* ── Pain checklist ── */
+    .pain-section { background: var(--bg2); }
+    .pain-list {
+      list-style: none;
+      margin: 2rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .pain-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-left: 3px solid #ef4444;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      font-size: 0.97rem;
+      font-weight: 500;
+    }
+    .pain-list li::before {
+      content: "✗";
+      color: #ef4444;
+      font-weight: 900;
+      font-size: 1rem;
+      flex-shrink: 0;
+      margin-top: 0.05rem;
+    }
+    .pain-conclusion {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fca5a5;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Why Now ── */
+    .why-section { background: var(--bg); }
+    .cost-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .cost-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem 1rem;
+      text-align: center;
+    }
+    .cost-icon { font-size: 2rem; margin-bottom: 0.6rem; }
+    .cost-card h4 { font-size: 0.9rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+    .cost-card p { font-size: 0.8rem; color: var(--dim); margin-top: 0.3rem; }
+    .cost-warning {
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fcd34d;
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Differentiators ── */
+    .diff-section { background: var(--bg2); }
+    .diff-badge {
+      display: inline-block;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.3rem 0.9rem;
+      border-radius: 50px;
+      margin-bottom: 1.6rem;
+    }
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .feature-list li::before {
+      content: "✔";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.6rem;
+      height: 1.6rem;
+      background: rgba(59,130,246,0.2);
+      border-radius: 50%;
+      color: #60a5fa;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .speed-compare {
+      display: flex;
+      gap: 1rem;
+      margin: 0.5rem 0 2.5rem;
+    }
+    .speed-item {
+      flex: 1;
+      background: var(--bg3);
+      border-radius: 12px;
+      padding: 1.2rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .speed-item .label { font-size: 0.78rem; color: var(--dim); margin-bottom: 0.4rem; }
+    .speed-item .val { font-size: 1.5rem; font-weight: 900; }
+    .speed-item.before .val { color: #ef4444; }
+    .speed-item.after .val { color: #34d399; }
+    .speed-arrow { display: flex; align-items: center; color: var(--dim); font-size: 1.5rem; }
+
+    /* ── Why Free ── */
+    .free-section { background: var(--bg); }
+    .trust-points {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .trust-point {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+    .trust-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .trust-point h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .trust-point p { font-size: 0.85rem; color: var(--dim); }
+
+    /* ── Urgency ── */
+    .urgency-section {
+      background: linear-gradient(135deg, #1a0a0a 0%, #1a0f0a 100%);
+      border-top: 1px solid rgba(239,68,68,0.2);
+      border-bottom: 1px solid rgba(239,68,68,0.2);
+    }
+    .urgency-box {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 14px;
+      padding: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .urgency-box h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #fca5a5;
+      margin-bottom: 1rem;
+    }
+    .quota-bar {
+      background: rgba(255,255,255,0.08);
+      border-radius: 50px;
+      height: 10px;
+      margin: 0.8rem 0;
+      overflow: hidden;
+    }
+    .quota-fill {
+      background: linear-gradient(90deg, #ef4444, #f97316);
+      height: 100%;
+      border-radius: 50px;
+      width: 70%;
+      animation: pulse-bar 2s ease-in-out infinite;
+    }
+    @keyframes pulse-bar {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .quota-text { font-size: 0.85rem; color: var(--dim); }
+    .quota-text strong { color: #fca5a5; }
+
+    /* ── Final CTA ── */
+    .final-section {
+      background: radial-gradient(ellipse 80% 60% at 50% 110%, rgba(59,130,246,0.2) 0%, transparent 70%);
+      padding: 6rem 1.5rem;
+      text-align: center;
+    }
+    .final-section h2 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+    .final-section h2 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .final-section p {
+      color: var(--dim);
+      font-size: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.8rem;
+      color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+
+    /* ── Divider ── */
+    .divider {
+      text-align: center;
+      color: var(--dim);
+      font-size: 1.5rem;
+      padding: 0.5rem 0;
+      opacity: 0.3;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .cost-cards { grid-template-columns: 1fr; }
+      .speed-compare { flex-direction: column; }
+      .speed-arrow { justify-content: center; transform: rotate(90deg); }
+      .hero h1 { font-size: 1.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 상단 긴박감 바 -->
+<div class="topbar">
+  🔥 &nbsp;이번 달 무료 진단 상담 &nbsp;<span>|</span>&nbsp; 마감 임박 — 지금 신청하세요
+</div>
+
+<!-- ① HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">🔥 무료 상담 전환 랜딩</div>
+    <h1>서류 때문에<br>아직도 <em>야근</em>하십니까?</h1>
+    <p class="hero-lead">대표님,<br>지금 회사에서 매달 <strong>낭비되는 시간</strong>을 알고 계십니까?</p>
+    <p class="hero-desc">
+      사업계획서, 견적서, 인증 서류…<br>
+      사람이 직접 붙잡고 있을 이유가 없습니다.
+    </p>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta-btn">👉 우리 회사 자동화 무료 진단받기</a>
+      <p class="cta-sub">10분이면 방향이 정해집니다 · 비용 없음 · 영업 강요 없음</p>
+    </div>
+  </div>
+</section>
+
+<!-- ② 해당 사항 체크리스트 -->
+<section class="pain-section">
+  <div class="wrap">
+    <span class="sec-label">Pain Check</span>
+    <h2 class="sec-title">이런 상황이라면<br><em>이미 늦었습니다</em></h2>
+    <ul class="pain-list">
+      <li>사업계획서 하나 쓰는데 며칠씩 걸린다</li>
+      <li>견적서 반복 입력이 너무 많다</li>
+      <li>KS / ISO 인증 서류 준비할 때마다 스트레스다</li>
+      <li>직원이 바뀌면 문서 체계가 흔들린다</li>
+      <li>대표가 직접 문서를 보고 수정한다</li>
+    </ul>
+    <div class="pain-conclusion">
+      하나라도 해당된다면<br>이미 <strong>자동화가 필요한 상태</strong>입니다.
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta-btn red">👉 무료 상담 신청하기</a>
+    </div>
+  </div>
+</section>
+
+<!-- ③ 왜 지금인가 -->
+<section class="why-section">
+  <div class="wrap">
+    <span class="sec-label">Why Now</span>
+    <h2 class="sec-title">서류 업무는<br>회사를 성장시키는 일이 아닙니다</h2>
+    <p class="sec-desc">
+      그런데도 <strong style="color:var(--text)">가장 많은 시간을 잡아먹고</strong> 있습니다.<br>
+      자동화하지 않으면 이 손실이 <strong style="color:#ef4444">매달 반복</strong>됩니다.
+    </p>
+    <div class="cost-cards">
+      <div class="cost-card">
+        <div class="cost-icon">💸</div>
+        <h4>인건비는<br>계속 오르고</h4>
+        <p>같은 업무에<br>더 많은 돈이 필요</p>
+      </div>
+      <div class="cost-card">
+        <div class="cost-icon">🔁</div>
+        <h4>실수는<br>반복되고</h4>
+        <p>사람이 하면<br>오류도 그대로</p>
+      </div>
+      <div class="cost-card">
+        <div class="cost-icon">⏳</div>
+        <h4>대표 시간은<br>계속 소모됩니다</h4>
+        <p>전략 대신<br>서류에 쓰이는 시간</p>
+      </div>
+    </div>
+    <div class="cost-warning">
+      ⚠️ 문제는, 이 손실이 <strong>매달 반복된다</strong>는 겁니다.
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta-btn">👉 10분 무료 상담 예약하기</a>
+    </div>
+  </div>
+</section>
+
+<!-- ④ Office-AI 차별점 -->
+<section class="diff-section">
+  <div class="wrap">
+    <div class="diff-badge">Office AI 차별점</div>
+    <h2 class="sec-title">단순 AI 툴이<br>아닙니다</h2>
+    <p class="sec-desc">
+      KS 심사 실무 경험을 기반으로<br>
+      현장에서 실제 사용하는 문서 구조를 자동화했습니다.
+    </p>
+    <ul class="feature-list">
+      <li>견적서 자동 생성 — 고객 정보 입력 후 3분 완성</li>
+      <li>사업계획서 초안 10분 완성 — 정부지원 양식 그대로</li>
+      <li>세금계산서 자동화 — 거래 내역 → 국세청 양식 즉시 발행</li>
+      <li>KS / ISO 인증 문서 대응 — 심사 규격 학습 완료</li>
+    </ul>
+    <div class="speed-compare">
+      <div class="speed-item before">
+        <div class="label">기존 방식</div>
+        <div class="val">며칠</div>
+        <div class="label" style="margin-top:0.3rem">사람이 직접</div>
+      </div>
+      <div class="speed-arrow">→</div>
+      <div class="speed-item after">
+        <div class="label">Office AI 비서</div>
+        <div class="val">10분</div>
+        <div class="label" style="margin-top:0.3rem">AI가 자동 완성</div>
+      </div>
+    </div>
+    <p style="text-align:center; font-size:1.05rem; font-weight:700; color:var(--text); margin-bottom:2.5rem;">
+      사람보다 빠르고, 사람보다 정확합니다.
+    </p>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta-btn">👉 무료 진단 신청하기</a>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ 왜 무료인가 -->
+<section class="free-section">
+  <div class="wrap">
+    <span class="sec-label">Why Free</span>
+    <h2 class="sec-title">왜 무료로<br>상담해드릴까요?</h2>
+    <p class="sec-desc">모든 기업이 자동화가 필요한 건 아닙니다.<br>도입 효과가 명확한 기업만 선별해서 진행합니다.</p>
+    <div class="trust-points">
+      <div class="trust-point">
+        <div class="trust-icon">🎯</div>
+        <div>
+          <h4>맞지 않으면 솔직하게 말씀드립니다</h4>
+          <p>불필요한 영업은 하지 않습니다. 도입 가능성이 없는 기업에게는 그 자리에서 정직하게 말씀드립니다.</p>
+        </div>
+      </div>
+      <div class="trust-point">
+        <div class="trust-icon">📋</div>
+        <div>
+          <h4>10분이면 방향이 정해집니다</h4>
+          <p>긴 PT 없습니다. 현재 업무 구조를 파악하고 자동화 가능 항목을 바로 짚어드립니다.</p>
+        </div>
+      </div>
+      <div class="trust-point">
+        <div class="trust-icon">🔒</div>
+        <div>
+          <h4>그래서 상담은 무료입니다</h4>
+          <p>효과가 없는 솔루션을 팔지 않습니다. 그게 더 오래 가는 신뢰라고 믿습니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ 긴박감 -->
+<section class="urgency-section">
+  <div class="wrap">
+    <span class="sec-label" style="color:#ef4444;">Urgency</span>
+    <h2 class="sec-title">한 달 상담 가능 기업은<br><em>제한되어 있습니다</em></h2>
+    <p class="sec-desc">
+      현재 상담 신청 기업이 늘어나고 있습니다.<br>
+      무제한으로 진행하지 않습니다.<br>
+      <strong style="color:var(--text)">오늘 신청하지 않으면 다음 달로 밀릴 수 있습니다.</strong>
+    </p>
+    <div class="urgency-box">
+      <h3>⏰ 이번 달 잔여 상담 슬롯</h3>
+      <div class="quota-bar"><div class="quota-fill"></div></div>
+      <p class="quota-text">전체 10건 중 <strong id="remainSlot">3건</strong> 남음 — 마감 임박</p>
+    </div>
+    <div class="cta-wrap">
+      <a href="#contact" class="cta-btn red">👉 우리 회사 자동화 무료 상담 신청하기 🚀</a>
+      <p class="cta-sub">비용 없음 · 부담 없음 · 10분이면 충분합니다</p>
+    </div>
+  </div>
+</section>
+
+<!-- ⑦ 최종 클로징 -->
+<section class="final-section" id="final">
+  <div class="wrap">
+    <h2>내일도 또<br>서류 때문에 시간을 쓰실 건가요?<br><em>10분이면 방향이 정해집니다.</em></h2>
+    <p>지금 무료로 진단받으십시오.</p>
+    <a href="#contact" class="cta-btn">🚀 우리 회사 자동화 무료 상담 신청하기</a>
+    <p class="cta-sub" style="margin-top:1rem;">비용 없음 · 강요 없음 · 10분 완료</p>
+  </div>
+</section>
+
+<!-- ⑧ 상담 신청 폼 -->
+<section id="contact" style="background:var(--bg2); padding:5rem 1.5rem;">
+  <div class="wrap">
+    <span class="sec-label">Free Consultation</span>
+    <h2 class="sec-title" style="margin-bottom:0.5rem;">자동화 무료 진단 신청</h2>
+    <p class="sec-desc">간단한 정보만 남겨주시면 담당자가 24시간 내 연락드립니다.</p>
+    <form name="office-ai-landing" method="POST" data-netlify="true"
+      style="display:flex;flex-direction:column;gap:1rem;">
+      <input type="hidden" name="form-name" value="office-ai-landing">
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <label style="font-size:0.85rem;font-weight:600;color:var(--dim);">회사명 *</label>
+        <input type="text" name="company" placeholder="예: (주)대한산업" required
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;color:var(--text);font-size:0.95rem;outline:none;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <label style="font-size:0.85rem;font-weight:600;color:var(--dim);">담당자 성함 *</label>
+        <input type="text" name="name" placeholder="홍길동" required
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;color:var(--text);font-size:0.95rem;outline:none;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <label style="font-size:0.85rem;font-weight:600;color:var(--dim);">연락처 *</label>
+        <input type="tel" name="phone" placeholder="010-0000-0000" required
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;color:var(--text);font-size:0.95rem;outline:none;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <label style="font-size:0.85rem;font-weight:600;color:var(--dim);">가장 시간이 많이 걸리는 업무</label>
+        <select name="pain" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;color:var(--text);font-size:0.95rem;outline:none;">
+          <option value="business-plan">사업계획서 / 정부지원 서류</option>
+          <option value="estimate">견적서 / 세금계산서</option>
+          <option value="certification">KS / ISO 인증 서류</option>
+          <option value="contract">계약서 / 내부 문서</option>
+          <option value="etc">기타 반복 업무</option>
+        </select>
+      </div>
+      <button type="submit"
+        style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;font-size:1.05rem;font-weight:800;padding:1rem;border-radius:50px;border:none;cursor:pointer;box-shadow:0 0 28px rgba(59,130,246,0.35);transition:transform 0.2s;">
+        🚀 무료 진단 신청하기
+      </button>
+      <p style="text-align:center;font-size:0.8rem;color:var(--dim);">비용 없음 · 영업 강요 없음 · 24시간 내 연락</p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Office AI · <a href="index.html">홈으로</a> · 제이케이네트웍스 대표 노진광 · 010-3127-4528</p>
+</footer>
+
+<script>
+  // 잔여 슬롯 동적 표시
+  const startDate = new Date('2026-02-01').getTime();
+  const elapsed = Date.now() - startDate;
+  const consumed = Math.min(7, Math.floor(elapsed / (1000 * 60 * 60 * 24 * 4)));
+  const remain = Math.max(1, 10 - consumed);
+  const el = document.getElementById('remainSlot');
+  if (el) el.textContent = remain + '건';
+
+  // 폼 input focus 스타일
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('focus', () => el.style.borderColor = '#3b82f6');
+    el.addEventListener('blur', () => el.style.borderColor = 'rgba(255,255,255,0.07)');
+  });
+</script>
+</body>
+</html>
