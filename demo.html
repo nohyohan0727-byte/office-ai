@@ -291,6 +291,9 @@
       color: var(--text-white);
       border-bottom-left-radius: 4px;
       border: 1px solid var(--border);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     .message.error .bubble {
@@ -298,6 +301,88 @@
       color: #f87171;
       border: 1px solid rgba(239, 68, 68, 0.2);
     }
+
+    /* ── Formatted bot response ── */
+    .resp-section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin: 1rem 0 0.5rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid rgba(59,130,246,0.2);
+    }
+    .resp-section-header:first-child { margin-top: 0; }
+
+    .resp-dot {
+      color: var(--primary);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .resp-para {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.75;
+      margin: 0.6rem 0;
+      text-align: justify;
+    }
+    
+    /* Bot response 추가 스타일 */
+    .message.bot .bubble strong {
+      color: var(--text-white);
+      font-weight: 600;
+    }
+    
+    .message.bot .bubble br {
+      line-height: 1.8;
+    }
+    
+    /* 목록 항목 간격 개선 */
+    .message.bot .bubble div:not(:last-child) {
+      margin-bottom: 0.4rem;
+    }
+
+    .resp-list {
+      list-style: none;
+      margin: 0.3rem 0 0.3rem 0.2rem;
+    }
+
+    .resp-list li {
+      position: relative;
+      padding: 0.2rem 0 0.2rem 1.1rem;
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    .resp-list li::before {
+      content: '–';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .resp-refs {
+      margin-top: 0.9rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .bubble a {
+      color: #60a5fa;
+      word-break: break-all;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .bubble a:hover { color: var(--primary); }
 
     .msg-meta {
       font-size: 11px;
@@ -511,6 +596,45 @@
     return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  function formatBotResponse(text) {
+    // HTML 이스케이프 처리
+    const escapeHtml = (str) => {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    };
+    
+    let formatted = escapeHtml(text);
+    
+    // 줄바꿈 처리
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    // 번호 목록 처리 (1. 2. 3. 등)
+    formatted = formatted.replace(/^(\d+\.\s)/gm, '<strong>$1</strong>');
+    
+    // 불릿 포인트 처리 (- 또는 • 시작)
+    formatted = formatted.replace(/^[-•]\s/gm, '<span style="color: var(--primary); font-weight: bold;">• </span>');
+    
+    // 강조 텍스트 처리 (**텍스트** 또는 __텍스트__)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text-white);">$1</strong>');
+    formatted = formatted.replace(/__(.*?)__/g, '<strong style="color: var(--text-white);">$1</strong>');
+    
+    // 제목 처리 (### 제목)
+    formatted = formatted.replace(/^###\s(.+)$/gm, '<div class="resp-section-header"><span class="resp-dot">●</span>$1</div>');
+    formatted = formatted.replace(/^##\s(.+)$/gm, '<div class="resp-section-header"><span class="resp-dot">●</span>$1</div>');
+    
+    // URL 링크 처리
+    formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
+    
+    // 단락 구분 (빈 줄로 구분된 텍스트를 단락으로 처리)
+    const paragraphs = formatted.split('<br><br>');
+    if (paragraphs.length > 1) {
+      formatted = paragraphs.map(p => p.trim() ? `<div class="resp-para">${p}</div>` : '').join('');
+    }
+    
+    return formatted;
+  }
+
   function removeWelcome() {
     const w = document.getElementById('welcomeCard');
     if (w) w.remove();
@@ -528,7 +652,13 @@
 
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
-    bubble.textContent = text;
+    
+    // AI 응답의 가독성을 위해 포맷팅 적용
+    if (type === 'bot') {
+      bubble.innerHTML = formatBotResponse(text);
+    } else {
+      bubble.textContent = text;
+    }
 
     const meta = document.createElement('div');
     meta.className = 'msg-meta';
