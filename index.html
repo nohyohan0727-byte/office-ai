@@ -19,7 +19,7 @@
         <div class="container event-banner-content">
             <div class="event-icon">🎉</div>
             <div class="event-text">
-                <strong>3월 특별 이벤트</strong>
+                <strong>3월 특별 이벤트 - 선착순 10분 한정</strong>
                 <span>무료 상담 신청 시 <span class="highlight">문서 1개 자동화 무료 서비스</span> 제공!</span>
             </div>
             <div class="event-actions">
@@ -562,6 +562,7 @@
             <div class="popup-header">
                 <div class="popup-icon">🎁</div>
                 <h3>3월 특별 이벤트</h3>
+                <div class="limited-badge">선착순 10분 한정</div>
                 <p class="popup-subtitle">지금 무료 상담 신청하시면</p>
             </div>
             <div class="popup-content">
@@ -576,12 +577,12 @@
                     </ul>
                 </div>
                 <div class="popup-timer">
-                    <span class="timer-label">이벤트 종료까지</span>
-                    <div class="timer-display" id="eventTimer">
-                        <span id="days">00</span>일 
-                        <span id="hours">00</span>시간 
-                        <span id="minutes">00</span>분
+                    <span class="timer-label">남은 혜택 수량</span>
+                    <div class="quota-display">
+                        <span class="quota-number" id="remainingQuota">7</span>
+                        <span class="quota-text">/ 10명</span>
                     </div>
+                    <div class="urgency-text">⚡ 마감 임박! 지금 신청하세요</div>
                 </div>
             </div>
             <div class="popup-actions">
@@ -629,22 +630,27 @@
             localStorage.setItem('eventPopupClosed', 'true');
         }
         
-        // Event Timer
-        function updateEventTimer() {
-            const endDate = new Date('2024-03-31 23:59:59');
-            const now = new Date();
-            const diff = endDate - now;
-            
-            if (diff > 0) {
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        // Event Quota Counter
+        function updateQuotaCounter() {
+            const quotaElement = document.getElementById('remainingQuota');
+            if (quotaElement) {
+                // 시뮬레이션: 시간에 따라 남은 수량 감소
+                const startTime = new Date('2024-03-01').getTime();
+                const now = new Date().getTime();
+                const elapsed = now - startTime;
                 
-                document.getElementById('days').textContent = days.toString().padStart(2, '0');
-                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-            } else {
-                document.getElementById('eventTimer').textContent = '이벤트 종료';
+                // 하루에 약 0.5명씩 감소하도록 시뮬레이션
+                const consumed = Math.min(3, Math.floor(elapsed / (1000 * 60 * 60 * 24 * 2)));
+                const remaining = Math.max(1, 10 - consumed);
+                
+                quotaElement.textContent = remaining;
+                
+                // 남은 수량이 적을수록 더 긴급하게 표시
+                if (remaining <= 3) {
+                    quotaElement.style.animation = 'glow-red 1s infinite alternate';
+                } else if (remaining <= 5) {
+                    quotaElement.style.animation = 'glow-red 2s infinite alternate';
+                }
             }
         }
         
@@ -660,9 +666,9 @@
                 setTimeout(showEventPopup, 3000);
             }
             
-            // Update timer every minute
-            updateEventTimer();
-            setInterval(updateEventTimer, 60000);
+            // Update quota counter
+            updateQuotaCounter();
+            setInterval(updateQuotaCounter, 60000); // Update every minute
             
             // Close popup when clicking overlay
             document.getElementById('eventPopup').addEventListener('click', function(e) {

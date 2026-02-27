@@ -240,6 +240,30 @@ body {
     font-size: 1rem;
 }
 
+.limited-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0.5rem 0 1rem;
+    animation: pulse-red 2s infinite;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(239, 68, 68, 0.5);
+    }
+}
+
 .popup-content {
     margin-bottom: 2rem;
 }
@@ -309,6 +333,50 @@ body {
     font-weight: 700;
     color: var(--primary);
     font-family: 'Courier New', monospace;
+}
+
+.quota-display {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 1rem 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quota-number {
+    color: #ef4444;
+    font-size: 3rem;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    animation: glow-red 2s infinite alternate;
+}
+
+@keyframes glow-red {
+    from {
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    }
+    to {
+        text-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+    }
+}
+
+.quota-text {
+    color: var(--text-dim);
+    font-size: 1.5rem;
+}
+
+.urgency-text {
+    color: #f59e0b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.6; }
 }
 
 .popup-actions {
