@@ -27,8 +27,19 @@
       color: var(--text-white);
       height: 100vh;
       display: flex;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .chat-wrapper {
+      width: 100%;
+      max-width: 960px;
+      height: 100vh;
+      display: flex;
       flex-direction: column;
       overflow: hidden;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
     }
 
     /* Header */
@@ -632,6 +643,7 @@
   </style>
 </head>
 <body>
+<div class="chat-wrapper">
 
   <!-- Header -->
   <header class="demo-header">
@@ -1189,12 +1201,18 @@
       }
     } catch (err) {
       removeTyping();
-      addMessage(`연결 오류가 발생했습니다.\n네트워크 상태를 확인하거나 잠시 후 다시 시도해 주세요.`, 'error');
+      console.error('[RAG Chat Error]', err);
+      const isNetworkErr = err instanceof TypeError && err.message.includes('fetch');
+      const msg = isNetworkErr
+        ? `연결 오류가 발생했습니다.\n네트워크 상태를 확인하거나 잠시 후 다시 시도해 주세요.`
+        : `오류가 발생했습니다.\n잠시 후 다시 시도해 주세요. (${err.message})`;
+      addMessage(msg, 'error');
     }
 
     sendBtn.disabled = false;
     inputEl.focus();
   }
 </script>
+</div><!-- /.chat-wrapper -->
 </body>
 </html>
