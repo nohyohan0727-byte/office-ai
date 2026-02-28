@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustRAG Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #0f172a;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59,130,246,0.3);
+      --accent: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-white: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', -apple-system, system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: rgba(15,23,42,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .back-btn {
+      display: flex; align-items: center; gap: 0.4rem;
+      color: var(--text-dim); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px; border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .back-btn:hover { color: var(--text-white); border-color: rgba(255,255,255,0.2); }
+    .header-title { font-size: 1rem; font-weight: 700; }
+    .header-title span { color: var(--primary); }
+    .badge {
+      padding: 0.2rem 0.6rem; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .badge-admin { background: rgba(139,92,246,0.2); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+    .badge-super { background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* Layout */
+    .main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; width: 100%; }
+
+    /* API Key Bar */
+    .api-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex; gap: 1rem; align-items: flex-end;
+      margin-bottom: 2rem;
+    }
+    .api-bar .field { flex: 1; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    input, select, textarea {
+      width: 100%; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-white); font-family: inherit;
+      padding: 0.6rem 0.9rem; font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+    select option { background: #1e293b; }
+
+    /* Buttons */
+    .btn {
+      padding: 0.65rem 1.4rem; border-radius: 8px;
+      border: none; cursor: pointer; font-family: inherit;
+      font-size: 0.9rem; font-weight: 600;
+      transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 0.5rem; white-space: nowrap;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #2563eb; box-shadow: 0 0 16px var(--primary-glow); }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-secondary:hover { color: var(--text-white); background: rgba(255,255,255,0.1); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.82rem; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Grid */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .card-icon { font-size: 1.1rem; }
+    .card-title { font-size: 0.95rem; font-weight: 700; }
+    .card-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.9rem; }
+    .row { display: flex; gap: 0.75rem; }
+    .row .field { flex: 1; }
+
+    /* User info strip */
+    .user-strip {
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 10px;
+      padding: 0.9rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .user-strip-item { font-size: 0.85rem; color: var(--text-dim); }
+    .user-strip-item strong { color: var(--text-white); margin-left: 0.3rem; }
+    .user-strip-item .role-badge {
+      display: inline-block; padding: 0.15rem 0.6rem;
+      border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+      background: rgba(139,92,246,0.2); color: #a78bfa;
+      margin-left: 0.3rem;
+    }
+
+    /* Result */
+    .result-box {
+      background: #0a0f1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #94a3b8;
+      max-height: 320px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .result-box.success { border-color: rgba(16,185,129,0.3); color: #6ee7b7; }
+    .result-box.error { border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+
+    /* Section title */
+    .section-title {
+      font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .section-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* Users table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    th { background: rgba(255,255,255,0.04); color: var(--text-dim); font-weight: 600; text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+    td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tr:last-child td { border-bottom: none; }
+    .role-pill {
+      display: inline-block; padding: 0.15rem 0.6rem;
+      border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+    }
+    .role-super_admin { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .role-company_admin { background: rgba(139,92,246,0.2); color: #a78bfa; }
+    .role-group_admin { background: rgba(59,130,246,0.2); color: #93c5fd; }
+    .role-user { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .spinner.show { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.75rem 1.25rem;
+      font-size: 0.875rem; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 999; transform: translateY(80px); opacity: 0;
+      transition: all 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(16,185,129,0.5); color: #6ee7b7; }
+    .toast.error { border-color: rgba(239,68,68,0.5); color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <a href="/trustrag/chat.html" class="back-btn">💬 Chat</a>
+      <a href="/trustrag/upload.html" class="back-btn">📤 Upload</a>
+      <span class="header-title">Trust<span>RAG</span> <span style="color:var(--text-dim)">Admin</span></span>
+    </div>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <span class="badge badge-admin" id="role-badge" style="display:none">—</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- API Key Bar -->
+    <div class="api-bar">
+      <div class="field">
+        <label>Admin API Key</label>
+        <input type="password" id="api-key" placeholder="trust_super_..." autocomplete="off">
+      </div>
+      <button class="btn btn-primary" onclick="validateKey()">
+        <span class="spinner" id="auth-spinner"></span>
+        🔐 인증
+      </button>
+    </div>
+
+    <!-- User Info Strip (hidden until authenticated) -->
+    <div class="user-strip" id="user-strip" style="display:none">
+      <div class="user-strip-item">👤 <strong id="u-name">—</strong></div>
+      <div class="user-strip-item">🏢 <strong id="u-company">—</strong></div>
+      <div class="user-strip-item">🎭 역할 <span class="role-badge" id="u-role">—</span></div>
+      <div class="user-strip-item">🪙 토큰 <strong id="u-tokens">—</strong></div>
+      <div style="margin-left:auto">
+        <button class="btn btn-secondary btn-sm" onclick="loadUsers()">👥 유저 목록 새로고침</button>
+      </div>
+    </div>
+
+    <div id="admin-panel" style="display:none">
+      <div class="grid">
+        <!-- Create User -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">👤</span>
+            <span class="card-title">유저 생성</span>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>이메일</label>
+              <input type="email" id="new-email" placeholder="user@company.com">
+            </div>
+            <div class="field">
+              <label>이름</label>
+              <input type="text" id="new-name" placeholder="홍길동">
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>역할</label>
+                <select id="new-role">
+                  <option value="user">user</option>
+                  <option value="group_admin">group_admin</option>
+                  <option value="company_admin">company_admin</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>토큰</label>
+                <input type="number" id="new-tokens" value="1000" min="0">
+              </div>
+            </div>
+            <button class="btn btn-success" onclick="createUser()" style="width:100%">
+              <span class="spinner" id="cu-spinner"></span>
+              ✅ 유저 생성
+            </button>
+            <div class="result-box" id="cu-result" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Create Category -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">📂</span>
+            <span class="card-title">카테고리 생성</span>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>카테고리 이름</label>
+              <input type="text" id="cat-name" placeholder="KS인증">
+            </div>
+            <div class="field">
+              <label>테이블명 (영문, 소문자, _만 허용)</label>
+              <input type="text" id="cat-table" placeholder="tr_jknetworks_ks_cert">
+            </div>
+            <div class="field">
+              <label>설명 (선택)</label>
+              <input type="text" id="cat-desc" placeholder="KS인증 관련 문서">
+            </div>
+            <button class="btn btn-success" onclick="createCategory()" style="width:100%">
+              <span class="spinner" id="cc-spinner"></span>
+              ✅ 카테고리 + 벡터 테이블 생성
+            </button>
+            <div class="result-box" id="cc-result" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Grant Permission -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">🔑</span>
+            <span class="card-title">카테고리 권한 부여</span>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>User ID</label>
+              <input type="text" id="perm-user" placeholder="유저 UUID">
+            </div>
+            <div class="field">
+              <label>Category ID</label>
+              <input type="text" id="perm-cat" placeholder="카테고리 UUID">
+            </div>
+            <div class="row">
+              <div class="field" style="display:flex;align-items:center;gap:0.5rem;padding-top:1.4rem">
+                <input type="checkbox" id="perm-upload" style="width:auto">
+                <label style="margin:0;text-transform:none;letter-spacing:0">업로드 권한</label>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="grantPermission()" style="width:100%">
+              <span class="spinner" id="gp-spinner"></span>
+              🔑 권한 부여
+            </button>
+            <div class="result-box" id="gp-result" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Audit Logs -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">📋</span>
+            <span class="card-title">감사 로그</span>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label>조회 건수</label>
+              <input type="number" id="audit-limit" value="20" min="1" max="100">
+            </div>
+            <button class="btn btn-secondary" onclick="getAuditLogs()" style="width:100%">
+              <span class="spinner" id="al-spinner"></span>
+              📋 로그 조회
+            </button>
+            <div class="result-box" id="al-result" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div style="margin-top:2rem">
+        <div class="section-title">👥 유저 목록</div>
+        <div class="card">
+          <div class="table-wrap" id="users-table">
+            <div style="padding:2rem;text-align:center;color:var(--text-dim)">인증 후 자동 로드됩니다</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const N8N = 'https://jknetworks.app.n8n.cloud/webhook';
+    let authData = null;
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => t.className = 'toast', 2800);
+    }
+
+    async function callAdmin(action, data) {
+      const apiKey = document.getElementById('api-key').value.trim();
+      if (!apiKey) { showToast('API 키를 입력하세요', 'error'); return null; }
+      const res = await fetch(`${N8N}/trustrag/admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: apiKey, action, data })
+      });
+      return res.json();
+    }
+
+    function setResult(id, data, isError = false) {
+      const el = document.getElementById(id);
+      el.style.display = 'block';
+      el.className = `result-box ${isError ? 'error' : 'success'}`;
+      el.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function spin(id, on) {
+      document.getElementById(id).className = `spinner ${on ? 'show' : ''}`;
+    }
+
+    async function validateKey() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      if (!apiKey) { showToast('API 키를 입력하세요', 'error'); return; }
+      spin('auth-spinner', true);
+      try {
+        const res = await fetch(`${N8N}/trustrag/validate-key`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: apiKey })
+        });
+        const data = await res.json();
+        spin('auth-spinner', false);
+
+        if (!data.success) {
+          showToast(data.message || '인증 실패', 'error'); return;
+        }
+
+        authData = data;
+        document.getElementById('u-name').textContent = data.name || '—';
+        document.getElementById('u-company').textContent = data.company_id?.substring(0,8) + '...' || '—';
+        document.getElementById('u-role').textContent = data.role;
+        document.getElementById('u-tokens').textContent = data.tokens_remaining;
+
+        const badge = document.getElementById('role-badge');
+        badge.textContent = data.role;
+        badge.style.display = 'inline-block';
+        badge.className = `badge badge-${data.role === 'super_admin' ? 'super' : 'admin'}`;
+
+        document.getElementById('user-strip').style.display = 'flex';
+        document.getElementById('admin-panel').style.display = 'block';
+
+        showToast(`✅ 인증 성공 — ${data.name}`);
+        loadUsers();
+      } catch (e) {
+        spin('auth-spinner', false);
+        showToast('연결 오류: ' + e.message, 'error');
+      }
+    }
+
+    async function createUser() {
+      spin('cu-spinner', true);
+      try {
+        const data = await callAdmin('create_user', {
+          email: document.getElementById('new-email').value.trim(),
+          name: document.getElementById('new-name').value.trim(),
+          role: document.getElementById('new-role').value,
+          tokens_remaining: parseInt(document.getElementById('new-tokens').value) || 1000
+        });
+        spin('cu-spinner', false);
+        const ok = data && data.success;
+        setResult('cu-result', data, !ok);
+        if (ok) { showToast('✅ 유저 생성 완료'); loadUsers(); }
+        else showToast(data?.message || '생성 실패', 'error');
+      } catch (e) {
+        spin('cu-spinner', false);
+        setResult('cu-result', { error: e.message }, true);
+      }
+    }
+
+    async function createCategory() {
+      spin('cc-spinner', true);
+      try {
+        const data = await callAdmin('create_category', {
+          name: document.getElementById('cat-name').value.trim(),
+          table_name: document.getElementById('cat-table').value.trim(),
+          description: document.getElementById('cat-desc').value.trim()
+        });
+        spin('cc-spinner', false);
+        const ok = data && data.success;
+        setResult('cc-result', data, !ok);
+        if (ok) showToast('✅ 카테고리 + 벡터 테이블 생성 완료');
+        else showToast(data?.message || '생성 실패', 'error');
+      } catch (e) {
+        spin('cc-spinner', false);
+        setResult('cc-result', { error: e.message }, true);
+      }
+    }
+
+    async function grantPermission() {
+      spin('gp-spinner', true);
+      try {
+        const data = await callAdmin('grant_permission', {
+          user_id: document.getElementById('perm-user').value.trim(),
+          category_id: document.getElementById('perm-cat').value.trim(),
+          can_upload: document.getElementById('perm-upload').checked
+        });
+        spin('gp-spinner', false);
+        const ok = data && data.success;
+        setResult('gp-result', data, !ok);
+        if (ok) showToast('✅ 권한 부여 완료');
+        else showToast(data?.message || '권한 부여 실패', 'error');
+      } catch (e) {
+        spin('gp-spinner', false);
+        setResult('gp-result', { error: e.message }, true);
+      }
+    }
+
+    async function getAuditLogs() {
+      spin('al-spinner', true);
+      try {
+        const data = await callAdmin('get_audit_logs', {
+          limit: parseInt(document.getElementById('audit-limit').value) || 20
+        });
+        spin('al-spinner', false);
+        const ok = data && data.success;
+        setResult('al-result', data?.result || data, !ok);
+        if (!ok) showToast(data?.message || '조회 실패', 'error');
+      } catch (e) {
+        spin('al-spinner', false);
+        setResult('al-result', { error: e.message }, true);
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const data = await callAdmin('list_users', {});
+        const users = Array.isArray(data?.result) ? data.result : [];
+        const tbody = users.map(u => `
+          <tr>
+            <td style="font-family:monospace;font-size:0.75rem">${u.id?.substring(0,8)}...</td>
+            <td>${u.email || '—'}</td>
+            <td>${u.name || '—'}</td>
+            <td><span class="role-pill role-${u.role}">${u.role}</span></td>
+            <td>${u.tokens_remaining ?? '—'}</td>
+            <td>${u.is_active ? '✅' : '❌'}</td>
+            <td style="font-size:0.75rem;color:var(--text-dim)">${u.created_at?.substring(0,10) || '—'}</td>
+          </tr>`).join('');
+
+        document.getElementById('users-table').innerHTML = users.length ? `
+          <table>
+            <thead><tr>
+              <th>ID</th><th>이메일</th><th>이름</th><th>역할</th>
+              <th>토큰</th><th>활성</th><th>생성일</th>
+            </tr></thead>
+            <tbody>${tbody}</tbody>
+          </table>` :
+          `<div style="padding:2rem;text-align:center;color:var(--text-dim)">유저가 없습니다</div>`;
+      } catch (e) {
+        document.getElementById('users-table').innerHTML =
+          `<div style="padding:1.5rem;color:var(--danger)">로드 실패: ${e.message}</div>`;
+      }
+    }
+
+    // Enter key
+    document.getElementById('api-key').addEventListener('keydown', e => {
+      if (e.key === 'Enter') validateKey();
+    });
+  </script>
+</body>
+</html>

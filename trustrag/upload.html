@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrustRAG Upload</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #0f172a;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59,130,246,0.3);
+      --accent: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-white: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', -apple-system, system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: rgba(15,23,42,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 0.4rem;
+      color: var(--text-dim); text-decoration: none;
+      font-size: 0.875rem; font-weight: 500;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px; border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { color: var(--text-white); border-color: rgba(255,255,255,0.2); }
+    .header-title { font-size: 1rem; font-weight: 700; }
+    .header-title span { color: var(--primary); }
+
+    .main { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; width: 100%; }
+
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    input, select {
+      width: 100%; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text-white); font-family: inherit;
+      padding: 0.6rem 0.9rem; font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+
+    .btn {
+      padding: 0.65rem 1.4rem; border-radius: 8px;
+      border: none; cursor: pointer; font-family: inherit;
+      font-size: 0.9rem; font-weight: 600;
+      transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 0.5rem;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: #2563eb; box-shadow: 0 0 16px var(--primary-glow); }
+    .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
+    .btn-secondary:hover { color: var(--text-white); background: rgba(255,255,255,0.1); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .card-title { font-size: 0.95rem; font-weight: 700; }
+    .card-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+    /* Drop Zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--primary);
+      background: rgba(59,130,246,0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+    }
+    .drop-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .drop-text { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .drop-sub { font-size: 0.85rem; color: var(--text-dim); }
+
+    /* File List */
+    .file-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .file-item {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .file-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 0.875rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-size { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.1rem; }
+    .file-status { font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
+    .file-status.pending { color: var(--text-dim); }
+    .file-status.uploading { color: var(--warning); }
+    .file-status.done { color: var(--success); }
+    .file-status.error { color: var(--danger); }
+
+    .progress-bar {
+      height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 2px; overflow: hidden; margin-top: 0.4rem;
+    }
+    .progress-fill {
+      height: 100%; background: var(--primary);
+      border-radius: 2px; transition: width 0.3s;
+      width: 0%;
+    }
+    .progress-fill.done { background: var(--success); }
+
+    .result-box {
+      background: #0a0f1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #94a3b8;
+      max-height: 260px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .result-box.success { border-color: rgba(16,185,129,0.3); color: #6ee7b7; }
+    .result-box.error { border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+
+    .row { display: flex; gap: 0.75rem; }
+    .row .field { flex: 1; }
+
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.75rem 1.25rem;
+      font-size: 0.875rem; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 999; transform: translateY(80px); opacity: 0;
+      transition: all 0.3s;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(16,185,129,0.5); color: #6ee7b7; }
+    .toast.error { border-color: rgba(239,68,68,0.5); color: #fca5a5; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .spinner.show { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center; padding: 2rem;
+      color: var(--text-dim); font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <a href="/trustrag/chat.html" class="nav-btn">💬 Chat</a>
+      <a href="/trustrag/admin.html" class="nav-btn">⚙️ Admin</a>
+      <span class="header-title">Trust<span>RAG</span> <span style="color:var(--text-dim)">Upload</span></span>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Auth + Settings -->
+    <div class="card">
+      <div class="card-header">
+        <span>🔐</span>
+        <span class="card-title">인증 & 설정</span>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="field">
+            <label>API Key</label>
+            <input type="password" id="api-key" placeholder="trust_..." autocomplete="off">
+          </div>
+          <div class="field">
+            <label>카테고리 (table_name)</label>
+            <input type="text" id="category" placeholder="tr_jknetworks_ks_cert">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="card">
+      <div class="card-header">
+        <span>📤</span>
+        <span class="card-title">파일 선택</span>
+      </div>
+      <div class="card-body">
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" multiple
+            accept=".pdf,.docx,.doc,.xlsx,.xls,.hwp,.hwpx,.txt,.csv,.pptx,.ppt">
+          <div class="drop-icon">📁</div>
+          <div class="drop-text">파일을 드래그하거나 클릭하여 선택</div>
+          <div class="drop-sub">PDF, DOCX, XLSX, HWP, TXT, CSV 등 지원 · 파일당 최대 50MB</div>
+        </div>
+
+        <div id="file-list" class="file-list">
+          <div class="empty-state">선택된 파일이 없습니다</div>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+          <button class="btn btn-secondary" onclick="clearFiles()">🗑 초기화</button>
+          <button class="btn btn-primary" id="upload-btn" onclick="uploadAll()" disabled>
+            <span class="spinner" id="up-spinner"></span>
+            📤 전체 업로드
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="card" id="result-card" style="display:none">
+      <div class="card-header">
+        <span>📊</span>
+        <span class="card-title">업로드 결과</span>
+      </div>
+      <div class="card-body">
+        <div class="result-box" id="result-box"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const N8N = 'https://jknetworks.app.n8n.cloud/webhook';
+    let selectedFiles = [];
+    let isUploading = false;
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast ${type} show`;
+      setTimeout(() => t.className = 'toast', 2800);
+    }
+
+    function getFileIcon(filename) {
+      if (!filename) return '📄';
+      const ext = filename.split('.').pop().toLowerCase();
+      const icons = {
+        'xlsx': '📊', 'xls': '📊', 'csv': '📊',
+        'docx': '📝', 'doc': '📝',
+        'pdf': '📕',
+        'pptx': '📊', 'ppt': '📊',
+        'hwp': '📝', 'hwpx': '📝',
+        'txt': '📄',
+        'zip': '📦', 'rar': '📦',
+        'png': '🖼', 'jpg': '🖼', 'jpeg': '🖼'
+      };
+      return icons[ext] || '📄';
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderFileList() {
+      const container = document.getElementById('file-list');
+      const uploadBtn = document.getElementById('upload-btn');
+
+      if (selectedFiles.length === 0) {
+        container.innerHTML = '<div class="empty-state">선택된 파일이 없습니다</div>';
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      uploadBtn.disabled = false;
+      container.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-item" id="file-item-${i}">
+          <span class="file-icon">${getFileIcon(f.file.name)}</span>
+          <div class="file-info">
+            <div class="file-name">${f.file.name}</div>
+            <div class="file-size">${formatSize(f.file.size)}</div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-${i}" style="width:${f.progress}%"></div>
+            </div>
+          </div>
+          <span class="file-status ${f.status}" id="status-${i}">
+            ${f.status === 'pending' ? '⏳ 대기' :
+              f.status === 'uploading' ? '🔄 업로드 중' :
+              f.status === 'done' ? '✅ 완료' : '❌ 실패'}
+          </span>
+        </div>`).join('');
+    }
+
+    function onFilesSelected(files) {
+      const newFiles = Array.from(files).map(f => ({
+        file: f, status: 'pending', progress: 0, result: null
+      }));
+      selectedFiles = [...selectedFiles, ...newFiles];
+      renderFileList();
+    }
+
+    document.getElementById('file-input').addEventListener('change', e => {
+      onFilesSelected(e.target.files);
+      e.target.value = '';
+    });
+
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      onFilesSelected(e.dataTransfer.files);
+    });
+
+    function clearFiles() {
+      if (isUploading) return;
+      selectedFiles = [];
+      renderFileList();
+      document.getElementById('result-card').style.display = 'none';
+    }
+
+    async function uploadFile(index) {
+      const f = selectedFiles[index];
+      const apiKey = document.getElementById('api-key').value.trim();
+      const category = document.getElementById('category').value.trim();
+
+      if (!apiKey || !category) {
+        f.status = 'error';
+        return { success: false, error: 'API 키와 카테고리를 입력하세요' };
+      }
+
+      f.status = 'uploading';
+      f.progress = 30;
+      renderFileList();
+
+      try {
+        const reader = new FileReader();
+        const filedata = await new Promise((res, rej) => {
+          reader.onload = e => res(e.target.result.split(',')[1]);
+          reader.onerror = rej;
+          reader.readAsDataURL(f.file);
+        });
+
+        f.progress = 60;
+        renderFileList();
+
+        const resp = await fetch(`${N8N}/trustrag/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_key: apiKey,
+            category,
+            filename: f.file.name,
+            filedata,
+            filesize: f.file.size,
+            mimetype: f.file.type || 'application/octet-stream'
+          })
+        });
+
+        const data = await resp.json();
+        f.progress = 100;
+        f.status = data.success ? 'done' : 'error';
+        f.result = data;
+        renderFileList();
+        return data;
+      } catch (e) {
+        f.status = 'error';
+        f.result = { error: e.message };
+        renderFileList();
+        return { success: false, error: e.message };
+      }
+    }
+
+    async function uploadAll() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      const category = document.getElementById('category').value.trim();
+      if (!apiKey) { showToast('API 키를 입력하세요', 'error'); return; }
+      if (!category) { showToast('카테고리를 입력하세요', 'error'); return; }
+      if (selectedFiles.length === 0) { showToast('파일을 선택하세요', 'error'); return; }
+
+      isUploading = true;
+      document.getElementById('up-spinner').className = 'spinner show';
+      document.getElementById('upload-btn').disabled = true;
+
+      const results = [];
+      const pending = selectedFiles.map((f, i) => i).filter(i => selectedFiles[i].status !== 'done');
+
+      for (const i of pending) {
+        const result = await uploadFile(i);
+        results.push({ file: selectedFiles[i].file.name, ...result });
+      }
+
+      isUploading = false;
+      document.getElementById('up-spinner').className = 'spinner';
+      document.getElementById('upload-btn').disabled = false;
+
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.length - successCount;
+
+      document.getElementById('result-card').style.display = 'block';
+      const resultBox = document.getElementById('result-box');
+      resultBox.className = `result-box ${failCount === 0 ? 'success' : failCount === results.length ? 'error' : ''}`;
+      resultBox.textContent = JSON.stringify(results, null, 2);
+
+      if (failCount === 0) showToast(`✅ ${successCount}개 업로드 완료`);
+      else if (successCount === 0) showToast(`❌ 모든 파일 업로드 실패`, 'error');
+      else showToast(`⚠️ ${successCount}개 완료, ${failCount}개 실패`, 'error');
+    }
+  </script>
+</body>
+</html>
