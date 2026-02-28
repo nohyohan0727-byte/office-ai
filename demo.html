@@ -1048,6 +1048,20 @@
   const DOWNLOAD_URL = "https://jknetworks.app.n8n.cloud/webhook/file-download";
 
   async function downloadSourceFile(src, cardEl) {
+    // drive_url이 sources 배열에 포함된 경우 webhook 없이 직접 열기
+    if (src.drive_url) {
+      cardEl.classList.add('downloading');
+      cardEl.querySelector('.src-dl').textContent = '⏳';
+      window.open(src.drive_url, '_blank');
+      setTimeout(() => {
+        cardEl.querySelector('.src-dl').textContent = '✅';
+        cardEl.classList.remove('downloading');
+        setTimeout(() => { cardEl.querySelector('.src-dl').textContent = '⬇'; }, 3000);
+      }, 400);
+      return;
+    }
+
+    // drive_url 없을 때 fallback: 기존 webhook 방식
     cardEl.classList.add('downloading');
     cardEl.querySelector('.src-dl').textContent = '⏳';
 
