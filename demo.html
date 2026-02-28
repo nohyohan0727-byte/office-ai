@@ -1022,6 +1022,22 @@
     return div;
   }
 
+  function getFileIcon(filename) {
+    if (!filename) return '📄';
+    const ext = filename.split('.').pop().toLowerCase();
+    const icons = {
+      'xlsx': '📊', 'xls': '📊',
+      'docx': '📝', 'doc': '📝',
+      'pdf': '📕',
+      'pptx': '📊', 'ppt': '📊',
+      'hwp': '📝', 'hwpx': '📝',
+      'txt': '📄', 'csv': '📊',
+      'zip': '📦', 'rar': '📦',
+      'png': '🖼', 'jpg': '🖼', 'jpeg': '🖼'
+    };
+    return icons[ext] || '📄';
+  }
+
   function renderSources(sources) {
     const wrap = document.createElement('div');
     wrap.className = 'source-docs';
