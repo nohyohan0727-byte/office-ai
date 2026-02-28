@@ -846,7 +846,7 @@
         if (res.ok && data.success) {
           successCount++;
           logEl.className = 'log-item success';
-          logEl.innerHTML = `<span class="log-icon">✅</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 완료 · ${formatSize(data.fileSize || file.size)} · 테이블: ${data.tableName || tableName}</div></div>`;
+          logEl.innerHTML = `<span class="log-icon">✅</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 완료 · ${formatSize(data.fileSize || file.size)} · 카테고리: ${projectName}</div></div>`;
           // 커스텀 카테고리 첫 성공 시 드롭다운 갱신
           if (isCustomCat && customLabel && successCount === 1) {
             loadCategoriesFromSheets();
