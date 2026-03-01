@@ -1020,6 +1020,12 @@
 
           ${isBoard ? `
           <div class="form-group full">
+            <label class="form-label">🖼 이미지 URL (선택)</label>
+            <input class="form-input" id="f-image" value="${esc(game?.image_url||'')}" placeholder="https://...">
+          </div>` : ''}
+
+          ${isBoard ? `
+          <div class="form-group full">
             <label class="form-label">🎬 유튜브 URL (선택)</label>
             <input class="form-input" id="f-youtube" value="${esc(game?.youtube_url||'')}" placeholder="https://www.youtube.com/watch?v=...">
           </div>` : ''}
@@ -1810,6 +1816,7 @@
       if (d.age_min)     document.getElementById('f-age').value     = d.age_min;
       if (d.rules)       document.getElementById('f-rules').value   = d.rules;
       if (d.tips)        document.getElementById('f-tips').value    = d.tips;
+      const imgEl = document.getElementById('f-image'); if (d.image_url && imgEl) imgEl.value = d.image_url;
       if (d.youtube_url) document.getElementById('f-youtube').value = d.youtube_url;
       if (d.categories?.length) {
         document.querySelectorAll('.cat-chip').forEach(btn => {
