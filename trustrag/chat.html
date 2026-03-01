@@ -712,10 +712,10 @@
     });
 
     // Admin API 호출 (get_file_url 등 인증된 사용자 액션)
+    // Extract Request 노드가 { api_key, action, data } 구조로 파싱하므로 params는 data 안에 넣음
     async function callAdmin(action, params = {}) {
       const apiKey = document.getElementById('api-key').value.trim();
-      const body = { api_key: apiKey, action };
-      Object.entries(params).forEach(([k, v]) => { if (v !== null && v !== undefined) body[k] = v; });
+      const body = { api_key: apiKey, action, data: params };
       const res = await fetch(`${N8N}/trustrag/admin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
