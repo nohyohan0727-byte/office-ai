@@ -53,7 +53,26 @@
     .tab.active-board    { border-color:var(--b); background:var(--card); color:var(--b); margin-bottom:-1px; }
     .tab.active-hand     { border-color:var(--p); background:var(--card); color:var(--p); margin-bottom:-1px; }
     .tab.active-visitor  { border-color:var(--g); background:var(--card); color:var(--g); margin-bottom:-1px; }
-    .tab:not(.active-board):not(.active-hand):not(.active-visitor):hover { color:#999; }
+    .tab.active-callmenu { border-color:var(--y); background:var(--card); color:var(--y); margin-bottom:-1px; }
+    .tab:not(.active-board):not(.active-hand):not(.active-visitor):not(.active-callmenu):hover { color:#999; }
+
+    /* ── 호출 메뉴 관리 ── */
+    .callmenu-list { padding:0 20px 80px; }
+    .callmenu-item {
+      background:var(--card); border:2px solid #222; border-radius:14px;
+      padding:14px 18px; margin-bottom:10px;
+      display:flex; align-items:center; gap:12px;
+      transition:border-color .2s;
+    }
+    .callmenu-item:hover { border-color:var(--y); }
+    .cmi-emoji { font-size:28px; flex-shrink:0; }
+    .cmi-label { font-weight:900; font-size:15px; color:#ddd; flex:1; }
+    .cmi-inactive { opacity:.4; }
+    .n8n-section {
+      background:var(--card); border:2px solid #ffd70033; border-radius:16px;
+      padding:20px; margin:0 20px 20px;
+    }
+    .n8n-label { font-size:12px; color:var(--y); font-weight:700; margin-bottom:8px; }
 
     /* ── 검색 ── */
     .search-row { padding:16px 20px; display:flex; gap:10px; }
@@ -332,6 +351,7 @@
     <div class="tab active-board" id="tab-board"    onclick="switchTab('board')">🎲 보드게임</div>
     <div class="tab" id="tab-hand"                  onclick="switchTab('hand')">✋ 맨손게임</div>
     <div class="tab" id="tab-visitor"               onclick="switchTab('visitor')">👥 방문자</div>
+    <div class="tab" id="tab-callmenu"              onclick="switchTab('callmenu')">📞 호출메뉴</div>
   </div>
 
   <!-- 검색 -->
@@ -442,7 +462,8 @@
       }
       await load();
       document.getElementById('add-btn').onclick = () => {
-        if (currentTab === 'visitor') openVisitorModal(null);
+        if (currentTab === 'visitor')  openVisitorModal(null);
+        else if (currentTab === 'callmenu') openCallMenuModal(null);
         else openModal(null);
       };
     }
@@ -496,7 +517,8 @@
       document.getElementById('search').value = '';
       document.getElementById('tab-board').className   = 'tab' + (tab==='board'   ? ' active-board'   : '');
       document.getElementById('tab-hand').className    = 'tab' + (tab==='hand'    ? ' active-hand'    : '');
-      document.getElementById('tab-visitor').className = 'tab' + (tab==='visitor' ? ' active-visitor' : '');
+      document.getElementById('tab-visitor').className  = 'tab' + (tab==='visitor'  ? ' active-visitor'  : '');
+      document.getElementById('tab-callmenu').className = 'tab' + (tab==='callmenu' ? ' active-callmenu' : '');
       document.getElementById('stats').innerHTML = '';
 
       const addBtn = document.getElementById('add-btn');
@@ -505,9 +527,15 @@
         document.getElementById('search').placeholder = '🔍 방문자 이름 검색...';
         document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
         loadVisitors();
+      } else if (tab === 'callmenu') {
+        addBtn.textContent = '+ 메뉴 추가';
+        document.getElementById('search').style.display = 'none';
+        document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        loadCallMenu();
       } else {
         addBtn.textContent = '+ 게임 추가';
         document.getElementById('search').placeholder = '🔍 게임 이름 검색...';
+        document.getElementById('search').style.display = '';
         document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
         load();
       }
@@ -706,6 +734,12 @@
           </div>
 
           ${isBoard ? `
+          <div class="form-group full">
+            <label class="form-label">🎬 유튜브 URL (선택)</label>
+            <input class="form-input" id="f-youtube" value="${esc(game?.youtube_url||'')}" placeholder="https://www.youtube.com/watch?v=...">
+          </div>` : ''}
+
+          ${isBoard ? `
           <div class="form-group full" style="display:flex;align-items:center;gap:10px;">
             <input type="checkbox" id="f-avail" ${game?.is_available!==false?'checked':''} style="width:18px;height:18px;accent-color:var(--g);">
             <label for="f-avail" class="form-label" style="margin:0;cursor:pointer;">이용 가능 (체크 해제 시 이용불가 표시)</label>
@@ -838,7 +872,8 @@
 
     async function submitForm(e) {
       e.preventDefault();
-      if (currentTab === 'visitor') { await submitVisitorForm(); return; }
+      if (currentTab === 'visitor')   { await submitVisitorForm();   return; }
+      if (currentTab === 'callmenu')  { await submitCallMenuForm();  return; }
 
       const isBoard = currentTab === 'board';
       const tbl     = isBoard ? 'board_games' : 'hand_games';
@@ -859,9 +894,10 @@
         tips:          document.getElementById('f-tips').value.trim()  || null,
       };
       if (isBoard) {
-        payload.name_en    = document.getElementById('f-name-en')?.value.trim() || null;
-        payload.difficulty = parseInt(document.getElementById('f-diff').value);
-        payload.is_available = document.getElementById('f-avail').checked;
+        payload.name_en     = document.getElementById('f-name-en')?.value.trim() || null;
+        payload.difficulty  = parseInt(document.getElementById('f-diff').value);
+        payload.is_available= document.getElementById('f-avail').checked;
+        payload.youtube_url = document.getElementById('f-youtube')?.value.trim() || null;
       } else {
         payload.materials = document.getElementById('f-materials')?.value.trim() || '없음';
       }
@@ -990,6 +1026,104 @@
       document.querySelectorAll('.rv-star').forEach(s => s.classList.remove('on'));
       await loadReviews();
       await load(); // 리뷰 배지 갱신
+    }
+
+    /* ══════════════════════════════════════
+       호출 메뉴 관리
+       ══════════════════════════════════════ */
+    let allCallMenu = [];
+
+    async function loadCallMenu() {
+      // n8n 웹훅 URL 설정 불러오기
+      const savedUrl = localStorage.getItem('gb_n8n_webhook') || '';
+      const { data, error } = await getDB().from('call_menu').select('*').order('sort_order');
+      allCallMenu = data || [];
+
+      document.getElementById('list-area').innerHTML = `
+        <div class="n8n-section">
+          <div class="n8n-label">⚡ n8n 웹훅 URL (카톡 알림)</div>
+          <div style="display:flex;gap:8px;">
+            <input class="form-input" id="n8n-url" value="${savedUrl}" placeholder="https://jknetworks.app.n8n.cloud/webhook/XXXX" style="flex:1;font-size:12px;">
+            <button class="btn-edit" style="white-space:nowrap;" onclick="saveN8nUrl()">저장</button>
+          </div>
+          <div style="font-size:11px;color:#555;margin-top:6px;">n8n에서 Webhook 노드 → KakaoTalk 노드 워크플로우의 웹훅 URL을 입력하세요.</div>
+        </div>
+        <div class="callmenu-list">
+          ${allCallMenu.map(item => `
+            <div class="callmenu-item${item.is_active ? '' : ' cmi-inactive'}">
+              <div class="cmi-emoji">${item.emoji}</div>
+              <div class="cmi-label">${esc(item.label)}</div>
+              <button class="btn-edit" style="flex:0;padding:8px 12px;font-size:12px;" onclick="openCallMenuModal(${item.id})">✏️</button>
+              <button class="btn-edit" style="flex:0;padding:8px 10px;font-size:12px;border-color:${item.is_active?'var(--r)':'var(--g)'};color:${item.is_active?'var(--r)':'var(--g)'};"
+                onclick="toggleCallMenuItem(${item.id},${!item.is_active})">${item.is_active ? '숨기기' : '표시'}</button>
+              <button class="btn-del" onclick="deleteCallMenuItem(${item.id})">🗑</button>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    function saveN8nUrl() {
+      const url = document.getElementById('n8n-url').value.trim();
+      localStorage.setItem('gb_n8n_webhook', url);
+      showToast('✅ 웹훅 URL 저장!');
+    }
+
+    function openCallMenuModal(idOrNull) {
+      const item = idOrNull ? allCallMenu.find(x => x.id === idOrNull) : null;
+      document.getElementById('modal-title').textContent = item ? '메뉴 수정' : '메뉴 추가';
+      document.getElementById('submit-btn').textContent  = item ? '수정 저장' : '+ 추가';
+      editingId = item?.id || null;
+
+      document.getElementById('form-fields').innerHTML = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">이모지</label>
+            <input class="form-input" id="cm-emoji" value="${esc(item?.emoji||'📦')}" placeholder="📦">
+          </div>
+          <div class="form-group">
+            <label class="form-label">메뉴 이름 *</label>
+            <input class="form-input" id="cm-label" required value="${esc(item?.label||'')}" placeholder="예: 물">
+          </div>
+          <div class="form-group">
+            <label class="form-label">순서 (숫자)</label>
+            <input class="form-input" id="cm-order" type="number" value="${item?.sort_order||0}">
+          </div>
+        </div>`;
+      document.getElementById('modal').classList.add('open');
+    }
+
+    async function submitCallMenuForm() {
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true; btn.textContent = '저장 중...';
+      const label = document.getElementById('cm-label').value.trim();
+      if (!label) { showToast('메뉴 이름을 입력해 주세요', true); btn.disabled=false; btn.textContent='+ 추가'; return; }
+      const payload = {
+        emoji:      document.getElementById('cm-emoji').value.trim() || '📦',
+        label,
+        sort_order: parseInt(document.getElementById('cm-order').value) || 0,
+      };
+      let error;
+      if (editingId) {
+        ({ error } = await getDB().from('call_menu').update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await getDB().from('call_menu').insert(payload));
+      }
+      btn.disabled = false; btn.textContent = editingId ? '수정 저장' : '+ 추가';
+      if (error) { showToast('저장 실패', true); return; }
+      showToast(editingId ? '✅ 수정 완료!' : '🎉 추가 완료!');
+      editingId = null; closeModal(); await loadCallMenu();
+    }
+
+    async function deleteCallMenuItem(id) {
+      if (!confirm('메뉴를 삭제할까요?')) return;
+      const { error } = await getDB().from('call_menu').delete().eq('id', id);
+      if (error) { showToast('삭제 실패', true); return; }
+      showToast('🗑 삭제 완료!'); await loadCallMenu();
+    }
+
+    async function toggleCallMenuItem(id, active) {
+      await getDB().from('call_menu').update({ is_active: active }).eq('id', id);
+      await loadCallMenu();
     }
 
     /* ══════════════════════════════════════
