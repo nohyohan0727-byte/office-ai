@@ -1019,7 +1019,9 @@
        🚀  메인 앱
        ================================================================ */
     function App() {
-      const [passed, setPassed]   = useState(() => sessionStorage.getItem('gb_pass') === '1');
+      const [passed, setPassed]   = useState(() =>
+        sessionStorage.getItem('gb_pass') === '1' || sessionStorage.getItem('gb_auth') === '1'
+      );
       const [user,   setUser]     = useState(() => {
         try { return JSON.parse(sessionStorage.getItem('gb_user')); } catch { return null; }
       });
