@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 가라온 브로즈</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0b0b1a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      color: #ddd;
+      padding: 20px;
+    }
+    .container { text-align: center; max-width: 480px; width: 100%; }
+
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes blink  { 50%{opacity:0} }
+    @keyframes glitch {
+      0%,100%{text-shadow:0 0 10px #00d4ff,0 0 20px #00d4ff}
+      15%{text-shadow:-2px 0 #ff006e,2px 0 #00ff88}
+      30%{text-shadow:2px 0 #ff006e,-2px 0 #00ff88}
+      45%{text-shadow:0 0 10px #00d4ff,0 0 20px #00d4ff}
+    }
+    @keyframes popIn { 0%{transform:scale(.6);opacity:0} 80%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+
+    .logo      { font-size: 64px; animation: float 3s ease-in-out infinite; margin-bottom: 16px; }
+    .title     { font-family:'Press Start 2P',monospace; font-size: 14px; color:#00d4ff; text-shadow:0 0 10px #00d4ff; animation:glitch 5s ease-in-out infinite; line-height:2; }
+    .subtitle  { font-family:'Press Start 2P',monospace; font-size: 7px; color:#ffd700; margin-top:8px; margin-bottom:40px; }
+    .blink     { animation: blink 1s step-end infinite; }
+
+    .card {
+      background: #151526;
+      border-radius: 20px;
+      padding: 28px 24px;
+      margin-bottom: 16px;
+      border: 2px solid transparent;
+      text-decoration: none;
+      display: block;
+      transition: transform .2s, box-shadow .2s;
+      animation: popIn .4s ease both;
+      cursor: pointer;
+    }
+    .card:hover { transform: translateY(-6px); }
+    .card-1 { border-color: #cc44ff; box-shadow: 0 0 10px #cc44ff44; animation-delay:.1s; }
+    .card-1:hover { box-shadow: 0 0 24px #cc44ff; }
+    .card-2 { border-color: #00ff88; box-shadow: 0 0 10px #00ff8844; animation-delay:.2s; }
+    .card-2:hover { box-shadow: 0 0 24px #00ff88; }
+
+    .card-icon  { font-size: 40px; margin-bottom: 10px; }
+    .card-title { font-weight: 900; font-size: 18px; margin-bottom: 6px; }
+    .card-desc  { font-size: 13px; color: #777; line-height: 1.6; }
+    .badge      { display:inline-block; font-size:10px; padding:3px 10px; border-radius:20px; margin-bottom:10px; font-weight:700; }
+    .badge-wip  { background:#ffd70022; color:#ffd700; border:1px solid #ffd700; }
+    .badge-done { background:#00ff8822; color:#00ff88; border:1px solid #00ff88; }
+
+    .card-1 .card-title { color: #cc44ff; }
+    .card-2 .card-title { color: #00ff88; }
+
+    .footer { margin-top: 32px; font-family:'Press Start 2P',monospace; font-size:6px; color:#333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🎮</div>
+    <div class="title">가라온 브로즈</div>
+    <div class="subtitle">PIXEL BASE &nbsp;<span class="blink">_</span></div>
+
+    <!-- 추천 앱 (준비중) -->
+    <div class="card card-1" style="cursor:default; opacity:.6;">
+      <div class="badge badge-wip">🚧 준비중</div>
+      <div class="card-icon">🎲</div>
+      <div class="card-title">보드게임 추천</div>
+      <div class="card-desc">인원수와 상황에 맞는<br>최적의 게임을 추천해 드려요!</div>
+    </div>
+
+    <!-- 픽셀 기지 (완성) -->
+    <a href="./pixel-base.html" class="card card-2">
+      <div class="badge badge-done">✅ 오픈</div>
+      <div class="card-icon">⚔️</div>
+      <div class="card-title">픽셀 기지</div>
+      <div class="card-desc">우리 집 보드게임 컬렉션 관리<br>별점·후기·가온&amp;라온 전용 앱</div>
+    </a>
+
+    <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
+  </div>
+</body>
+</html>

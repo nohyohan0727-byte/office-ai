@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 가라온 브로즈: 픽셀 기지</title>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+
+  <!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║          Supabase 설정 방법 (최초 1회 실행)                 ║
+  ╚══════════════════════════════════════════════════════════════╝
+  Supabase → SQL Editor에 아래 SQL 전체를 붙여넣고 실행하세요:
+
+  create table if not exists games (
+    id uuid default gen_random_uuid() primary key,
+    name text not null,
+    youtube_url text default '',
+    youtube_id text default '',
+    icon text default '🎲',
+    gaon_hint text default '',
+    created_at timestamptz default now()
+  );
+
+  create table if not exists ratings (
+    id uuid default gen_random_uuid() primary key,
+    game_id uuid references games(id) on delete cascade,
+    user_name text not null,
+    user_character text default '',
+    score integer check (score between 1 and 5),
+    review text default '',
+    created_at timestamptz default now()
+  );
+
+  create table if not exists players (
+    id uuid default gen_random_uuid() primary key,
+    name text unique not null,
+    character_emoji text default '',
+    exp integer default 0,
+    created_at timestamptz default now()
+  );
+
+  alter table games enable row level security;
+  alter table ratings enable row level security;
+  alter table players enable row level security;
+
+  create policy "public_all" on games for all using (true) with check (true);
+  create policy "public_all" on ratings for all using (true) with check (true);
+  create policy "public_all" on players for all using (true) with check (true);
+  -->
+
+  <style>
+    :root {
+      --bg:    #0b0b1a;
+      --card:  #151526;
+      --card2: #1e1e38;
+      --g:  #00ff88;  /* 네온 그린 */
+      --p:  #ff006e;  /* 네온 핑크 */
+      --b:  #00d4ff;  /* 네온 블루 */
+      --y:  #ffd700;  /* 골드 */
+      --pp: #cc44ff;  /* 퍼플 */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); min-height: 100vh; font-family: 'Nunito', sans-serif; color: #ddd; }
+
+    /* 폰트 */
+    .pf { font-family: 'Press Start 2P', monospace; }
+
+    /* 네온 텍스트 */
+    .tg { color: var(--g); text-shadow: 0 0 8px var(--g), 0 0 16px var(--g); }
+    .tp { color: var(--p); text-shadow: 0 0 8px var(--p), 0 0 16px var(--p); }
+    .tb { color: var(--b); text-shadow: 0 0 8px var(--b), 0 0 16px var(--b); }
+    .ty { color: var(--y); text-shadow: 0 0 6px var(--y); }
+    .tpp{ color: var(--pp);text-shadow: 0 0 8px var(--pp);}
+
+    /* 네온 글로우 보더 */
+    .bg { border: 2px solid var(--g); box-shadow: 0 0 8px var(--g), 0 0 16px var(--g)44; }
+    .bp { border: 2px solid var(--p); box-shadow: 0 0 8px var(--p), 0 0 16px var(--p)44; }
+    .bb { border: 2px solid var(--b); box-shadow: 0 0 8px var(--b), 0 0 16px var(--b)44; }
+    .by { border: 2px solid var(--y); box-shadow: 0 0 8px var(--y), 0 0 16px var(--y)44; }
+    .bpp{ border: 2px solid var(--pp);box-shadow: 0 0 8px var(--pp);}
+
+    /* 애니메이션 */
+    @keyframes popIn    { 0%{transform:scale(.5);opacity:0} 80%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+    @keyframes floatY   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes ticker   { 0%{transform:translateX(110vw)} 100%{transform:translateX(-100%)} }
+    @keyframes stampIn  { 0%{transform:scale(3) rotate(-15deg);opacity:0} 60%{transform:scale(.9) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
+    @keyframes blink    { 50%{opacity:0} }
+    @keyframes pulseG   { 0%,100%{box-shadow:0 0 8px var(--g),0 0 16px var(--g)44} 50%{box-shadow:0 0 20px var(--g),0 0 40px var(--g)} }
+    @keyframes pulseP   { 0%,100%{box-shadow:0 0 8px var(--pp)} 50%{box-shadow:0 0 24px var(--pp),0 0 48px var(--pp)} }
+    @keyframes scanH    { from{transform:translateY(-100%)} to{transform:translateY(100vh)} }
+    @keyframes wiggle   { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes glitch   {
+      0%,100%{text-shadow:0 0 8px var(--b),0 0 16px var(--b)}
+      10%{text-shadow:-2px 0 var(--p),2px 0 var(--g)}
+      20%{text-shadow:2px 0 var(--p),-2px 0 var(--g)}
+      30%{text-shadow:0 0 8px var(--b),0 0 16px var(--b)}
+    }
+
+    .pop-in  { animation: popIn 0.4s cubic-bezier(.175,.885,.32,1.275) both; }
+    .float   { animation: floatY 3s ease-in-out infinite; }
+    .stamp   { animation: stampIn 0.5s cubic-bezier(.175,.885,.32,1.275) both; }
+    .blink   { animation: blink 1s step-end infinite; }
+    .wiggle  { animation: wiggle 0.4s ease-in-out; }
+    .fade-up { animation: fadeUp 0.3s ease both; }
+    .glitch  { animation: glitch 4s ease-in-out infinite; }
+    .pulse-g { animation: pulseG 2s ease-in-out infinite; }
+    .pulse-p { animation: pulseP 2s ease-in-out infinite; }
+
+    /* 스캔라인 오버레이 */
+    .scanlines { position: relative; overflow: hidden; }
+    .scanlines::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,.13) 3px, rgba(0,0,0,.13) 4px);
+      pointer-events: none; z-index: 5;
+    }
+
+    /* 버튼 */
+    .btn { transition: transform .12s, filter .12s; cursor: pointer; }
+    .btn:hover  { filter: brightness(1.2); }
+    .btn:active { transform: scale(.92); }
+
+    /* 카드 */
+    .card-hover { transition: transform .2s, box-shadow .2s; }
+    .card-hover:hover { transform: translateY(-6px); }
+
+    /* 티커 */
+    .ticker-wrap { overflow: hidden; white-space: nowrap; }
+    .ticker-move { display: inline-block; animation: ticker 30s linear infinite; }
+
+    /* 모달 백드롭 */
+    .modal-bd {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,.88); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+    }
+
+    /* 형아찬스 오버레이 */
+    .bro-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,.95);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* EXP 바 */
+    .exp-fill { height: 100%; border-radius: 4px; transition: width .8s ease; }
+
+    /* 스크롤바 */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--g); border-radius: 2px; }
+
+    /* 비밀번호 입력 핀 도트 */
+    .pin-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid var(--b); background: transparent;
+      transition: background .15s;
+    }
+    .pin-dot.filled { background: var(--b); box-shadow: 0 0 8px var(--b); }
+
+    /* 키패드 버튼 */
+    .key-btn {
+      width: 72px; height: 72px; border-radius: 12px;
+      background: var(--card2); border: 1px solid #333; color: #ccc;
+      font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900;
+      cursor: pointer; transition: all .12s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .key-btn:hover  { border-color: var(--b); color: var(--b); box-shadow: 0 0 8px var(--b)66; }
+    .key-btn:active { transform: scale(.9); }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+    /* =========================================================
+       ⚙️  SUPABASE 설정 — 여기에 본인 값을 입력하세요
+       ========================================================= */
+    const SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* ---- 상수 ---- */
+    const APP_PASSWORD = '!20150910!';
+
+    const PRESET_PLAYERS = [
+      { name: '가온', emoji: '⚔️', role: '사령관',  color: '#00ff88', isAdmin: true,  isRaon: false },
+      { name: '라온', emoji: '🌈', role: '탐험대원', color: '#cc44ff', isAdmin: false, isRaon: true  },
+    ];
+
+    const CUSTOM_EMOJIS = ['🚀','🦊','🐼','🌟','🐲','🦄','⚡','🎯','🐸','🦁'];
+
+    const REVIEW_OPTIONS = [
+      { e:'👍', t:'최고예요!' },
+      { e:'🔥', t:'또 하고 싶어요' },
+      { e:'😊', t:'재미있어요!' },
+      { e:'🧩', t:'조금 어려워요' },
+      { e:'😅', t:'운이 필요해요' },
+      { e:'🤔', t:'전략 게임이에요' },
+    ];
+
+    const SCORE_LABELS = ['','별로였어요 😕','그냥 그랬어요 😐','괜찮았어요 😊','재미있어요! 😄','완전 최고! 🤩'];
+
+    const GAME_ICONS = ['🎲','🃏','🎯','🧩','♟️','🎮','🏆','🎡','🎪','💎','🌀','🎠','🃏','🀄','🔮'];
+
+    const NEON_COLORS = ['#00ff88','#ff006e','#00d4ff','#ffd700','#cc44ff','#ff8800'];
+
+    /* ---- 유틸 ---- */
+    function ytId(url) {
+      if (!url) return '';
+      const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+      return m ? m[1] : '';
+    }
+    function ytThumb(id) {
+      return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null;
+    }
+    function cardNeon(id) {
+      if (!id) return NEON_COLORS[0];
+      const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+      return NEON_COLORS[n % NEON_COLORS.length];
+    }
+    function calcLv(exp)  { return Math.floor((exp || 0) / 100) + 1; }
+    function calcPct(exp) { return (exp || 0) % 100; }
+    function getAvg(ratings) {
+      if (!ratings?.length) return null;
+      return (ratings.reduce((s, r) => s + r.score, 0) / ratings.length).toFixed(1);
+    }
+
+    async function ensurePlayer(name, emoji) {
+      const { data } = await db.from('players').select('id').eq('name', name).maybeSingle();
+      if (!data) await db.from('players').insert({ name, character_emoji: emoji, exp: 0 });
+    }
+    async function addExp(name, amount) {
+      const { data } = await db.from('players').select('exp').eq('name', name).maybeSingle();
+      const cur = data?.exp || 0;
+      await db.from('players').update({ exp: cur + amount }).eq('name', name);
+    }
+
+    /* ================================================================
+       🔐  비밀번호 화면  (키패드 스타일)
+       ================================================================ */
+    function PasswordScreen({ onPass }) {
+      const [input, setInput] = useState('');
+      const [shake, setShake] = useState(false);
+      const [hint, setHint] = useState('');
+
+      const keys = ['1','2','3','4','5','6','7','8','9','!','0','⌫'];
+      const specials = ['!','@','#','$','%','^','&','*','(',')','-','_','=','+'];
+
+      const press = (k) => {
+        if (k === '⌫') { setInput(p => p.slice(0,-1)); return; }
+        const next = input + k;
+        setInput(next);
+        if (next === APP_PASSWORD) {
+          setTimeout(onPass, 300);
+        } else if (next.length >= APP_PASSWORD.length) {
+          setShake(true);
+          setHint('틀렸어요! 다시 해봐요 👀');
+          setTimeout(() => { setShake(false); setInput(''); setHint(''); }, 700);
+        }
+      };
+
+      return (
+        <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:16 }}>
+          <div className="pop-in scanlines" style={{ background:'var(--card)', border:'2px solid var(--b)', borderRadius:24, padding:36, maxWidth:340, width:'100%', textAlign:'center', boxShadow:'0 0 40px #00d4ff33' }}>
+            {/* 로고 */}
+            <div style={{ fontSize:52, marginBottom:8 }} className="float">🎮</div>
+            <div className="pf tb glitch" style={{ fontSize:10, lineHeight:2.2 }}>가라온 브로즈</div>
+            <div className="pf" style={{ color:'var(--y)', fontSize:7, marginTop:4, marginBottom:28 }}>PIXEL BASE  <span className="blink">_</span></div>
+
+            {/* 핀 도트 */}
+            <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:24 }}>
+              {Array.from({ length: Math.max(input.length, 8) }).map((_, i) => (
+                <div key={i} className={`pin-dot${i < input.length ? ' filled' : ''}`} />
+              ))}
+            </div>
+
+            {/* 입력값 표시 (마스킹) */}
+            <div style={{ fontFamily:'monospace', fontSize:18, color:'var(--b)', letterSpacing:4, height:24, marginBottom:6, opacity: input ? 1 : 0.3 }}>
+              {'●'.repeat(input.length) || '비밀번호 입력'}
+            </div>
+
+            {hint && <div className={`fade-up${shake ? ' wiggle' : ''}`} style={{ color:'var(--p)', fontSize:12, marginBottom:12, fontWeight:700 }}>{hint}</div>}
+
+            {/* 키패드 — 문자 포함 키보드 */}
+            <div style={{ marginBottom:16 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, justifyItems:'center' }}>
+                {keys.map(k => (
+                  <button key={k} className="key-btn btn" onClick={() => press(k)}>{k}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* 특수문자 행 */}
+            <div style={{ display:'flex', flexWrap:'wrap', gap:6, justifyContent:'center', marginBottom:16 }}>
+              {specials.map(k => (
+                <button key={k} onClick={() => press(k)} className="btn"
+                  style={{ width:36, height:36, borderRadius:8, background:'var(--card2)', border:'1px solid #333', color:'#aaa', fontSize:14, fontWeight:700 }}>
+                  {k}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ color:'#444', fontSize:11, marginTop:4 }}>비밀번호를 눌러 입장하세요</div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       👤  로그인 화면 (캐릭터 선택)
+       ================================================================ */
+    function LoginScreen({ onLogin }) {
+      const [custom, setCustom]   = useState(false);
+      const [name, setName]       = useState('');
+      const [emoji, setEmoji]     = useState('🚀');
+      const [loading, setLoading] = useState(false);
+      const [shake, setShake]     = useState(false);
+
+      const doLogin = async (player) => {
+        setLoading(true);
+        await ensurePlayer(player.name, player.emoji);
+        const { data } = await db.from('players').select('*').eq('name', player.name).maybeSingle();
+        onLogin({ ...player, exp: data?.exp || 0 });
+      };
+
+      const handleCustom = async () => {
+        if (!name.trim()) { setShake(true); setTimeout(() => setShake(false), 500); return; }
+        await doLogin({ name: name.trim(), emoji, role: '대원', color: '#00d4ff', isAdmin: false, isRaon: false });
+      };
+
+      return (
+        <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:16 }}>
+          <div className="pop-in" style={{ background:'var(--card)', border:'2px solid var(--b)', borderRadius:24, padding:32, maxWidth:380, width:'100%', boxShadow:'0 0 40px #00d4ff22' }}>
+            <div className="pf tb" style={{ fontSize:9, textAlign:'center', marginBottom:24, lineHeight:2 }}>
+              탐험가를 선택하세요!
+            </div>
+
+            {!custom ? (
+              <>
+                {PRESET_PLAYERS.map(p => (
+                  <button key={p.name} onClick={() => doLogin(p)} className="btn card-hover"
+                    style={{ width:'100%', background:'var(--card2)', border:`2px solid ${p.color}`, borderRadius:16, padding:'18px 20px', marginBottom:12, display:'flex', alignItems:'center', gap:16, cursor:'pointer', boxShadow:`0 0 10px ${p.color}44` }}>
+                    <span style={{ fontSize:40 }}>{p.emoji}</span>
+                    <div style={{ textAlign:'left', flex:1 }}>
+                      <div style={{ fontWeight:900, fontSize:20, color:p.color }}>{p.name}</div>
+                      <div style={{ color:'#888', fontSize:13 }}>{p.role}{p.isAdmin ? ' 👑 관리자' : ''}{p.isRaon ? ' 🌈 큰화면 모드' : ''}</div>
+                    </div>
+                    <span style={{ color:p.color, fontSize:22 }}>▶</span>
+                  </button>
+                ))}
+
+                <div style={{ display:'flex', alignItems:'center', gap:10, margin:'16px 0', color:'#444' }}>
+                  <div style={{ flex:1, height:1, background:'#333' }} />
+                  <span style={{ fontSize:12 }}>또는</span>
+                  <div style={{ flex:1, height:1, background:'#333' }} />
+                </div>
+
+                <button onClick={() => setCustom(true)} className="btn"
+                  style={{ width:'100%', background:'transparent', border:'1px solid #333', borderRadius:14, padding:14, color:'#666', fontWeight:700, cursor:'pointer' }}>
+                  ✏️ 직접 입력
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginBottom:20 }}>
+                  {CUSTOM_EMOJIS.map(e => (
+                    <button key={e} onClick={() => setEmoji(e)} className="btn"
+                      style={{ fontSize:28, padding:'8px', borderRadius:10, border:`2px solid ${emoji===e ? 'var(--b)' : '#333'}`, background: emoji===e ? '#00d4ff22' : 'var(--card2)', cursor:'pointer' }}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+
+                <div className={shake ? 'wiggle' : ''} style={{ marginBottom:20 }}>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCustom()}
+                    placeholder="이름을 입력하세요" maxLength={10}
+                    style={{ width:'100%', background:'var(--card2)', border:'2px solid var(--b)', borderRadius:12, padding:'14px', color:'#fff', fontWeight:900, fontSize:18, textAlign:'center', outline:'none' }} />
+                </div>
+
+                <button onClick={handleCustom} disabled={loading} className="btn"
+                  style={{ width:'100%', background:'var(--b)', color:'var(--bg)', border:'none', borderRadius:12, padding:14, fontWeight:900, fontSize:16, cursor:'pointer' }}>
+                  🚀 입장!
+                </button>
+                <button onClick={() => setCustom(false)} className="btn"
+                  style={{ width:'100%', background:'transparent', border:'none', color:'#555', marginTop:10, padding:8, cursor:'pointer', fontWeight:700 }}>
+                  ← 뒤로
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🎬  YouTube 모달
+       ================================================================ */
+    function YoutubeModal({ id, onClose }) {
+      return (
+        <div className="modal-bd" onClick={onClose}>
+          <div className="pop-in" onClick={e => e.stopPropagation()}
+            style={{ background:'var(--card)', border:'2px solid var(--b)', borderRadius:20, overflow:'hidden', width:'100%', maxWidth:680, boxShadow:'0 0 40px #00d4ff55' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 16px', borderBottom:'1px solid #222' }}>
+              <span className="pf tb" style={{ fontSize:9 }}>🎬 공략 영상</span>
+              <button onClick={onClose} className="btn" style={{ color:'#666', fontSize:22, lineHeight:1 }}>✕</button>
+            </div>
+            <div style={{ position:'relative', paddingTop:'56.25%' }}>
+              <iframe style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}
+                src={`https://www.youtube.com/embed/${id}?autoplay=1`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       📱  QR 코드 모달
+       ================================================================ */
+    function QRModal({ game, onClose }) {
+      const target = game.youtube_url || window.location.href;
+      const qrSrc  = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(target)}&bgcolor=151526&color=00ff88&margin=10`;
+      return (
+        <div className="modal-bd" onClick={onClose}>
+          <div className="pop-in" onClick={e => e.stopPropagation()} style={{ background:'var(--card)', border:'2px solid var(--g)', borderRadius:20, padding:32, maxWidth:300, width:'100%', textAlign:'center', boxShadow:'0 0 30px #00ff8866' }}>
+            <div style={{ fontSize:36, marginBottom:8 }}>{game.icon}</div>
+            <div className="pf tg" style={{ fontSize:8, marginBottom:16 }}>📱 QR 코드</div>
+            <div style={{ fontWeight:900, fontSize:16, marginBottom:16 }}>{game.name}</div>
+            <img src={qrSrc} alt="QR" style={{ width:200, height:200, margin:'0 auto 16px', display:'block', borderRadius:10, border:'2px solid var(--g)' }} />
+            <div style={{ color:'#555', fontSize:11, marginBottom:20 }}>게임 상자에 붙여두세요! 📦</div>
+            <button onClick={onClose} className="btn"
+              style={{ background:'var(--g)', color:'var(--bg)', border:'none', borderRadius:12, padding:'10px 28px', fontWeight:900, cursor:'pointer' }}>
+              닫기
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       💬  가온 힌트 모달
+       ================================================================ */
+    function HintModal({ game, onClose }) {
+      return (
+        <div className="modal-bd" onClick={onClose}>
+          <div className="pop-in" onClick={e => e.stopPropagation()} style={{ background:'var(--card)', border:'2px solid var(--y)', borderRadius:20, padding:28, maxWidth:380, width:'100%', boxShadow:'0 0 24px #ffd70066' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
+              <span style={{ fontSize:36 }}>{game.icon}</span>
+              <div>
+                <div className="pf ty" style={{ fontSize:8, lineHeight:2 }}>가온 마스터의 힌트</div>
+                <div style={{ fontWeight:900, fontSize:16, color:'#fff' }}>{game.name}</div>
+              </div>
+            </div>
+            <div style={{ background:'var(--bg)', borderRadius:14, padding:'16px 18px', position:'relative', border:'1px solid #333' }}>
+              <div style={{ position:'absolute', top:-14, left:16, fontSize:22 }}>💬</div>
+              <p style={{ color:'#ccc', lineHeight:1.9, whiteSpace:'pre-wrap', marginTop:6, fontSize:14 }}>
+                {game.gaon_hint || '(힌트 없음)'}
+              </p>
+            </div>
+            <button onClick={onClose} className="btn"
+              style={{ marginTop:20, width:'100%', background:'var(--y)', color:'var(--bg)', border:'none', borderRadius:12, padding:14, fontWeight:900, fontSize:16, cursor:'pointer' }}>
+              알겠어요! 👍
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       ⭐  별점 / 후기 모달
+       ================================================================ */
+    function RatingModal({ game, user, onClose, onSaved }) {
+      const [score, setScore]   = useState(0);
+      const [hover, setHover]   = useState(0);
+      const [review, setReview] = useState('');
+      const [saving, setSaving] = useState(false);
+      const [done, setDone]     = useState(false);
+
+      const save = async () => {
+        if (!score) return;
+        setSaving(true);
+        const { error } = await db.from('ratings').insert({
+          game_id: game.id, user_name: user.name,
+          user_character: user.emoji, score, review,
+        });
+        if (!error) {
+          await addExp(user.name, 10);
+          setDone(true);
+          setTimeout(() => { onSaved(); onClose(); }, 2000);
+        } else {
+          alert('저장 실패: ' + error.message);
+          setSaving(false);
+        }
+      };
+
+      if (done) return (
+        <div className="modal-bd">
+          <div style={{ textAlign:'center' }}>
+            <div className="stamp" style={{ fontSize:100 }}>🏆</div>
+            <div className="stamp pf tg" style={{ fontSize:14, marginTop:12, animationDelay:'.15s' }}>공략 완료!</div>
+            <div style={{ color:'#888', marginTop:12, fontSize:14 }}>+10 EXP 획득! 🎉</div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="modal-bd" onClick={onClose}>
+          <div className="pop-in" onClick={e => e.stopPropagation()}
+            style={{ background:'var(--card)', border:'2px solid var(--y)', borderRadius:20, padding:28, maxWidth:400, width:'100%', boxShadow:'0 0 24px #ffd70055' }}>
+            <div style={{ textAlign:'center', marginBottom:24 }}>
+              <div style={{ fontSize:48 }}>{game.icon}</div>
+              <div className="pf ty" style={{ fontSize:9, marginTop:8, lineHeight:2 }}>"{game.name}"</div>
+              <div style={{ color:'#777', fontSize:12, marginTop:4 }}>이 게임 어땠어요?</div>
+            </div>
+
+            {/* 별점 */}
+            <div style={{ textAlign:'center', marginBottom:24 }}>
+              <div style={{ fontWeight:900, marginBottom:10, color:'#ccc' }}>⭐ 별점을 줘봐요!</div>
+              <div style={{ display:'flex', justifyContent:'center', gap:10 }}>
+                {[1,2,3,4,5].map(s => (
+                  <button key={s} className="btn"
+                    style={{ fontSize:36, transition:'transform .1s', transform: s<=(hover||score) ? 'scale(1.25)' : 'scale(1)' }}
+                    onMouseEnter={() => setHover(s)} onMouseLeave={() => setHover(0)} onClick={() => setScore(s)}>
+                    {s <= (hover || score) ? '⭐' : '☆'}
+                  </button>
+                ))}
+              </div>
+              {score > 0 && <div className="fade-up" style={{ color:'var(--y)', fontWeight:900, marginTop:8 }}>{SCORE_LABELS[score]}</div>}
+            </div>
+
+            {/* 후기 스티커 */}
+            <div style={{ marginBottom:24 }}>
+              <div style={{ fontWeight:900, color:'#ccc', marginBottom:10 }}>💭 어떤 느낌이었나요?</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                {REVIEW_OPTIONS.map(o => (
+                  <button key={o.t} onClick={() => setReview(review===o.t ? '' : o.t)} className="btn"
+                    style={{ padding:'10px', borderRadius:12, border:`2px solid ${review===o.t ? 'var(--g)' : '#333'}`, background: review===o.t ? '#00ff8822' : 'var(--card2)', color: review===o.t ? 'var(--g)' : '#999', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                    {o.e} {o.t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={onClose} className="btn"
+                style={{ flex:1, padding:14, borderRadius:12, border:'1px solid #333', background:'var(--card2)', color:'#888', fontWeight:700, cursor:'pointer' }}>
+                취소
+              </button>
+              <button onClick={save} disabled={!score || saving} className="btn"
+                style={{ flex:2, padding:14, borderRadius:12, border:'none', background: score && !saving ? 'var(--y)' : '#333', color: score && !saving ? 'var(--bg)' : '#666', fontWeight:900, fontSize:16, cursor: score ? 'pointer' : 'not-allowed' }}>
+                {saving ? '저장 중...' : '⭐ 등록!'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       ➕  게임 추가 모달 (가온 전용)
+       ================================================================ */
+    function AddGameModal({ user, onClose, onDone }) {
+      const [name, setName]   = useState('');
+      const [url, setUrl]     = useState('');
+      const [icon, setIcon]   = useState('🎲');
+      const [hint, setHint]   = useState('');
+      const [saving, setSaving] = useState(false);
+      const [done, setDone]   = useState(false);
+      const [shake, setShake] = useState(false);
+
+      const save = async () => {
+        if (!name.trim()) { setShake(true); setTimeout(() => setShake(false), 500); return; }
+        setSaving(true);
+        const { error } = await db.from('games').insert({
+          name: name.trim(), youtube_url: url,
+          youtube_id: ytId(url), icon, gaon_hint: hint,
+        });
+        if (!error) {
+          const bonus = 30 + (hint.trim() ? 20 : 0);
+          await addExp(user.name, bonus);
+          setDone(true);
+        } else {
+          alert('등록 실패: ' + error.message);
+          setSaving(false);
+        }
+      };
+
+      if (done) return (
+        <div className="modal-bd">
+          <div className="pop-in" style={{ textAlign:'center', background:'var(--card)', border:'2px solid var(--g)', borderRadius:24, padding:48, maxWidth:340, width:'100%', boxShadow:'0 0 40px #00ff8866' }}>
+            <div style={{ fontSize:72, marginBottom:16 }} className="float">🎖️</div>
+            <div className="pf tg" style={{ fontSize:9, lineHeight:2.5 }}>가온 사령관님이<br/>새로운 미션을<br/>하달했습니다!</div>
+            <div style={{ color:'var(--y)', marginTop:16, fontWeight:900, fontSize:18 }}>"{name}"</div>
+            <div style={{ color:'#666', marginTop:8, fontSize:13 }}>+{hint.trim() ? 50 : 30} EXP 획득! 🎉</div>
+            <button onClick={() => { onDone(); onClose(); }} className="btn"
+              style={{ marginTop:24, background:'var(--g)', color:'var(--bg)', border:'none', borderRadius:14, padding:'14px 40px', fontWeight:900, fontSize:16, cursor:'pointer' }}>
+              확인!
+            </button>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="modal-bd" onClick={onClose}>
+          <div className="pop-in" onClick={e => e.stopPropagation()}
+            style={{ background:'var(--card)', border:'2px solid var(--g)', borderRadius:20, padding:28, maxWidth:440, width:'100%', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 0 24px #00ff8855' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+              <span className="pf tg" style={{ fontSize:9 }}>🎖️ 신규 미션 등록</span>
+              <button onClick={onClose} className="btn" style={{ color:'#555', fontSize:22 }}>✕</button>
+            </div>
+
+            {/* 아이콘 선택 */}
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontWeight:900, fontSize:13, marginBottom:10, color:'#ccc' }}>🎮 아이콘 선택</div>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                {GAME_ICONS.map(ic => (
+                  <button key={ic} onClick={() => setIcon(ic)} className="btn"
+                    style={{ fontSize:26, padding:'7px', borderRadius:10, border:`2px solid ${icon===ic ? 'var(--g)' : '#333'}`, background: icon===ic ? '#00ff8822' : 'var(--card2)', cursor:'pointer' }}>
+                    {ic}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 이름 */}
+            <div className={shake ? 'wiggle' : ''} style={{ marginBottom:16 }}>
+              <label style={{ fontWeight:900, fontSize:13, display:'block', marginBottom:8, color:'#ccc' }}>🎯 게임 이름</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && save()}
+                placeholder="예: 부루마블, 할리갈리..."
+                style={{ width:'100%', background:'var(--bg)', border:'2px solid var(--g)', borderRadius:10, padding:'12px 14px', color:'#fff', fontWeight:700, fontSize:15, outline:'none' }} />
+            </div>
+
+            {/* 유튜브 */}
+            <div style={{ marginBottom:16 }}>
+              <label style={{ fontWeight:900, fontSize:13, display:'block', marginBottom:8, color:'#ccc' }}>🎬 유튜브 링크 <span style={{ color:'#555', fontWeight:400 }}>(선택)</span></label>
+              <input type="url" value={url} onChange={e => setUrl(e.target.value)}
+                placeholder="https://youtube.com/watch?v=..."
+                style={{ width:'100%', background:'var(--bg)', border:'2px solid #333', borderRadius:10, padding:'12px 14px', color:'#fff', fontWeight:700, fontSize:13, outline:'none' }} />
+            </div>
+
+            {/* 힌트 (라온이를 위한) */}
+            <div style={{ marginBottom:28 }}>
+              <label style={{ fontWeight:900, fontSize:13, display:'block', marginBottom:8, color:'#ccc' }}>
+                💬 라온이를 위한 힌트 <span style={{ color:'var(--y)', fontSize:11 }}>+20 EXP</span>
+              </label>
+              <textarea value={hint} onChange={e => setHint(e.target.value)} rows={3}
+                placeholder="게임 규칙이나 팁을 써주세요..."
+                style={{ width:'100%', background:'var(--bg)', border:'2px solid var(--y)', borderRadius:10, padding:'12px 14px', color:'#fff', fontWeight:700, fontSize:13, outline:'none', resize:'vertical', fontFamily:'Nunito, sans-serif' }} />
+            </div>
+
+            <button onClick={save} disabled={saving} className="btn"
+              style={{ width:'100%', background: saving ? '#333' : 'linear-gradient(135deg, var(--g), var(--b))', color:'var(--bg)', border:'none', borderRadius:14, padding:16, fontWeight:900, fontSize:16, cursor: saving ? 'not-allowed' : 'pointer' }}>
+              {saving ? '등록 중...' : '🎖️ 미션 등록!'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🃏  퀘스트 카드 (일반 모드)
+       ================================================================ */
+    function QuestCard({ game, user, onRate, onVideo, onHint, onQR }) {
+      const avg    = getAvg(game.ratings);
+      const thumb  = ytThumb(game.youtube_id);
+      const neon   = cardNeon(game.id);
+      const stars  = avg ? Math.round(parseFloat(avg)) : 0;
+
+      return (
+        <div className="card-hover" style={{ borderRadius:16, overflow:'hidden', background:'var(--card)', border:`2px solid ${neon}`, boxShadow:`0 0 8px ${neon}44`, display:'flex', flexDirection:'column', cursor:'default', transition:'transform .2s, box-shadow .2s' }}
+          onMouseEnter={e => e.currentTarget.style.boxShadow = `0 0 20px ${neon}`}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = `0 0 8px ${neon}44`}>
+
+          {/* 썸네일 / 아이콘 */}
+          <div style={{ height:130, background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', position:'relative' }}>
+            {thumb
+              ? <img src={thumb} alt={game.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              : <span style={{ fontSize:56 }} className="float">{game.icon}</span>
+            }
+            {/* 가온 힌트 뱃지 */}
+            {game.gaon_hint && (
+              <button onClick={() => onHint(game)} className="btn"
+                style={{ position:'absolute', top:8, right:8, background:'var(--y)', border:'none', borderRadius:20, padding:'4px 10px', fontSize:14, cursor:'pointer' }}>
+                💬
+              </button>
+            )}
+            {/* 등급 배지 */}
+            {avg && parseFloat(avg) >= 4.5 && (
+              <div style={{ position:'absolute', top:8, left:8, background:'var(--p)', borderRadius:20, padding:'3px 8px', fontSize:10, fontWeight:900, color:'#fff' }}>
+                HOT 🔥
+              </div>
+            )}
+          </div>
+
+          {/* 정보 */}
+          <div style={{ padding:'12px 12px 6px', flex:1 }}>
+            <div style={{ fontWeight:900, fontSize:15, color:'#fff', marginBottom:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }} title={game.name}>
+              {game.name}
+            </div>
+            {avg ? (
+              <div style={{ fontSize:12 }}>
+                <span style={{ color:'var(--y)' }}>{'⭐'.repeat(stars)}</span>
+                <span style={{ color:'#666', marginLeft:4 }}>{avg} ({game.ratings.length}명)</span>
+              </div>
+            ) : (
+              <div style={{ color:'#444', fontSize:12 }}>아직 평가 없음 🌱</div>
+            )}
+          </div>
+
+          {/* 버튼 */}
+          <div style={{ padding:'6px 10px 12px', display:'flex', flexDirection:'column', gap:5 }}>
+            {game.youtube_id && (
+              <button onClick={() => onVideo(game.youtube_id)} className="btn"
+                style={{ width:'100%', background:'#ff0000', color:'#fff', border:'none', borderRadius:8, padding:'8px', fontWeight:700, fontSize:12, cursor:'pointer' }}>
+                ▶ 공략 영상 🎬
+              </button>
+            )}
+            <div style={{ display:'flex', gap:5 }}>
+              <button onClick={() => onRate(game)} className="btn"
+                style={{ flex:1, background:'#ffd70022', border:'1px solid var(--y)', color:'var(--y)', borderRadius:8, padding:'7px', fontWeight:700, fontSize:12, cursor:'pointer' }}>
+                ⭐ 평가
+              </button>
+              <button onClick={() => onQR(game)} className="btn"
+                style={{ background:'var(--card2)', border:`1px solid ${neon}`, color:neon, borderRadius:8, padding:'7px 9px', fontWeight:700, fontSize:12, cursor:'pointer' }}>
+                📱
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🌈  라온 모드 카드 (크고 시각적으로)
+       ================================================================ */
+    function RaonCard({ game, onRate, onVideo }) {
+      const avg   = getAvg(game.ratings);
+      const thumb = ytThumb(game.youtube_id);
+      const stars = avg ? Math.round(parseFloat(avg)) : 0;
+
+      return (
+        <div className="card-hover pulse-p" style={{ borderRadius:20, overflow:'hidden', background:'var(--card)', border:'2px solid var(--pp)', display:'flex', flexDirection:'column' }}>
+          {/* 큰 썸네일 */}
+          <div style={{ height:200, background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+            {thumb
+              ? <img src={thumb} alt={game.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              : <span style={{ fontSize:88 }} className="float">{game.icon}</span>
+            }
+          </div>
+
+          {/* 이름 + 별 */}
+          <div style={{ padding:'14px 14px 10px', textAlign:'center' }}>
+            <div style={{ fontWeight:900, fontSize:20, color:'#fff', marginBottom:8 }}>{game.name}</div>
+            <div style={{ fontSize:26 }}>
+              {stars > 0 ? '⭐'.repeat(stars) : '☆☆☆☆☆'}
+            </div>
+          </div>
+
+          {/* 버튼 (크게!) */}
+          <div style={{ padding:'0 12px 16px', display:'flex', flexDirection:'column', gap:8 }}>
+            {game.youtube_id && (
+              <button onClick={() => onVideo(game.youtube_id)} className="btn"
+                style={{ width:'100%', background:'#ff0000', color:'#fff', border:'none', borderRadius:14, padding:'14px', fontWeight:900, fontSize:17, cursor:'pointer' }}>
+                ▶▶ 영상 보기 🎬
+              </button>
+            )}
+            <button onClick={() => onRate(game)} className="btn"
+              style={{ width:'100%', background:'var(--y)', color:'var(--bg)', border:'none', borderRadius:14, padding:'14px', fontWeight:900, fontSize:17, cursor:'pointer' }}>
+              ⭐⭐ 평가하기
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🚨  형아 찬스 오버레이 (라온 전용)
+       ================================================================ */
+    function BroHelp({ onClose }) {
+      return (
+        <div className="bro-overlay" onClick={onClose}>
+          <div className="pop-in" style={{ textAlign:'center', padding:32 }}>
+            <div style={{ fontSize:100 }} className="float">🚨</div>
+            <div className="pf tp" style={{ fontSize:14, marginTop:24, lineHeight:3 }}>
+              가온 대장님,<br/>
+              라온 대원이<br/>
+              도움을 요청했습니다!
+            </div>
+            <div className="pf ty" style={{ fontSize:10, marginTop:12 }}>출동하세요! 🏃</div>
+            <button onClick={onClose} className="btn"
+              style={{ marginTop:32, background:'var(--p)', color:'#fff', border:'none', borderRadius:14, padding:'18px 48px', fontWeight:900, fontSize:20, cursor:'pointer', boxShadow:'0 0 24px var(--p)' }}>
+              달려갈게요! ⚔️
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🏆  TOP 3 티커
+       ================================================================ */
+    function Top3Ticker({ games }) {
+      const top3 = useMemo(() => {
+        const since = new Date(); since.setDate(since.getDate() - 7);
+        return [...games]
+          .map(g => ({ ...g, cnt: (g.ratings||[]).filter(r => new Date(r.created_at) >= since).length }))
+          .sort((a,b) => b.cnt - a.cnt)
+          .slice(0,3)
+          .filter(g => g.cnt > 0);
+      }, [games]);
+
+      if (!top3.length) return null;
+
+      const medals = ['🥇','🥈','🥉'];
+      const txt = top3.map((g,i) => `${medals[i]} ${g.name} (${g.cnt}명)`).join('   ·   ');
+
+      return (
+        <div style={{ background:'var(--card)', border:'1px solid var(--y)', borderRadius:10, padding:'8px 0', overflow:'hidden', marginBottom:16, position:'relative' }}>
+          <div style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', zIndex:1, display:'flex', alignItems:'center', gap:4 }}>
+            <span className="pf ty" style={{ fontSize:6 }}>TOP</span>
+          </div>
+          <div style={{ paddingLeft:48 }} className="ticker-wrap">
+            <span className="ticker-move pf ty" style={{ fontSize:8 }}>
+              🏆&nbsp;&nbsp;이번 주 인기 게임&nbsp;&nbsp;·&nbsp;&nbsp;{txt}&nbsp;&nbsp;·&nbsp;&nbsp;🏆&nbsp;&nbsp;이번 주 인기 게임&nbsp;&nbsp;·&nbsp;&nbsp;{txt}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🏠  대시보드
+       ================================================================ */
+    function Dashboard({ user, onLogout }) {
+      const [games,    setGames]    = useState([]);
+      const [loading,  setLoading]  = useState(true);
+      const [player,   setPlayer]   = useState(null);
+      const [search,   setSearch]   = useState('');
+      const [rateGame, setRateGame] = useState(null);
+      const [vidId,    setVidId]    = useState('');
+      const [hintGame, setHintGame] = useState(null);
+      const [qrGame,   setQrGame]   = useState(null);
+      const [addOpen,  setAddOpen]  = useState(false);
+      const [broHelp,  setBroHelp]  = useState(false);
+
+      const fetchAll = useCallback(async () => {
+        setLoading(true);
+        const [{ data: gd }, { data: rd }, { data: pd }] = await Promise.all([
+          db.from('games').select('*').order('created_at', { ascending: false }),
+          db.from('ratings').select('*'),
+          db.from('players').select('*').eq('name', user.name).maybeSingle(),
+        ]);
+        if (gd) setGames(gd.map(g => ({ ...g, ratings: (rd||[]).filter(r => r.game_id === g.id) })));
+        setPlayer(pd);
+        setLoading(false);
+      }, [user.name]);
+
+      useEffect(() => { fetchAll(); }, [fetchAll]);
+
+      const filtered = useMemo(() =>
+        games.filter(g => g.name.toLowerCase().includes(search.toLowerCase())),
+        [games, search]);
+
+      const lv  = calcLv(player?.exp || 0);
+      const pct = calcPct(player?.exp || 0);
+
+      /* ---- 통계 ---- */
+      const stats = useMemo(() => {
+        const total = games.length;
+        const reviewed = games.filter(g => g.ratings.length > 0);
+        const avgAll = reviewed.length
+          ? (reviewed.reduce((s,g) => s + parseFloat(getAvg(g.ratings)||0), 0) / reviewed.length).toFixed(1)
+          : '-';
+        const totalRatings = games.reduce((s,g) => s + g.ratings.length, 0);
+        return { total, avgAll, totalRatings };
+      }, [games]);
+
+      return (
+        <div style={{ minHeight:'100vh', padding:16, maxWidth:1200, margin:'0 auto' }}>
+
+          {/* ── 헤더 ── */}
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16, flexWrap:'wrap' }}>
+            {/* 유저 패널 */}
+            <div className="scanlines" style={{ flex:1, background:'var(--card)', border:`2px solid ${user.color}`, borderRadius:14, padding:'10px 14px', display:'flex', alignItems:'center', gap:12, position:'relative', boxShadow:`0 0 8px ${user.color}44` }}>
+              <span style={{ fontSize:30 }}>{user.emoji}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div className="pf" style={{ fontSize:8, color:user.color, lineHeight:2 }}>
+                  {user.name} {user.role} {user.isAdmin ? '👑' : ''}
+                </div>
+                {/* EXP 바 */}
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span className="pf tg" style={{ fontSize:6, flexShrink:0 }}>Lv.{lv}</span>
+                  <div style={{ flex:1, background:'var(--bg)', borderRadius:4, height:6, overflow:'hidden' }}>
+                    <div className="exp-fill" style={{ width:`${pct}%`, background:'linear-gradient(90deg,var(--g),var(--b))' }} />
+                  </div>
+                  <span style={{ fontSize:10, color:'#666', flexShrink:0 }}>{pct}/100</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 타이틀 */}
+            <div className="scanlines" style={{ background:'var(--card)', borderRadius:14, padding:'10px 16px', textAlign:'center', position:'relative' }}>
+              <div className="pf tb glitch" style={{ fontSize:9 }}>가라온<br/>브로즈</div>
+              <div className="pf ty" style={{ fontSize:6, marginTop:4 }}>PIXEL BASE <span className="blink">_</span></div>
+            </div>
+
+            <button onClick={onLogout} className="btn"
+              style={{ background:'var(--card)', border:'1px solid #333', color:'#555', borderRadius:10, padding:'10px 12px', fontWeight:700, cursor:'pointer', fontSize:13 }}>
+              🚪
+            </button>
+          </div>
+
+          {/* ── 통계 바 ── */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
+            {[
+              { label:'보드게임', val: stats.total,       color:'var(--pp)' },
+              { label:'총 평가',  val: stats.totalRatings, color:'var(--y)' },
+              { label:'평균 평점', val: stats.avgAll,      color:'var(--g)' },
+            ].map(s => (
+              <div key={s.label} style={{ background:'var(--card)', borderRadius:12, padding:'10px', textAlign:'center', border:'1px solid #222' }}>
+                <div style={{ fontSize:22, fontWeight:900, color:s.color }}>{s.val}</div>
+                <div style={{ fontSize:11, color:'#555', marginTop:2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── TOP 3 티커 ── */}
+          <Top3Ticker games={games} />
+
+          {/* ── 검색 + 추가 버튼 ── */}
+          <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="🔍 게임 검색..."
+              style={{ flex:1, background:'var(--card)', border:'1px solid #333', borderRadius:10, padding:'10px 14px', color:'#fff', fontWeight:700, fontSize:14, outline:'none' }} />
+            {user.isAdmin && (
+              <button onClick={() => setAddOpen(true)} className="btn pulse-g"
+                style={{ background:'var(--g)', color:'var(--bg)', border:'none', borderRadius:10, padding:'10px 16px', fontWeight:900, cursor:'pointer', whiteSpace:'nowrap', fontSize:13, boxShadow:'0 0 12px var(--g)' }}>
+                + 미션 등록
+              </button>
+            )}
+          </div>
+
+          {/* ── 게임 그리드 ── */}
+          {loading ? (
+            <div style={{ textAlign:'center', padding:60 }}>
+              <div className="float" style={{ fontSize:52 }}>⏳</div>
+              <div className="pf" style={{ color:'#333', fontSize:8, marginTop:16 }}>LOADING...</div>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign:'center', padding:60 }}>
+              <div className="float" style={{ fontSize:60 }}>{search ? '🔍' : '🎲'}</div>
+              <div className="pf" style={{ color:'#333', fontSize:8, marginTop:16 }}>
+                {search ? 'NOT FOUND' : 'NO GAMES YET'}
+              </div>
+              {!search && user.isAdmin && (
+                <button onClick={() => setAddOpen(true)} className="btn"
+                  style={{ marginTop:20, background:'var(--g)', color:'var(--bg)', border:'none', borderRadius:14, padding:'14px 32px', fontWeight:900, fontSize:16, cursor:'pointer' }}>
+                  첫 게임 등록하기! 🎉
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={{
+              display:'grid',
+              gridTemplateColumns: user.isRaon
+                ? 'repeat(auto-fill, minmax(260px, 1fr))'
+                : 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap:16,
+              paddingBottom: user.isRaon ? 100 : 32,
+            }}>
+              {filtered.map(g =>
+                user.isRaon
+                  ? <RaonCard key={g.id} game={g} onRate={setRateGame} onVideo={setVidId} />
+                  : <QuestCard key={g.id} game={g} user={user} onRate={setRateGame} onVideo={setVidId} onHint={setHintGame} onQR={setQrGame} />
+              )}
+            </div>
+          )}
+
+          {/* ── 형아 찬스 버튼 (라온 전용) ── */}
+          {user.isRaon && (
+            <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:100 }}>
+              <button onClick={() => setBroHelp(true)} className="btn"
+                style={{ background:'linear-gradient(135deg,var(--p),var(--pp))', color:'#fff', border:'none', borderRadius:50, padding:'18px 36px', fontWeight:900, fontSize:17, cursor:'pointer', boxShadow:'0 0 24px var(--p), 0 4px 20px rgba(0,0,0,.4)', whiteSpace:'nowrap' }}>
+                🆘 형아! 이 게임 어떻게 해?
+              </button>
+            </div>
+          )}
+
+          {/* ── 모달들 ── */}
+          {vidId    && <YoutubeModal  id={vidId}     onClose={() => setVidId('')} />}
+          {rateGame && <RatingModal   game={rateGame} user={user} onClose={() => setRateGame(null)} onSaved={fetchAll} />}
+          {hintGame && <HintModal     game={hintGame} onClose={() => setHintGame(null)} />}
+          {qrGame   && <QRModal       game={qrGame}   onClose={() => setQrGame(null)} />}
+          {addOpen  && <AddGameModal  user={user} onClose={() => setAddOpen(false)} onDone={fetchAll} />}
+          {broHelp  && <BroHelp onClose={() => setBroHelp(false)} />}
+        </div>
+      );
+    }
+
+    /* ================================================================
+       🚀  메인 앱
+       ================================================================ */
+    function App() {
+      const [passed, setPassed]   = useState(() => sessionStorage.getItem('gb_pass') === '1');
+      const [user,   setUser]     = useState(() => {
+        try { return JSON.parse(sessionStorage.getItem('gb_user')); } catch { return null; }
+      });
+
+      const onPass = () => { sessionStorage.setItem('gb_pass','1'); setPassed(true); };
+
+      const onLogin = (u) => { sessionStorage.setItem('gb_user', JSON.stringify(u)); setUser(u); };
+
+      const onLogout = () => {
+        sessionStorage.removeItem('gb_user');
+        sessionStorage.removeItem('gb_pass');
+        setUser(null); setPassed(false);
+      };
+
+      if (!passed) return <PasswordScreen onPass={onPass} />;
+      if (!user)   return <LoginScreen    onLogin={onLogin} />;
+      return <Dashboard user={user} onLogout={onLogout} />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
