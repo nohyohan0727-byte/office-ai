@@ -521,27 +521,20 @@
     </div>
   </div>
 
-  <!-- 방문자 추가 모달 -->
+  <!-- 오늘 방문자 추가 모달 (늦게 온 친구 체크인) -->
   <div id="add-visitor-overlay" style="display:none;position:fixed;inset:0;background:#0008;z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)closeAddVisitorModal()">
-    <div style="background:#151526;border-radius:20px;border:2px solid #00ff88;padding:28px 24px;width:min(400px,92vw);max-height:85vh;overflow-y:auto;box-shadow:0 0 40px #00ff8844;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div style="background:#151526;border-radius:20px;border:2px solid #00ff88;padding:28px 24px;width:min(420px,92vw);max-height:85vh;overflow-y:auto;box-shadow:0 0 40px #00ff8844;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div style="font-size:17px;font-weight:900;color:#00ff88;">👥 방문자 추가</div>
         <button onclick="closeAddVisitorModal()" style="background:none;border:none;color:#555;font-size:20px;cursor:pointer;">✕</button>
       </div>
-
-      <!-- 아바타 선택 -->
-      <div style="font-size:12px;color:#777;font-weight:700;margin-bottom:8px;">아바타 선택</div>
-      <div id="av-grid-main" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px;margin-bottom:18px;"></div>
-
-      <!-- 닉네임 -->
-      <div style="font-size:12px;color:#777;font-weight:700;margin-bottom:6px;">닉네임 *</div>
-      <input id="av-nickname" type="text" maxlength="12" placeholder="부르는 이름"
-        style="width:100%;background:#0b0b1a;border:2px solid #222;border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;font-family:'Nunito',sans-serif;margin-bottom:18px;outline:none;"
-        onfocus="this.style.borderColor='#00ff88'" onblur="this.style.borderColor='#222'">
-
-      <button onclick="submitAddVisitor()"
+      <div style="font-size:13px;color:#555;margin-bottom:18px;">오늘 세션에 추가할 친구를 선택하세요</div>
+      <div id="latecome-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:20px;">
+        <div style="color:#555;font-size:13px;grid-column:1/-1;text-align:center;padding:20px 0;">로딩 중...</div>
+      </div>
+      <button onclick="confirmLateCheckin()"
         style="width:100%;background:#00ff88;color:#0b0b1a;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">
-        ✅ 등록하기
+        ✅ 오늘 세션에 추가
       </button>
       <div id="av-msg" style="text-align:center;font-size:13px;margin-top:10px;min-height:18px;"></div>
     </div>
@@ -1146,51 +1139,81 @@
       document.getElementById('welcome-overlay').style.display = 'none';
     }
 
-    /* ── 방문자 추가 모달 ── */
-    const AV_EMOJIS = ['🧑','👦','👧','👨','👩','👴','👵','🧒','🤖','👾',
-                       '🦊','🐯','🐸','🐧','🦁','🐻','🐼','🐨','🐺','🦋',
-                       '🐲','🦄','⚡','🌟','🍀','🎯','🎮','🔥','👑','💎'];
-    let _avSel = '🧑';
+    /* ── 오늘 방문자 추가 (늦게 온 친구 체크인) ── */
+    let _lateSel = new Set();
 
-    function openAddVisitorModal() {
-      _avSel = '🧑';
-      document.getElementById('av-nickname').value = '';
+    async function openAddVisitorModal() {
+      _lateSel = new Set();
       document.getElementById('av-msg').textContent = '';
-      // 아바타 그리드 렌더
-      document.getElementById('av-grid-main').innerHTML = AV_EMOJIS.map(e => `
-        <div onclick="pickAv(this,'${e}')" style="
-          cursor:pointer;text-align:center;font-size:24px;padding:6px;
-          border-radius:10px;border:2px solid ${e===_avSel?'#00ff88':'transparent'};
-          background:${e===_avSel?'#00ff8822':'transparent'};transition:all .15s;"
-          data-av="${e}">${e}</div>
-      `).join('');
-      const ov = document.getElementById('add-visitor-overlay');
-      ov.style.display = 'flex';
-      setTimeout(() => document.getElementById('av-nickname').focus(), 100);
+      document.getElementById('add-visitor-overlay').style.display = 'flex';
+
+      const todayIds = new Set(JSON.parse(sessionStorage.getItem('gb_today_visitors') || '[]'));
+      const { data } = await getDB().from('visitors').select('id,name,nickname,avatar').order('name');
+      const notYet = (data || []).filter(v => !todayIds.has(v.id));
+
+      const grid = document.getElementById('latecome-grid');
+      if (!notYet.length) {
+        grid.innerHTML = '<div style="color:#555;font-size:13px;grid-column:1/-1;text-align:center;padding:20px 0;">모두 이미 체크인했어요!</div>';
+        return;
+      }
+      grid.innerHTML = notYet.map(v => {
+        const label = v.nickname || v.name || '?';
+        return `<div id="lc-${v.id}" onclick="toggleLate(${v.id},'${label}')" style="
+          cursor:pointer;background:#0b0b1a;border:2px solid #222;border-radius:14px;
+          padding:14px 8px;text-align:center;transition:all .15s;" data-name="${label}">
+          <div style="font-size:28px;margin-bottom:6px;">${v.avatar||'🧑'}</div>
+          <div style="font-size:13px;font-weight:700;color:#ccc;">${label}</div>
+        </div>`;
+      }).join('');
     }
 
-    function pickAv(el, emoji) {
-      _avSel = emoji;
-      document.querySelectorAll('#av-grid-main [data-av]').forEach(d => {
-        const on = d.dataset.av === emoji;
-        d.style.borderColor = on ? '#00ff88' : 'transparent';
-        d.style.background  = on ? '#00ff8822' : 'transparent';
-      });
+    function toggleLate(id, name) {
+      const el = document.getElementById(`lc-${id}`);
+      if (_lateSel.has(id)) {
+        _lateSel.delete(id);
+        el.style.borderColor = '#222';
+        el.style.background  = '#0b0b1a';
+      } else {
+        _lateSel.add(id);
+        el.style.borderColor = '#00ff88';
+        el.style.background  = '#00ff8822';
+      }
     }
 
     function closeAddVisitorModal() {
       document.getElementById('add-visitor-overlay').style.display = 'none';
     }
 
-    async function submitAddVisitor() {
-      const nickname = document.getElementById('av-nickname').value.trim();
+    async function confirmLateCheckin() {
       const msg = document.getElementById('av-msg');
-      if (!nickname) { msg.style.color='#ff4466'; msg.textContent='닉네임을 입력해주세요'; return; }
-      msg.style.color='#777'; msg.textContent='등록 중...';
-      const { error } = await getDB().from('visitors').insert({ nickname, name: nickname, avatar: _avSel });
-      if (error) { msg.style.color='#ff4466'; msg.textContent='오류: '+error.message; return; }
-      msg.style.color='#00ff88'; msg.textContent='✅ 등록됐어요!';
-      setTimeout(closeAddVisitorModal, 900);
+      if (!_lateSel.size) { msg.style.color='#ff4466'; msg.textContent='친구를 선택해주세요'; return; }
+
+      // sessionStorage에 추가
+      const current = JSON.parse(sessionStorage.getItem('gb_today_visitors') || '[]');
+      const newIds  = [...new Set([...current, ..._lateSel])];
+      sessionStorage.setItem('gb_today_visitors', JSON.stringify(newIds));
+
+      // DB visit_logs 기록
+      const today = new Date().toISOString().slice(0,10);
+      const now   = new Date().toISOString();
+      try {
+        await getDB().from('visit_logs').upsert(
+          [..._lateSel].map(id => ({ visitor_id: id, visit_date: today, check_in_at: now })),
+          { onConflict: 'visitor_id,visit_date', ignoreDuplicates: false }
+        );
+      } catch(e) { console.warn('visit_logs 저장 실패:', e); }
+
+      // 체크아웃 바 이름 갱신
+      const { data } = await getDB().from('visitors').select('id,name,nickname').in('id', newIds);
+      const names = (data||[]).map(v => v.nickname || v.name).join(', ');
+      document.getElementById('checkout-bar-names').textContent = `🎮 ${names} 이용 중`;
+      document.getElementById('checkout-bar').style.display = 'flex';
+
+      const addedNames = [...document.querySelectorAll('#latecome-grid [data-name]')]
+        .filter(el => _lateSel.has(Number(el.id.replace('lc-',''))))
+        .map(el => el.dataset.name).join(', ');
+      showToast(`✅ ${addedNames} — 추가됐어요!`);
+      closeAddVisitorModal();
     }
   </script>
 </body>
