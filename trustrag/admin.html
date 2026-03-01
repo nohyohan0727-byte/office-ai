@@ -841,9 +841,14 @@
     }
 
     /* ==================== 권한 관리 ==================== */
-    let permState = { userId: null, userName: '', userCompanyId: null, categories: [], original: {}, current: {} };
-    // categories: 선택된 유저의 회사 카테고리 목록
-    // original/current: { [categoryId]: { access: bool, can_upload: bool } }
+    let permState = {
+      userId: null, userName: '', userCompanyId: null,
+      categories: [],
+      originalRole: null, currentRole: null,
+      originalActive: null, currentActive: null,
+      original: {}, current: {}
+      // original/current: { [categoryId]: { access: bool, can_upload: bool } }
+    };
 
     function goToPermTab(userId) {
       switchTab('perms');
@@ -904,6 +909,10 @@
       permState.userId = userId;
       permState.userName = user.name || user.email;
       permState.userCompanyId = user.company_id || authData.company_id;
+      permState.originalRole = user.role;
+      permState.currentRole = user.role;
+      permState.originalActive = user.is_active !== false;
+      permState.currentActive = user.is_active !== false;
 
       // 유저 행 하이라이트
       document.querySelectorAll('.perm-user-row').forEach(r => r.classList.remove('selected'));
@@ -951,31 +960,59 @@
       const body = document.getElementById('perm-panel-body');
       if (!body) return;
 
-      if (cats.length === 0) {
-        body.innerHTML = '<div style="padding:1.5rem;color:var(--text-dim)">이 회사에 등록된 카테고리가 없습니다</div>';
-        return;
-      }
+      // 역할 옵션: 현재 관리자보다 낮은 역할만 변경 가능
+      const adminRole = authData.role;
+      const roleOptions = [
+        { value: 'user', label: '사용자' },
+        { value: 'group_admin', label: '그룹관리자' },
+        { value: 'company_admin', label: '회사관리자', onlyFor: 'super_admin' },
+      ].filter(r => !r.onlyFor || adminRole === r.onlyFor)
+       .map(r => `<option value="${r.value}" ${permState.currentRole === r.value ? 'selected' : ''}>${r.label}</option>`)
+       .join('');
 
-      const rows = cats.map(c => {
-        const catId = c.id || c.category_id;
-        const state = permState.current[catId] || { access: false, can_upload: false };
-        return `
-          <div class="perm-cat-row" id="perm-cat-${catId}">
-            <label class="perm-cat-main">
-              <input type="checkbox" class="perm-access-cb" data-cat="${catId}"
-                ${state.access ? 'checked' : ''} onchange="onPermAccessChange('${catId}', this.checked)">
-              <span class="perm-cat-name">📂 ${c.name}</span>
-            </label>
-            <label class="perm-upload-label ${state.access ? '' : 'perm-upload-disabled'}" id="perm-upload-label-${catId}">
-              <input type="checkbox" class="perm-upload-cb" data-cat="${catId}"
-                ${state.can_upload ? 'checked' : ''} ${state.access ? '' : 'disabled'}
-                onchange="onPermUploadChange('${catId}', this.checked)">
-              <span>📤 업로드</span>
-            </label>
-          </div>`;
-      }).join('');
+      const catRows = cats.length
+        ? cats.map(c => {
+            const catId = c.id || c.category_id;
+            const state = permState.current[catId] || { access: false, can_upload: false };
+            return `
+            <div class="perm-cat-row" id="perm-cat-${catId}">
+              <label class="perm-cat-main">
+                <input type="checkbox" class="perm-access-cb" data-cat="${catId}"
+                  ${state.access ? 'checked' : ''} onchange="onPermAccessChange('${catId}', this.checked)">
+                <span class="perm-cat-name">📂 ${c.name}</span>
+              </label>
+              <label class="perm-upload-label ${state.access ? '' : 'perm-upload-disabled'}" id="perm-upload-label-${catId}">
+                <input type="checkbox" class="perm-upload-cb" data-cat="${catId}"
+                  ${state.can_upload ? 'checked' : ''} ${state.access ? '' : 'disabled'}
+                  onchange="onPermUploadChange('${catId}', this.checked)">
+                <span>📤 업로드</span>
+              </label>
+            </div>`;
+          }).join('')
+        : '<div style="padding:0.75rem 0;color:var(--text-dim);font-size:0.875rem">이 회사에 등록된 카테고리가 없습니다</div>';
 
-      body.innerHTML = rows;
+      body.innerHTML = `
+        <div style="padding-bottom:1rem;margin-bottom:1rem;border-bottom:1px solid var(--border)">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.65rem">역할 및 계정 상태</div>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <div class="field" style="flex:1;min-width:160px;margin:0">
+              <label>역할</label>
+              <select id="perm-role-sel" onchange="permState.currentRole=this.value">${roleOptions}</select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.25rem">
+              <label>계정 상태</label>
+              <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500">
+                <input type="checkbox" id="perm-active-cb"
+                  ${permState.currentActive ? 'checked' : ''}
+                  onchange="permState.currentActive=this.checked"
+                  style="width:16px;height:16px;accent-color:var(--success)">
+                활성 계정
+              </label>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.65rem">카테고리 접근 권한</div>
+        ${catRows}`;
     }
 
     function onPermAccessChange(catId, checked) {
@@ -1024,21 +1061,37 @@
         }
       });
 
-      if (ops.length === 0) {
+      // 역할/상태 변경 여부 확인
+      const roleChanged = permState.currentRole !== permState.originalRole;
+      const activeChanged = permState.currentActive !== permState.originalActive;
+
+      if (ops.length === 0 && !roleChanged && !activeChanged) {
         spin('perm-save-spinner', false);
         showToast('변경 사항이 없습니다', '');
         return;
       }
 
       try {
-        const results = await Promise.all(ops.map(op => {
-          if (op.type === 'grant') {
-            return callAdmin('grant_permission', { user_id: permState.userId, category_id: op.catId, can_upload: op.can_upload });
-          } else {
-            return callAdmin('revoke_permission', { user_id: permState.userId, category_id: op.catId });
-          }
-        }));
+        const allOps = [];
 
+        // 역할 또는 상태 변경
+        if (roleChanged || activeChanged) {
+          const payload = { user_id: permState.userId };
+          if (roleChanged) payload.role = permState.currentRole;
+          if (activeChanged) payload.is_active = permState.currentActive;
+          allOps.push(callAdmin('update_user', payload));
+        }
+
+        // 카테고리 권한 변경
+        ops.forEach(op => {
+          if (op.type === 'grant') {
+            allOps.push(callAdmin('grant_permission', { user_id: permState.userId, category_id: op.catId, can_upload: op.can_upload }));
+          } else {
+            allOps.push(callAdmin('revoke_permission', { user_id: permState.userId, category_id: op.catId }));
+          }
+        });
+
+        const results = await Promise.all(allOps);
         spin('perm-save-spinner', false);
         const failed = results.filter(r => !r?.success);
         const el = document.getElementById('perm-result');
@@ -1046,13 +1099,21 @@
 
         if (failed.length === 0) {
           el.className = 'result-box success';
-          el.textContent = `✅ ${ops.length}건 저장 완료`;
-          showToast(`✅ 권한 저장 완료`);
-          // original을 current로 동기화
+          const msgs = [];
+          if (roleChanged || activeChanged) msgs.push(`역할/상태 변경 완료`);
+          if (ops.length > 0) msgs.push(`카테고리 권한 ${ops.length}건 저장`);
+          el.textContent = '✅ ' + msgs.join(' · ');
+          showToast('✅ 저장 완료');
+          // 동기화
+          permState.originalRole = permState.currentRole;
+          permState.originalActive = permState.currentActive;
           permState.original = JSON.parse(JSON.stringify(permState.current));
+          // userList 내 해당 유저 정보 갱신
+          const u = userList.find(u => u.id === permState.userId);
+          if (u) { u.role = permState.currentRole; u.is_active = permState.currentActive; }
         } else {
           el.className = 'result-box error';
-          el.textContent = `⚠️ ${ops.length - failed.length}건 성공, ${failed.length}건 실패`;
+          el.textContent = `⚠️ ${allOps.length - failed.length}건 성공, ${failed.length}건 실패`;
           showToast('일부 저장 실패', 'error');
         }
       } catch (e) {
