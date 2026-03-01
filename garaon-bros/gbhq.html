@@ -559,7 +559,10 @@
           <div style="font-size:11px;color:#555;font-weight:700;">💬 REVIEW</div>
           <div class="modal-title" id="rv-modal-title" style="color:var(--y);font-size:19px;">게임 후기</div>
         </div>
-        <button class="modal-close" onclick="closeModal2('review-modal')">✕</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn-edit" style="border-color:var(--b);color:var(--b);padding:7px 12px;font-size:12px;" onclick="openQR(rvGameId,rvGameType,rvGameName)">📱 QR</button>
+          <button class="modal-close" onclick="closeModal2('review-modal')">✕</button>
+        </div>
       </div>
       <div id="rv-list"></div>
       <div class="review-add-form">
@@ -630,6 +633,7 @@
     // 후기 모달
     let rvGameId     = null;
     let rvGameType   = null;
+    let rvGameName   = '';
     let rvRating     = 0;
 
     const AVATARS = ['🧑','👦','👧','👨','👩','👴','👵','🧒','🤖','👾',
@@ -1373,6 +1377,7 @@
     async function openReviewsModal(gameId, gameType, gameName) {
       rvGameId   = gameId;
       rvGameType = gameType;
+      rvGameName = gameName;
       rvRating   = 0;
       document.getElementById('rv-modal-title').textContent = `💬 ${gameName} 후기`;
       document.getElementById('rv-comment').value = '';
