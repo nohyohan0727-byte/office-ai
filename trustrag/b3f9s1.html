@@ -347,15 +347,6 @@
       switchTab(tabs[0].id);
     }
 
-    function switchTab(id) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      const labels = { members: '👥 회원 관리', categories: '📂 카테고리 관리', perms: '🔑 권한 관리', audit: '📋 감사 로그' };
-      document.querySelectorAll('.tab-btn').forEach(b => { if (b.textContent === labels[id]) b.classList.add('active'); });
-      const panel = document.getElementById(`tab-${id}`);
-      if (panel) panel.classList.add('active');
-    }
-
     /* ==================== 회원 관리 ==================== */
     function buildMemberTab(role) {
       const el = document.getElementById('member-content');
@@ -621,7 +612,9 @@
           role: document.getElementById('new-role').value,
           tokens_remaining: parseInt(document.getElementById('new-tokens').value) || 1000
         };
+        // super_admin: 선택된 회사 ID, company_admin 이하: 본인 회사 ID
         if (companyId) payload.company_id = companyId;
+        else if (authData.company_id) payload.company_id = authData.company_id;
         const data = await callAdmin('create_user', payload);
         spin('cu-spinner', false);
         const ok = data?.success;
@@ -851,6 +844,7 @@
     };
 
     function goToPermTab(userId) {
+      permState.userId = null; // 기존 선택 초기화 (race condition 방지)
       switchTab('perms');
       selectPermUser(userId);
     }
@@ -861,7 +855,8 @@
       const el = document.getElementById('perm-content');
       const isSuperAdmin = authData?.role === 'super_admin';
 
-      // super_admin: 회사 필터 기본값 설정
+      // super_admin: 회사 필터 기본값 설정 (첫 진입 여부 추적)
+      const wasFilterEmpty = !permCompanyFilter;
       if (isSuperAdmin && !permCompanyFilter && companyList.length > 0) {
         permCompanyFilter = companyList[0].id;
       }
@@ -930,6 +925,11 @@
       // 이미 선택된 유저가 있으면 복원
       if (permState.userId && visibleUsers.find(u => u.id === permState.userId)) {
         selectPermUser(permState.userId);
+      }
+
+      // super_admin 최초 진입: 첫 회사의 유저를 자동 로드 (유저가 없을 경우)
+      if (isSuperAdmin && wasFilterEmpty && permCompanyFilter && visibleUsers.length === 0) {
+        onPermCompanyFilter(permCompanyFilter);
       }
     }
 
@@ -1005,15 +1005,20 @@
       const body = document.getElementById('perm-panel-body');
       if (!body) return;
 
-      // 역할 옵션: 현재 관리자보다 낮은 역할만 변경 가능
+      // 역할 옵션: 현재 관리자가 부여할 수 있는 역할만 표시
       const adminRole = authData.role;
-      const roleOptions = [
+      const assignableRoles = [
         { value: 'user', label: '사용자' },
         { value: 'group_admin', label: '그룹관리자' },
         { value: 'company_admin', label: '회사관리자', onlyFor: 'super_admin' },
-      ].filter(r => !r.onlyFor || adminRole === r.onlyFor)
-       .map(r => `<option value="${r.value}" ${permState.currentRole === r.value ? 'selected' : ''}>${r.label}</option>`)
-       .join('');
+      ].filter(r => !r.onlyFor || adminRole === r.onlyFor);
+
+      // 현재 유저의 역할이 부여 가능 목록에 없으면 역할 변경 불가 (강등 방지)
+      const canChangeRole = assignableRoles.some(r => r.value === permState.currentRole);
+      const roleLabels = { super_admin: '운영자', company_admin: '회사관리자', group_admin: '그룹관리자', user: '사용자' };
+      const roleOptions = canChangeRole
+        ? assignableRoles.map(r => `<option value="${r.value}" ${permState.currentRole === r.value ? 'selected' : ''}>${r.label}</option>`).join('')
+        : `<option value="${permState.currentRole}" selected>${roleLabels[permState.currentRole] || permState.currentRole}</option>`;
 
       const catRows = cats.length
         ? cats.map(c => {
@@ -1042,7 +1047,8 @@
           <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
             <div class="field" style="flex:1;min-width:160px;margin:0">
               <label>역할</label>
-              <select id="perm-role-sel" onchange="permState.currentRole=this.value">${roleOptions}</select>
+              <select id="perm-role-sel" onchange="permState.currentRole=this.value" ${canChangeRole ? '' : 'disabled title="현재 역할을 변경할 권한이 없습니다"'}>${roleOptions}</select>
+              ${!canChangeRole ? `<div style="font-size:0.72rem;color:var(--warning);margin-top:0.25rem">⚠️ 상위 역할 — 변경 불가</div>` : ''}
             </div>
             <div style="display:flex;flex-direction:column;gap:0.25rem">
               <label>계정 상태</label>
@@ -1194,7 +1200,6 @@
     }
 
     /* 탭 전환 시 컨텐츠 빌드 */
-    const origSwitchTab = switchTab;
     function switchTab(id) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
