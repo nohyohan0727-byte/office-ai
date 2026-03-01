@@ -1146,7 +1146,7 @@
       document.getElementById('modal-title').textContent = visitor ? '방문자 수정' : '방문자 추가';
       document.getElementById('submit-btn').textContent  = visitor ? '수정 저장' : '+ 등록';
 
-      const ageGroups = ['10대','20대','30대','40대','50대+'];
+      const ageGroups = ['10대 미만','10대','20대 이상'];
       const genders   = [{ v:'남', e:'🙋‍♂️' }, { v:'여', e:'🙋‍♀️' }, { v:'기타', e:'✨' }];
       const selGender = visitor?.gender || '';
       document.getElementById('form-fields').innerHTML = `
