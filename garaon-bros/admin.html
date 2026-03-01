@@ -75,13 +75,27 @@
     .n8n-label { font-size:12px; color:var(--y); font-weight:700; margin-bottom:8px; }
 
     /* ── 검색 ── */
-    .search-row { padding:16px 20px; display:flex; gap:10px; }
+    .search-row { padding:16px 20px 8px; display:flex; gap:10px; }
     .search-input {
       flex:1; background:var(--card); border:1px solid #333; border-radius:10px;
       padding:10px 14px; color:#fff; font-family:'Nunito',sans-serif;
       font-weight:700; font-size:14px; outline:none; transition:border .15s;
     }
     .search-input:focus { border-color:var(--b); }
+
+    /* ── 카테고리 필터 ── */
+    .cat-filter-row {
+      display:flex; gap:8px; padding:0 20px 12px; flex-wrap:wrap;
+      overflow-x:auto; -webkit-overflow-scrolling:touch;
+    }
+    .cat-filter-row:empty, .cat-filter-row.hidden { display:none; }
+    .cf-chip {
+      flex-shrink:0; padding:5px 14px; border-radius:20px; font-size:12px;
+      font-weight:700; border:1px solid #333; background:var(--card);
+      color:#777; cursor:pointer; transition:all .15s; white-space:nowrap;
+    }
+    .cf-chip:hover { border-color:#666; color:#ccc; }
+    .cf-chip.on { border-color:var(--b); background:#00d4ff18; color:var(--b); }
 
     /* ── 통계 ── */
     .stats { display:flex; gap:10px; padding:0 20px 16px; flex-wrap:wrap; }
@@ -434,6 +448,8 @@
   <div class="search-row">
     <input class="search-input" id="search" placeholder="🔍 게임 이름 검색..." oninput="currentTab==='visitor' ? renderVisitorList() : renderList()">
   </div>
+  <!-- 카테고리 필터 -->
+  <div class="cat-filter-row hidden" id="cat-filter-row"></div>
 
   <!-- 통계 -->
   <div class="stats" id="stats"></div>
@@ -521,6 +537,7 @@
        상태
        ══════════════════════════════════════ */
     let currentTab  = 'board';   // 'board' | 'hand' | 'visitor'
+    let _selCats    = [];        // 선택된 카테고리 필터 (빈 배열 = 전체)
     let allGames    = [];
     let editingId   = null;
 
@@ -596,6 +613,7 @@
       });
 
       renderStats();
+      renderCatFilter();
       renderList();
     }
 
@@ -608,9 +626,10 @@
       document.getElementById('tab-board').className   = 'tab' + (tab==='board'   ? ' active-board'   : '');
       document.getElementById('tab-hand').className    = 'tab' + (tab==='hand'    ? ' active-hand'    : '');
       document.getElementById('tab-visitor').className  = 'tab' + (tab==='visitor'  ? ' active-visitor'  : '');
-      document.getElementById('tab-callmenu').className = 'tab' + (tab==='callmenu' ? ' active-callmenu' : '');
       document.getElementById('stats').innerHTML = '';
 
+      _selCats = [];
+      renderCatFilter();
       const addBtn = document.getElementById('add-btn');
       if (tab === 'visitor') {
         addBtn.textContent = '+ 방문자 추가';
@@ -649,11 +668,39 @@
     /* ══════════════════════════════════════
        목록 렌더
        ══════════════════════════════════════ */
+    function renderCatFilter() {
+      const row = document.getElementById('cat-filter-row');
+      const cats = currentTab === 'board' ? BOARD_CATS : currentTab === 'hand' ? HAND_CATS : null;
+      if (!cats) { row.classList.add('hidden'); return; }
+      row.classList.remove('hidden');
+      row.innerHTML = ['전체', ...cats].map(c => {
+        const isAll = c === '전체';
+        const on = isAll ? _selCats.length === 0 : _selCats.includes(c);
+        return `<div class="cf-chip${on?' on':''}" onclick="toggleFilterCat('${c}')">${c}</div>`;
+      }).join('');
+    }
+
+    function toggleFilterCat(cat) {
+      if (cat === '전체') { _selCats = []; }
+      else {
+        const idx = _selCats.indexOf(cat);
+        if (idx >= 0) _selCats.splice(idx, 1);
+        else _selCats.push(cat);
+      }
+      renderCatFilter();
+      renderList();
+    }
+
     function renderList() {
       const q = document.getElementById('search').value.toLowerCase();
-      const filtered = allGames.filter(g =>
+      let filtered = allGames.filter(g =>
         g.name.toLowerCase().includes(q) || (g.name_en||'').toLowerCase().includes(q)
       );
+      if (_selCats.length > 0) {
+        filtered = filtered.filter(g =>
+          (g.categories || []).some(c => _selCats.includes(c))
+        );
+      }
 
       if (!filtered.length) {
         document.getElementById('list-area').innerHTML = `
