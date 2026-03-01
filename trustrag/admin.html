@@ -220,7 +220,10 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ api_key: apiKey, action, data })
       });
-      return res.json();
+      const text = await res.text();
+      if (!text || !text.trim()) return { success: false, message: '서버 응답이 없습니다' };
+      try { return JSON.parse(text); }
+      catch(e) { return { success: false, message: '응답 파싱 오류: ' + text.substring(0, 100) }; }
     }
 
     async function validateKey() {
@@ -441,7 +444,9 @@
         const el = document.getElementById('cu-result');
         el.style.display = 'block';
         el.className = `result-box ${ok ? 'success' : 'error'}`;
-        el.textContent = ok ? `✅ 회원 등록 완료\n이메일: ${document.getElementById('new-email').value}` : (data?.message || '등록 실패');
+        el.textContent = ok
+          ? `✅ 회원 등록 완료\n이메일: ${data.result?.email}\nAPI 키: ${data.api_key || data.result?.api_key || '(확인 필요)'}`
+          : (data?.message || '등록 실패');
         if (ok) { showToast('✅ 회원 등록 완료'); loadMembers(); }
         else showToast(data?.message || '등록 실패', 'error');
       } catch (e) {
