@@ -1095,7 +1095,10 @@
             </div>
           </div>
 
-          ${cats ? `<div class="detail-section"><div class="detail-label">카테고리</div><div class="detail-cats">${cats}</div></div>` : ''}
+          <div class="detail-section">
+            <div class="detail-label">카테고리</div>
+            <div class="detail-cats">${cats || '<span style="color:#444;font-style:italic;">미입력</span>'}</div>
+          </div>
 
           ${isBoard ? `
           <div class="detail-section">
@@ -1110,28 +1113,25 @@
             ${funBar(g.fun_score)}
           </div>
 
-          ${g.description ? `
           <div class="detail-section">
             <div class="detail-label">게임 소개</div>
-            <div class="detail-value">${esc(g.description)}</div>
-          </div>` : ''}
+            <div class="detail-value">${g.description ? esc(g.description) : '<span style="color:#444;font-style:italic;">미입력</span>'}</div>
+          </div>
 
-          ${g.rules ? `
           <div class="detail-section">
             <div class="detail-label">규칙 요약</div>
-            <div class="detail-value">${esc(g.rules)}</div>
-          </div>` : ''}
+            <div class="detail-value">${g.rules ? esc(g.rules) : '<span style="color:#444;font-style:italic;">미입력</span>'}</div>
+          </div>
 
-          ${g.tips ? `
           <div class="detail-section">
             <div class="detail-label">팁 / 전략</div>
-            <div class="detail-value" style="color:var(--g);">${esc(g.tips)}</div>
-          </div>` : ''}
+            <div class="detail-value" style="${g.tips ? 'color:var(--g);' : ''}">${g.tips ? esc(g.tips) : '<span style="color:#444;font-style:italic;">미입력</span>'}</div>
+          </div>
 
-          ${!isBoard && g.materials ? `
+          ${!isBoard ? `
           <div class="detail-section">
             <div class="detail-label">준비물</div>
-            <div class="detail-value">${esc(g.materials)}</div>
+            <div class="detail-value">${g.materials ? esc(g.materials) : '<span style="color:#444;font-style:italic;">없음</span>'}</div>
           </div>` : ''}
 
           ${g.youtube_url ? (()=>{
