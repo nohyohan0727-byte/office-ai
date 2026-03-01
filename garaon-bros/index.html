@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎮 가라온 브로즈</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/config.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -50,7 +52,8 @@
     .card-desc  { font-size:13px; color:#777; line-height:1.6; }
     .badge { display:inline-block; font-size:10px; padding:3px 10px; border-radius:20px; margin-bottom:10px; font-weight:700; }
 
-    .card-rec  { border-color:#cc44ff; box-shadow:0 0 10px #cc44ff44; animation-delay:.1s; opacity:.55; cursor:default; }
+    .card-rec  { border-color:#cc44ff; box-shadow:0 0 10px #cc44ff44; animation-delay:.1s; }
+    .card-rec:hover  { box-shadow:0 0 24px #cc44ff; }
     .card-info { border-color:#00d4ff; box-shadow:0 0 10px #00d4ff44; animation-delay:.15s; }
     .card-info:hover { box-shadow:0 0 24px #00d4ff; }
     .card-base { border-color:#00ff88; box-shadow:0 0 10px #00ff8844; animation-delay:.2s; }
@@ -102,16 +105,185 @@
     .key:active { transform:scale(.9); }
     .key.del    { font-size:16px; }
 
-    /* 특수문자 행 */
-    .specials { display:flex; gap:8px; justify-content:center; }
-    .spec {
-      width:48px; height:48px; border-radius:10px; background:#1e1e38;
-      border:1px solid #333; color:#aaa; font-size:16px; font-weight:700;
-      cursor:pointer; transition:all .12s;
+
+    /* ── 집주인 호출 버튼 (우측상단) ── */
+    .top-right-area {
+      display:none;
+      position:fixed; top:14px; right:14px; z-index:80;
+      align-items:center; gap:6px;
+    }
+    #call-fab {
+      background:linear-gradient(135deg,#ffd700,#ff9900);
+      color:#0b0b1a; border:none; border-radius:20px;
+      padding:9px 16px; font-size:14px; font-weight:900;
+      font-family:'Nunito',sans-serif;
+      cursor:pointer; box-shadow:0 2px 14px #ffd70055;
+      transition:all .2s; white-space:nowrap;
+    }
+    #call-fab:hover { filter:brightness(1.1); box-shadow:0 4px 20px #ffd700aa; }
+    #call-fab:active { transform:scale(.95); }
+    #call-settings-btn {
+      background:#151526; border:1px solid #444; border-radius:20px;
+      width:36px; height:36px; font-size:16px;
+      cursor:pointer; color:#888; transition:all .15s;
       display:flex; align-items:center; justify-content:center;
     }
-    .spec:hover  { border-color:#00d4ff; color:#00d4ff; }
-    .spec:active { transform:scale(.88); }
+    #call-settings-btn:hover { border-color:#ffd700; color:#ffd700; }
+
+    /* ── 호출메뉴 설정 모달 ── */
+    .settings-overlay {
+      display:none; position:fixed; inset:0;
+      background:#000a; z-index:250;
+      align-items:flex-end; justify-content:center;
+    }
+    .settings-overlay.open { display:flex; }
+    .settings-sheet {
+      background:#151526; border:2px solid #444;
+      border-radius:24px 24px 0 0; width:100%; max-width:480px;
+      padding:24px 20px 40px; max-height:80vh; overflow-y:auto;
+      box-shadow:0 -8px 48px #0008;
+      animation:slideUp .25s ease; position:relative;
+    }
+    .settings-title {
+      font-family:'Press Start 2P',monospace; font-size:8px;
+      color:#888; text-align:center; margin-bottom:20px; line-height:2;
+    }
+    .settings-section { margin-bottom:24px; }
+    .settings-label { font-size:12px; color:#ffd700; font-weight:700; margin-bottom:8px; }
+    .settings-input {
+      width:100%; background:#0b0b1a; border:1px solid #444; border-radius:10px;
+      padding:10px 12px; color:#ddd; font-family:'Nunito',sans-serif; font-size:13px;
+      outline:none; transition:border .15s;
+    }
+    .settings-input:focus { border-color:#ffd700; }
+    .settings-save-btn {
+      background:#ffd700; color:#0b0b1a; border:none; border-radius:8px;
+      padding:8px 16px; font-family:'Nunito',sans-serif; font-weight:900;
+      font-size:13px; cursor:pointer; margin-top:8px; transition:filter .15s;
+    }
+    .settings-save-btn:hover { filter:brightness(1.1); }
+    .cmi-list { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+    .cmi-row {
+      background:#1e1e38; border:1px solid #333; border-radius:10px;
+      padding:10px 14px; display:flex; align-items:center; gap:10px;
+    }
+    .cmi-row-emoji { font-size:22px; flex-shrink:0; }
+    .cmi-row-label { flex:1; font-weight:700; font-size:14px; color:#ddd; }
+    .cmi-row-inactive { opacity:.4; }
+    .cmi-row-toggle {
+      background:transparent; border:1px solid #666; border-radius:8px;
+      padding:4px 10px; font-size:11px; color:#888; cursor:pointer;
+      font-family:'Nunito',sans-serif; font-weight:700; transition:all .15s;
+    }
+    .cmi-row-toggle:hover { border-color:#ffd700; color:#ffd700; }
+    .cmi-row-del {
+      background:transparent; border:1px solid #ff4466; border-radius:8px;
+      padding:4px 8px; font-size:13px; cursor:pointer; color:#ff4466;
+      transition:all .15s;
+    }
+    .cmi-row-del:hover { background:#ff446622; }
+    .cmi-add-row { display:flex; gap:8px; }
+    .cmi-add-emoji { width:52px; background:#0b0b1a; border:1px solid #444; border-radius:8px; padding:8px; color:#ddd; font-size:16px; text-align:center; outline:none; }
+    .cmi-add-label { flex:1; background:#0b0b1a; border:1px solid #444; border-radius:8px; padding:8px 12px; color:#ddd; font-family:'Nunito',sans-serif; font-size:13px; outline:none; }
+    .cmi-add-label:focus, .cmi-add-emoji:focus { border-color:#ffd700; }
+    .cmi-add-btn {
+      background:#ffd700; color:#0b0b1a; border:none; border-radius:8px;
+      padding:8px 14px; font-weight:900; font-size:13px; cursor:pointer;
+      font-family:'Nunito',sans-serif; white-space:nowrap;
+    }
+
+    /* ── 호출 모달 ── */
+    .call-overlay {
+      display:none; position:fixed; inset:0;
+      background:#000a; z-index:200;
+      align-items:flex-end; justify-content:center;
+    }
+    .call-overlay.open { display:flex; }
+    .call-sheet {
+      background:#151526; border:2px solid #ffd700;
+      border-radius:24px 24px 0 0; width:100%; max-width:480px;
+      padding:24px 20px 40px;
+      box-shadow:0 -8px 48px #ffd70033;
+      animation:slideUp .25s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .call-title {
+      font-family:'Press Start 2P',monospace; font-size:8px;
+      color:#ffd700; text-align:center; margin-bottom:20px; line-height:2;
+    }
+    .call-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px;
+    }
+    .call-item {
+      background:#1e1e38; border:2px solid #333; border-radius:14px;
+      padding:14px 8px; cursor:pointer; text-align:center;
+      transition:all .15s; font-size:13px; font-weight:700; color:#ccc;
+    }
+    .call-item:hover { border-color:#ffd700; color:#ffd700; box-shadow:0 0 10px #ffd70033; }
+    .call-item:active { transform:scale(.94); }
+    .call-item.selected { border-color:#ffd700; background:#ffd70022; color:#ffd700; }
+    .call-item-emoji { font-size:28px; display:block; margin-bottom:6px; }
+    .call-custom {
+      width:100%; background:#1e1e38; border:1px solid #444; border-radius:10px;
+      padding:12px; color:#ddd; font-family:'Nunito',sans-serif; font-size:14px;
+      margin-bottom:16px; display:none;
+      resize:none;
+    }
+    .call-custom:focus { outline:none; border-color:#ffd700; }
+    .call-submit {
+      width:100%; background:linear-gradient(135deg,#ffd700,#ff9900);
+      color:#0b0b1a; border:none; border-radius:14px; padding:16px;
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:16px;
+      cursor:pointer; transition:all .15s;
+    }
+    .call-submit:hover { filter:brightness(1.1); }
+    .call-submit:disabled { opacity:.4; cursor:not-allowed; }
+    .call-close {
+      position:absolute; top:16px; right:20px;
+      background:none; border:none; color:#666; font-size:22px; cursor:pointer;
+    }
+    .call-close:hover { color:#aaa; }
+
+    /* ── 고릴라 경고 모달 ── */
+    .gorilla-overlay {
+      display:none; position:fixed; inset:0;
+      background:#000c; z-index:300;
+      align-items:center; justify-content:center;
+    }
+    .gorilla-overlay.open { display:flex; }
+    .gorilla-box {
+      background:#151526; border:3px solid #ff4466;
+      border-radius:24px; padding:32px 24px; max-width:340px; width:90%;
+      text-align:center; box-shadow:0 0 60px #ff446644;
+      animation:shake .4s ease;
+    }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+    .gorilla-emoji { font-size:72px; margin-bottom:16px; }
+    .gorilla-msg {
+      font-weight:900; font-size:15px; color:#ff4466; margin-bottom:8px; line-height:1.6;
+    }
+    .gorilla-sub { font-size:13px; color:#888; margin-bottom:24px; line-height:1.6; }
+    .gorilla-btns { display:flex; gap:10px; justify-content:center; }
+    .gorilla-cancel {
+      flex:1; padding:13px; border-radius:12px;
+      background:#1e1e38; border:1px solid #666; color:#aaa;
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:14px; cursor:pointer;
+    }
+    .gorilla-confirm {
+      flex:1; padding:13px; border-radius:12px;
+      background:linear-gradient(135deg,#ff4466,#cc0033); border:none; color:#fff;
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:14px; cursor:pointer;
+    }
+
+    /* ── 호출 완료 토스트 ── */
+    #call-toast {
+      display:none; position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+      background:#151526; border:2px solid #00ff88; border-radius:14px;
+      padding:12px 24px; color:#00ff88; font-weight:900; font-size:14px;
+      z-index:400; white-space:nowrap; box-shadow:0 0 20px #00ff8844;
+      animation:fadeUp .3s ease;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translate(-50%,10px)} to{opacity:1;transform:translate(-50%,0)} }
   </style>
 </head>
 <body>
@@ -131,8 +303,6 @@
       <!-- 숫자 키패드 -->
       <div class="keypad" id="keypad"></div>
 
-      <!-- 특수문자 -->
-      <div class="specials" id="specials"></div>
     </div>
   </div>
 
@@ -144,38 +314,102 @@
     <div class="title">가라온 브로즈</div>
     <div class="subtitle">PIXEL BASE &nbsp;<span class="blink">_</span></div>
 
-    <!-- 보드게임 추천 (준비중) -->
-    <div class="card card-rec">
-      <div class="badge badge-wip">🚧 준비중</div>
+    <!-- 보드게임 추천 -->
+    <a href="./recommend.html" class="card card-rec">
+      <div class="badge badge-wip">🎲 추천받기</div>
       <div class="card-icon">🎲</div>
       <div class="card-title">보드게임 추천</div>
-      <div class="card-desc">인원수와 상황에 맞는<br>최적의 게임을 추천해 드려요!</div>
-    </div>
-
-    <!-- 보드게임 정보 (신규) -->
-    <a href="./admin.html" class="card card-info">
-      <div class="badge badge-blue">📋 관리</div>
-      <div class="card-icon">📊</div>
-      <div class="card-title">보드게임 정보</div>
-      <div class="card-desc">게임 목록 조회·등록·수정·삭제<br>보드게임 + 맨손게임 통합 관리</div>
+      <div class="card-desc">인원수·난이도·분위기로<br>딱 맞는 게임을 골라드려요!</div>
     </a>
 
-    <!-- 픽셀 기지 -->
+    <!-- 픽셀 기지 (게임 컬렉션 + 후기) -->
     <a href="./pixel-base.html" class="card card-base">
-      <div class="badge badge-done">✅ 오픈</div>
-      <div class="card-icon">⚔️</div>
+      <div class="badge badge-done">⚔️ 게임탐색</div>
+      <div class="card-icon">🕹️</div>
       <div class="card-title">픽셀 기지</div>
-      <div class="card-desc">우리 집 보드게임 컬렉션 관리<br>별점·후기·가온&amp;라온 전용 앱</div>
+      <div class="card-desc">게임 컬렉션 탐색·별점·후기<br>가온&amp;라온 전용 게임 아카이브</div>
+    </a>
+
+    <!-- 관리자 -->
+    <a href="./admin.html" class="card card-info">
+      <div class="badge badge-blue">🔧 관리자</div>
+      <div class="card-icon">📊</div>
+      <div class="card-title">어드민</div>
+      <div class="card-desc">게임 등록·방문자 관리·후기 확인<br>보드게임 + 맨손게임 통합 관리</div>
     </a>
 
     <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
   </div>
 
+  <!-- ══════════════════════════════
+       집주인 호출 (우측상단)
+       ══════════════════════════════ -->
+  <div class="top-right-area" id="top-right-area">
+    <button id="call-settings-btn" title="호출메뉴 설정" onclick="openSettings()">⚙️</button>
+    <button id="call-fab" onclick="openCallModal()">🔔 집주인 호출</button>
+  </div>
+  <div id="call-toast">✅ 집주인에게 전달했어요!</div>
+
+  <!-- 호출 메뉴 모달 -->
+  <div class="call-overlay" id="call-overlay" onclick="closeCallModal(event)">
+    <div class="call-sheet" id="call-sheet">
+      <button class="call-close" onclick="closeCallModal()">✕</button>
+      <div class="call-title">집주인 호출 🔔<br>무엇이 필요한가요?</div>
+      <div class="call-grid" id="call-grid">
+        <!-- 호출 메뉴 아이템 동적 생성 -->
+        <div style="grid-column:1/-1;text-align:center;color:#555;padding:20px;">로딩 중...</div>
+      </div>
+      <textarea class="call-custom" id="call-custom" rows="2" placeholder="기타 내용을 입력하세요..."></textarea>
+      <button class="call-submit" id="call-submit" onclick="submitCall()" disabled>호출하기 🚀</button>
+    </div>
+  </div>
+
+  <!-- 고릴라 경고 모달 -->
+  <div class="gorilla-overlay" id="gorilla-overlay">
+    <div class="gorilla-box">
+      <div class="gorilla-emoji">🦍</div>
+      <div class="gorilla-msg">집주인이 고릴라로 변할 수 있어요!</div>
+      <div class="gorilla-sub" id="gorilla-sub">오늘 같은 걸 이미 여러 번 요청하셨네요 😅<br>그래도 호출하시겠어요?</div>
+      <div class="gorilla-btns">
+        <button class="gorilla-cancel" onclick="closeGorilla()">취소</button>
+        <button class="gorilla-confirm" onclick="confirmCall()">그래도 호출 🦍</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 호출메뉴 설정 모달 -->
+  <div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+    <div class="settings-sheet">
+      <button class="call-close" onclick="closeSettings()">✕</button>
+      <div class="settings-title">⚙️ 호출메뉴 설정</div>
+
+      <!-- n8n 웹훅 -->
+      <div class="settings-section">
+        <div class="settings-label">⚡ n8n 웹훅 URL (카톡 알림)</div>
+        <input class="settings-input" id="s-n8n-url" placeholder="https://...n8n.cloud/webhook/XXXX">
+        <div style="font-size:11px;color:#555;margin-top:6px;">집주인 카톡으로 호출 알림을 보내는 n8n 웹훅 URL</div>
+        <button class="settings-save-btn" onclick="saveN8nUrl()">저장</button>
+      </div>
+
+      <!-- 호출 메뉴 항목 관리 -->
+      <div class="settings-section">
+        <div class="settings-label">📋 호출 메뉴 항목</div>
+        <div class="cmi-list" id="s-cmi-list">
+          <div style="color:#555;font-size:13px;padding:12px 0;">로딩 중...</div>
+        </div>
+        <div class="cmi-add-row">
+          <input class="cmi-add-emoji" id="s-add-emoji" maxlength="4" placeholder="📦" value="">
+          <input class="cmi-add-label" id="s-add-label" placeholder="메뉴 이름 (예: 물)">
+          <button class="cmi-add-btn" onclick="addCallMenuItem()">+ 추가</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const PW      = '!20150910!';
-    const NUMS    = ['1','2','3','4','5','6','7','8','9','⌫','0',''];
-    const SPECS   = ['!','@','#','$','%','-','_','.'];
-    let   input   = '';
+    const PW   = '0910';
+    const NUMS = ['1','2','3','4','5','6','7','8','9','⌫','0',''];
+    let   input = '';
 
     /* ── 초기화 ── */
     function init() {
@@ -202,15 +436,6 @@
         kp.appendChild(btn);
       });
 
-      // 특수문자
-      const sp = document.getElementById('specials');
-      SPECS.forEach(k => {
-        const btn = document.createElement('button');
-        btn.className = 'spec';
-        btn.textContent = k;
-        btn.onclick = () => press(k);
-        sp.appendChild(btn);
-      });
     }
 
     /* ── 키 입력 ── */
@@ -262,6 +487,255 @@
       pw.style.opacity = '0';
       setTimeout(() => { pw.style.display = 'none'; }, 300);
       document.getElementById('main').style.display = 'block';
+      // 집주인 호출 버튼 (우측상단) 활성화
+      document.getElementById('top-right-area').style.display = 'flex';
+      loadCallMenu();
+    }
+
+    /* ══════════════════════════════
+       집주인 호출 시스템
+       ══════════════════════════════ */
+    let _callItems = [];  // { id, emoji, label, is_active }
+    let _selItem   = null; // 선택된 메뉴 아이템
+
+    async function loadCallMenu() {
+      const db = getDB();
+      if (!db) { _callItems = defaultMenuItems(); return; }
+      try {
+        const { data } = await db.from('call_menu')
+          .select('*').eq('is_active', true).order('sort_order');
+        _callItems = data && data.length ? data : defaultMenuItems();
+      } catch(e) {
+        _callItems = defaultMenuItems();
+      }
+    }
+
+    function defaultMenuItems() {
+      return [
+        { id: 'water',   emoji: '💧', label: '물' },
+        { id: 'drink',   emoji: '🥤', label: '음료' },
+        { id: 'snack',   emoji: '🍿', label: '과자' },
+        { id: 'cotton',  emoji: '🍭', label: '솜사탕' },
+        { id: 'popcorn', emoji: '🍿', label: '팝콘' },
+        { id: 'etc',     emoji: '✏️', label: '기타' },
+      ];
+    }
+
+    function openCallModal() {
+      const overlay = document.getElementById('call-overlay');
+      overlay.classList.add('open');
+      _selItem = null;
+      document.getElementById('call-custom').style.display = 'none';
+      document.getElementById('call-custom').value = '';
+      document.getElementById('call-submit').disabled = true;
+      renderCallGrid();
+    }
+
+    function closeCallModal(e) {
+      if (e && e.target !== document.getElementById('call-overlay')) return;
+      document.getElementById('call-overlay').classList.remove('open');
+    }
+
+    function renderCallGrid() {
+      const grid = document.getElementById('call-grid');
+      if (!_callItems.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#555;padding:20px;">메뉴 없음</div>';
+        return;
+      }
+      grid.innerHTML = _callItems.map(item => `
+        <div class="call-item" id="ci-${item.id}" onclick="selectCallItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
+          <span class="call-item-emoji">${item.emoji || '📦'}</span>
+          ${item.label}
+        </div>
+      `).join('');
+    }
+
+    function selectCallItem(item) {
+      _selItem = item;
+      // 선택 표시
+      document.querySelectorAll('.call-item').forEach(el => el.classList.remove('selected'));
+      const el = document.getElementById('ci-' + item.id);
+      if (el) el.classList.add('selected');
+      // 기타 선택 시 직접 입력 표시
+      const isEtc = (item.label === '기타' || item.id === 'etc');
+      const customEl = document.getElementById('call-custom');
+      customEl.style.display = isEtc ? 'block' : 'none';
+      document.getElementById('call-submit').disabled = false;
+    }
+
+    async function submitCall() {
+      if (!_selItem) return;
+      const customText = document.getElementById('call-custom').value.trim();
+      const isEtc = (_selItem.label === '기타' || _selItem.id === 'etc');
+      if (isEtc && !customText) {
+        document.getElementById('call-custom').focus();
+        return;
+      }
+      // 오늘 동일 메뉴 호출 횟수 확인
+      const todayCount = await getTodayCallCount(_selItem.label);
+      if (todayCount >= 2) {
+        showGorilla(todayCount, _selItem.label);
+        return;
+      }
+      await doCall(customText);
+    }
+
+    async function getTodayCallCount(label) {
+      const db = getDB();
+      if (!db) return 0;
+      try {
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const { count } = await db.from('call_history')
+          .select('*', { count: 'exact', head: true })
+          .eq('menu_label', label)
+          .gte('called_at', today + 'T00:00:00')
+          .lte('called_at', today + 'T23:59:59');
+        return count || 0;
+      } catch(e) { return 0; }
+    }
+
+    function showGorilla(count, label) {
+      const sub = document.getElementById('gorilla-sub');
+      sub.textContent = `오늘 "${label}" 를 이미 ${count}번 요청하셨네요 😅\n그래도 집주인을 깨우시겠어요?`;
+      document.getElementById('gorilla-overlay').classList.add('open');
+    }
+
+    function closeGorilla() {
+      document.getElementById('gorilla-overlay').classList.remove('open');
+    }
+
+    async function confirmCall() {
+      closeGorilla();
+      const customText = document.getElementById('call-custom').value.trim();
+      await doCall(customText);
+    }
+
+    async function doCall(customText) {
+      const btn = document.getElementById('call-submit');
+      btn.disabled = true;
+      btn.textContent = '전송 중...';
+
+      const label   = _selItem.label + (customText ? ` (${customText})` : '');
+      const emoji   = _selItem.emoji || '📦';
+      const n8nUrl  = localStorage.getItem('gb_n8n_webhook');
+
+      // n8n 웹훅 POST
+      if (n8nUrl) {
+        try {
+          await fetch(n8nUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'call',
+              emoji,
+              label,
+              message: `[가라온 브로즈] ${emoji} ${label} 요청이 들어왔어요!`,
+              called_at: new Date().toISOString(),
+            }),
+          });
+        } catch(e) { console.warn('n8n 전송 실패:', e); }
+      }
+
+      // Supabase call_history 저장
+      const db = getDB();
+      if (db) {
+        try {
+          await db.from('call_history').insert([{
+            menu_id:     _selItem.id || null,
+            menu_label:  _selItem.label,
+            menu_emoji:  _selItem.emoji || '📦',
+            custom_text: customText || null,
+          }]);
+        } catch(e) { console.warn('call_history 저장 실패:', e); }
+      }
+
+      // 완료 처리
+      document.getElementById('call-overlay').classList.remove('open');
+      btn.disabled = false;
+      btn.textContent = '호출하기 🚀';
+      showToast();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('call-toast');
+      if (msg) toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function escH(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ══════════════════════════════
+       호출메뉴 설정 패널
+       ══════════════════════════════ */
+    function openSettings() {
+      document.getElementById('s-n8n-url').value = localStorage.getItem('gb_n8n_webhook') || '';
+      document.getElementById('settings-overlay').classList.add('open');
+      renderSettingsCMI();
+    }
+
+    function closeSettings() {
+      document.getElementById('settings-overlay').classList.remove('open');
+    }
+
+    function saveN8nUrl() {
+      const url = document.getElementById('s-n8n-url').value.trim();
+      localStorage.setItem('gb_n8n_webhook', url);
+      showToast('✅ n8n URL 저장 완료!');
+    }
+
+    async function renderSettingsCMI() {
+      const list = document.getElementById('s-cmi-list');
+      list.innerHTML = '<div style="color:#555;font-size:13px;padding:8px 0;">로딩 중...</div>';
+      const db = getDB();
+      if (!db) { list.innerHTML = '<div style="color:#555;font-size:13px;">DB 연결 안됨</div>'; return; }
+      const { data } = await db.from('call_menu').select('*').order('sort_order');
+      const items = data || [];
+      if (!items.length) {
+        list.innerHTML = '<div style="color:#555;font-size:13px;padding:8px 0;">메뉴 없음. 아래서 추가해 보세요!</div>';
+        return;
+      }
+      list.innerHTML = items.map(item => `
+        <div class="cmi-row${item.is_active ? '' : ' cmi-row-inactive'}">
+          <span class="cmi-row-emoji">${item.emoji||'📦'}</span>
+          <span class="cmi-row-label">${escH(item.label)}</span>
+          <button class="cmi-row-toggle" onclick="toggleCmiItem(${item.id},${!item.is_active})">
+            ${item.is_active ? '숨기기' : '표시'}
+          </button>
+          <button class="cmi-row-del" onclick="deleteCmiItem(${item.id})">🗑</button>
+        </div>`).join('');
+    }
+
+    async function addCallMenuItem() {
+      const emoji = document.getElementById('s-add-emoji').value.trim() || '📦';
+      const label = document.getElementById('s-add-label').value.trim();
+      if (!label) { document.getElementById('s-add-label').focus(); return; }
+      const db = getDB();
+      if (db) {
+        const maxOrder = (_callItems.length ? Math.max(..._callItems.map(i=>i.sort_order||0)) : 0) + 1;
+        await db.from('call_menu').insert({ emoji, label, is_active: true, sort_order: maxOrder });
+      }
+      document.getElementById('s-add-emoji').value = '';
+      document.getElementById('s-add-label').value = '';
+      await loadCallMenu();
+      await renderSettingsCMI();
+    }
+
+    async function toggleCmiItem(id, is_active) {
+      const db = getDB();
+      if (db) await db.from('call_menu').update({ is_active }).eq('id', id);
+      await loadCallMenu();
+      await renderSettingsCMI();
+    }
+
+    async function deleteCmiItem(id) {
+      if (!confirm('이 메뉴를 삭제할까요?')) return;
+      const db = getDB();
+      if (db) await db.from('call_menu').delete().eq('id', id);
+      await loadCallMenu();
+      await renderSettingsCMI();
     }
 
     /* ── 키보드 입력도 지원 ── */

@@ -138,9 +138,26 @@
 
     /* 섹션 박스 */
     .section { margin-bottom:28px; }
+
+    /* 홈 버튼 */
+    .home-bar {
+      width:100%; max-width:420px; display:flex; justify-content:flex-start;
+      margin-bottom:12px;
+    }
+    .home-btn {
+      background:transparent; border:1px solid #333; border-radius:10px;
+      padding:7px 14px; color:#888; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:13px; cursor:pointer; text-decoration:none;
+      transition:all .15s;
+    }
+    .home-btn:hover { border-color:var(--b); color:var(--b); }
   </style>
 </head>
 <body>
+
+<div class="home-bar">
+  <a href="./index.html" class="home-btn">🏠 홈</a>
+</div>
 
 <div class="wrap" id="main-wrap">
   <div class="logo">💬</div>

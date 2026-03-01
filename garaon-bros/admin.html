@@ -326,6 +326,83 @@
     .qr-wrap img { border-radius:12px; background:#fff; padding:8px; }
     .qr-url { font-size:11px; color:#555; margin-top:8px; word-break:break-all; }
 
+    /* ── YouTube 검색 ── */
+    .yt-trigger-btn {
+      background:#ff000022; border:1px solid #ff4444; color:#ff6666;
+      border-radius:8px; padding:3px 10px; font-family:'Nunito',sans-serif;
+      font-size:11px; font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap;
+    }
+    .yt-trigger-btn:hover { background:#ff000044; color:#ff8888; }
+    .yt-modal-bd {
+      position:fixed; inset:0; background:rgba(0,0,0,.9); backdrop-filter:blur(6px);
+      z-index:500; display:flex; align-items:center; justify-content:center;
+      padding:16px; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .yt-modal-bd.open { opacity:1; pointer-events:all; }
+    .yt-modal {
+      background:var(--card); border-radius:20px;
+      max-width:520px; width:100%; max-height:85vh;
+      border:2px solid #ff4444; box-shadow:0 0 40px #ff000033;
+      display:flex; flex-direction:column;
+      transform:scale(.95); transition:transform .2s;
+    }
+    .yt-modal-bd.open .yt-modal { transform:scale(1); }
+    .yt-modal-head {
+      padding:16px 20px; border-bottom:1px solid #222;
+      display:flex; align-items:center; gap:12px; flex-shrink:0;
+    }
+    .yt-modal-title { font-family:'Press Start 2P',monospace; font-size:8px; color:#ff4444; flex:1; line-height:1.8; }
+    .yt-results { overflow-y:auto; padding:16px; flex:1; }
+    .yt-card {
+      display:flex; gap:12px; padding:12px; border:1px solid #222;
+      border-radius:12px; margin-bottom:10px;
+      transition:all .15s; align-items:flex-start;
+    }
+    .yt-card:hover { border-color:#ff4444; background:#ff000011; }
+    .yt-thumb { width:100px; height:56px; border-radius:8px; object-fit:cover; flex-shrink:0; background:#111; }
+    .yt-info { flex:1; min-width:0; }
+    .yt-title {
+      font-weight:900; font-size:13px; color:#ddd; margin-bottom:4px;
+      overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    }
+    .yt-channel { font-size:11px; color:#555; margin-bottom:4px; }
+    .yt-desc {
+      font-size:11px; color:#666; line-height:1.4;
+      overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    }
+    .yt-card-btns { display:flex; gap:6px; margin-top:6px; }
+    .yt-select-btn {
+      background:#ff4444; color:#fff; border:none; border-radius:6px;
+      padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;
+      font-family:'Nunito',sans-serif; white-space:nowrap; transition:filter .15s;
+    }
+    .yt-select-btn:hover { filter:brightness(1.2); }
+    .yt-view-btn {
+      background:#333; color:#aaa; border:none; border-radius:6px;
+      padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer;
+      font-family:'Nunito',sans-serif; white-space:nowrap;
+    }
+    .yt-loading { text-align:center; padding:40px; color:#555; font-size:14px; line-height:2; }
+    .yt-no-key { text-align:center; padding:24px 20px; }
+    .yt-key-note { font-size:13px; color:#888; line-height:1.8; margin-bottom:20px; }
+    .yt-key-note a { color:#ff6666; }
+    .yt-key-input {
+      width:100%; background:var(--card2); border:1px solid #444; border-radius:8px;
+      padding:10px 12px; color:#ddd; font-family:'Nunito',sans-serif; font-size:13px;
+      margin-bottom:10px; outline:none;
+    }
+    .yt-key-input:focus { border-color:#ff4444; }
+    .yt-key-save {
+      background:#ff4444; color:#fff; border:none; border-radius:8px;
+      padding:10px 20px; font-weight:900; cursor:pointer;
+      font-family:'Nunito',sans-serif; font-size:14px; transition:filter .15s;
+    }
+    .yt-key-save:hover { filter:brightness(1.15); }
+    .yt-open-link {
+      display:inline-block; margin-top:14px; color:#ff6666;
+      font-size:13px; cursor:pointer; text-decoration:underline;
+    }
+
     /* ── 반응형 ── */
     @media(max-width:480px) {
       .form-grid { grid-template-columns:1fr; }
@@ -341,7 +418,7 @@
 
   <!-- 헤더 -->
   <header>
-    <button class="back-btn" onclick="location.href='./index.html'">← 뒤로</button>
+    <button class="back-btn" onclick="location.href='./index.html'">🏠 홈</button>
     <div class="header-title">보드게임 정보</div>
     <button class="add-btn" id="add-btn">+ 게임 추가</button>
   </header>
@@ -351,7 +428,6 @@
     <div class="tab active-board" id="tab-board"    onclick="switchTab('board')">🎲 보드게임</div>
     <div class="tab" id="tab-hand"                  onclick="switchTab('hand')">✋ 맨손게임</div>
     <div class="tab" id="tab-visitor"               onclick="switchTab('visitor')">👥 방문자</div>
-    <div class="tab" id="tab-callmenu"              onclick="switchTab('callmenu')">📞 호출메뉴</div>
   </div>
 
   <!-- 검색 -->
@@ -425,6 +501,20 @@
 
   <!-- 토스트 -->
   <div class="toast" id="toast"></div>
+
+  <!-- YouTube 검색 모달 -->
+  <div class="yt-modal-bd" id="yt-modal" onclick="if(event.target===this)closeYTModal()">
+    <div class="yt-modal">
+      <div class="yt-modal-head">
+        <span style="font-size:22px;">▶️</span>
+        <div class="yt-modal-title" id="yt-modal-title">YouTube 검색</div>
+        <button class="modal-close" onclick="closeYTModal()">✕</button>
+      </div>
+      <div class="yt-results" id="yt-results">
+        <div class="yt-loading">🔍 검색 중...</div>
+      </div>
+    </div>
+  </div>
 
   <script>
     /* ══════════════════════════════════════
@@ -667,7 +757,10 @@
       document.getElementById('form-fields').innerHTML = `
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">게임 이름 *</label>
+            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center;">
+              게임 이름 *
+              <button type="button" class="yt-trigger-btn" onclick="openYTSearch()">🎬 YouTube 검색</button>
+            </label>
             <input class="form-input" id="f-name" required value="${esc(game?.name||'')}" placeholder="예: 할리갈리">
           </div>
           ${isBoard ? `
@@ -757,6 +850,118 @@
     function closeModal() {
       document.getElementById('modal').classList.remove('open');
       editingId = null;
+    }
+
+    /* ══════════════════════════════════════
+       YouTube 검색
+       ══════════════════════════════════════ */
+    function openYTSearch() {
+      const name = (document.getElementById('f-name')?.value || '').trim();
+      if (!name) { showToast('게임 이름을 먼저 입력해 주세요', true); return; }
+      document.getElementById('yt-modal').classList.add('open');
+      document.getElementById('yt-modal-title').textContent = `"${name}" YouTube 검색`;
+      document.getElementById('yt-results').innerHTML = '<div class="yt-loading">🔍 검색 중...</div>';
+      const apiKey = localStorage.getItem('gb_yt_key');
+      if (!apiKey) { renderYTKeyConfig(name); return; }
+      searchYouTube(name, apiKey);
+    }
+
+    function closeYTModal() {
+      document.getElementById('yt-modal').classList.remove('open');
+    }
+
+    function renderYTKeyConfig(name) {
+      const safeQ = encodeURIComponent(name + ' 보드게임 설명 리뷰');
+      document.getElementById('yt-results').innerHTML = `
+        <div class="yt-no-key">
+          <div style="font-size:48px;margin-bottom:12px;">🔑</div>
+          <div class="yt-key-note">
+            YouTube Data API 키를 설정하면<br>게임 영상을 앱 안에서 바로 검색할 수 있어요!<br><br>
+            <a href="https://console.developers.google.com/" target="_blank">Google Cloud Console</a>에서<br>
+            YouTube Data API v3 키를 발급받으세요.
+          </div>
+          <input class="yt-key-input" id="yt-key-input" placeholder="AIza..." autocomplete="off">
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button class="yt-key-save" onclick="saveYTKey(${JSON.stringify(name)})">저장 & 검색</button>
+          </div>
+          <a class="yt-open-link" onclick="window.open('https://www.youtube.com/results?search_query=${safeQ}','_blank')">
+            → 새 탭에서 유튜브로 직접 검색하기
+          </a>
+        </div>`;
+    }
+
+    function saveYTKey(name) {
+      const key = (document.getElementById('yt-key-input')?.value || '').trim();
+      if (!key) { showToast('API 키를 입력해 주세요', true); return; }
+      localStorage.setItem('gb_yt_key', key);
+      document.getElementById('yt-results').innerHTML = '<div class="yt-loading">🔍 검색 중...</div>';
+      searchYouTube(name, key);
+    }
+
+    async function searchYouTube(query, apiKey) {
+      const q = encodeURIComponent(query + ' 보드게임 설명 리뷰');
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&maxResults=6&key=${apiKey}&relevanceLanguage=ko`;
+      try {
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) {
+          if (data.error?.code === 403 || data.error?.code === 400) {
+            localStorage.removeItem('gb_yt_key');
+            document.getElementById('yt-results').innerHTML = `
+              <div class="yt-loading" style="color:var(--r);">
+                ⚠️ API 키 오류<br>
+                <small style="color:#666;">${esc(data.error?.message||'키를 다시 확인해 주세요')}</small>
+              </div>`;
+            return;
+          }
+          throw new Error(data.error?.message || 'YouTube API 오류');
+        }
+        renderYTResults(data.items || [], query);
+      } catch(e) {
+        document.getElementById('yt-results').innerHTML =
+          `<div class="yt-loading" style="color:var(--r);">오류: ${esc(e.message)}</div>`;
+      }
+    }
+
+    function renderYTResults(items, query) {
+      if (!items.length) {
+        document.getElementById('yt-results').innerHTML = '<div class="yt-loading">검색 결과가 없어요 😅</div>';
+        return;
+      }
+      const safeQ = encodeURIComponent(query + ' 보드게임');
+      document.getElementById('yt-results').innerHTML =
+        `<div style="font-size:11px;color:#555;margin-bottom:12px;text-align:right;">
+           <a style="color:#ff6666;cursor:pointer;" onclick="window.open('https://www.youtube.com/results?search_query=${safeQ}','_blank')">
+             → 유튜브에서 더 보기
+           </a>
+         </div>` +
+        items.map(item => {
+          const vid   = item.id?.videoId || '';
+          const s     = item.snippet || {};
+          const thumb = s.thumbnails?.medium?.url || s.thumbnails?.default?.url || '';
+          return `
+            <div class="yt-card">
+              <img class="yt-thumb" src="${thumb}" alt="" loading="lazy">
+              <div class="yt-info">
+                <div class="yt-title">${esc(s.title||'')}</div>
+                <div class="yt-channel">${esc(s.channelTitle||'')}</div>
+                <div class="yt-desc">${esc(s.description||'')}</div>
+                <div class="yt-card-btns">
+                  <button class="yt-select-btn" onclick="selectYTVideo('${vid}')">✓ URL 선택</button>
+                  <button class="yt-view-btn" onclick="window.open('https://www.youtube.com/watch?v=${vid}','_blank')">▶ 보기</button>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+    }
+
+    function selectYTVideo(videoId) {
+      const ytInput = document.getElementById('f-youtube');
+      if (ytInput) {
+        ytInput.value = `https://www.youtube.com/watch?v=${videoId}`;
+        showToast('✅ YouTube URL 입력 완료!');
+      }
+      closeYTModal();
     }
 
     /* ══════════════════════════════════════
