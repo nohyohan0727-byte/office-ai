@@ -1580,11 +1580,29 @@
       _acTimer = setTimeout(() => searchBGG(val), 500);
     }
 
+    // 한글 포함 여부 감지
+    function isKorean(s) { return /[\uAC00-\uD7A3\u3131-\u318E]/.test(s); }
+
+    // MyMemory 무료 번역 (한→영)
+    async function translateKoToEn(q) {
+      try {
+        const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=ko|en`);
+        const j = await r.json();
+        return j?.responseData?.translatedText || q;
+      } catch { return q; }
+    }
+
     async function searchBGG(q) {
       const drop = document.getElementById('ac-drop');
       if (!drop) return;
       try {
-        const bggUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(q)}&type=boardgame`;
+        let searchQ = q;
+        if (isKorean(q)) {
+          drop.innerHTML = '<div class="ac-loading">🌐 번역 중...</div>';
+          searchQ = await translateKoToEn(q);
+        }
+
+        const bggUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(searchQ)}&type=boardgame`;
         const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
         const xml  = await res.text();
         const doc  = new DOMParser().parseFromString(xml, 'application/xml');
@@ -1594,7 +1612,7 @@
           year: el.querySelector('yearpublished')?.getAttribute('value') || ''
         })).filter(it => it.name);
         if (!items.length) {
-          drop.innerHTML = '<div class="ac-loading">결과 없음 (영어로 검색해 보세요)</div>';
+          drop.innerHTML = `<div class="ac-loading">결과 없음${isKorean(q) ? ` (번역: "${esc(searchQ)}")` : ''}</div>`;
           return;
         }
         drop.innerHTML = items.map(it => `
