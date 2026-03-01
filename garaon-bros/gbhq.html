@@ -1584,14 +1584,17 @@
       const drop = document.getElementById('ac-drop');
       if (!drop) return;
       try {
-        const res = await fetch('https://jknetworks.app.n8n.cloud/webhook/garaon-bg-search', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ query: q })
-        });
-        const data = await res.json();
-        const items = data.items || [];
+        const bggUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(q)}&type=boardgame`;
+        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
+        const xml  = await res.text();
+        const doc  = new DOMParser().parseFromString(xml, 'application/xml');
+        const items = [...doc.querySelectorAll('item[type="boardgame"]')].slice(0,10).map(el => ({
+          id:   el.getAttribute('objectid') || el.getAttribute('id'),
+          name: el.querySelector('name[type="primary"]')?.getAttribute('value') || '',
+          year: el.querySelector('yearpublished')?.getAttribute('value') || ''
+        })).filter(it => it.name);
         if (!items.length) {
-          drop.innerHTML = '<div class="ac-loading">결과 없음</div>';
+          drop.innerHTML = '<div class="ac-loading">결과 없음 (영어로 검색해 보세요)</div>';
           return;
         }
         drop.innerHTML = items.map(it => `
@@ -1614,18 +1617,34 @@
       document.getElementById('f-name').value = bggName;
       showToast('🔍 BGG에서 정보 가져오는 중...');
       try {
-        const res = await fetch('https://jknetworks.app.n8n.cloud/webhook/garaon-bg-detail', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ id: bggId })
-        });
-        const d = await res.json();
+        const bggUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&stats=0`;
+        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
+        const xml  = await res.text();
 
-        // 기본 필드 채우기
-        if (d.description) document.getElementById('f-desc').value = d.description;
-        if (d.min_players) document.getElementById('f-min').value = d.min_players;
-        if (d.max_players) document.getElementById('f-max').value = d.max_players;
-        if (d.play_time_min) document.getElementById('f-time').value = d.play_time_min;
-        if (d.age_min) document.getElementById('f-age').value = d.age_min;
+        // BGG가 캐시 준비 중일 때 202 반환
+        if (res.status === 202 || xml.includes('try again')) {
+          showToast('⏳ BGG 서버가 준비 중... 잠시 후 다시 클릭해주세요.', true);
+          return;
+        }
+
+        const doc  = new DOMParser().parseFromString(xml, 'application/xml');
+        const item = doc.querySelector('item');
+        if (!item) { showToast('BGG 정보를 찾을 수 없어요.', true); return; }
+
+        // 설명 (HTML 엔티티 디코딩 + 500자 제한)
+        const rawDesc = item.querySelector('description')?.textContent || '';
+        const desc = rawDesc
+          .replace(/&amp;#10;/g, '\n').replace(/&#10;/g, '\n')
+          .replace(/&amp;mdash;/g, '—').replace(/&amp;/g, '&')
+          .replace(/<[^>]+>/g, '').trim();
+        if (desc) document.getElementById('f-desc').value = desc.slice(0, 500);
+
+        // 플레이어 수 / 시간 / 최소 나이
+        const getVal = sel => item.querySelector(sel)?.getAttribute('value') || '';
+        if (getVal('minplayers')) document.getElementById('f-min').value = getVal('minplayers');
+        if (getVal('maxplayers')) document.getElementById('f-max').value = getVal('maxplayers');
+        if (getVal('minplaytime')) document.getElementById('f-time').value = getVal('minplaytime');
+        if (getVal('minage')) document.getElementById('f-age').value = getVal('minage');
 
         // 카테고리 매핑 (영어→한국어)
         const catMap = {
@@ -1634,28 +1653,31 @@
           'Abstract':'추상', 'Bluffing':'블러핑', 'Memory':'기억',
           'Word Game':'단어', 'Trivia':'퀴즈', 'Negotiation':'협상',
         };
-        const matchedCats = (d.categories||[]).map(c => catMap[c]).filter(Boolean);
+        const bggCats = [...item.querySelectorAll('link[type="boardgamecategory"]')]
+                           .map(el => el.getAttribute('value'));
+        const matchedCats = bggCats.map(c => catMap[c]).filter(Boolean);
         if (matchedCats.length) {
           document.querySelectorAll('.cat-chip').forEach(btn => {
             if (matchedCats.includes(btn.textContent.trim())) btn.classList.add('on');
           });
         }
 
-        // 이미지 URL 저장 (hidden input으로)
-        if (d.image) {
+        // 이미지 URL (BGG는 //로 시작하는 프로토콜 상대 URL 사용)
+        const rawImg = item.querySelector('image')?.textContent?.trim()
+                    || item.querySelector('thumbnail')?.textContent?.trim() || '';
+        const imgUrl = rawImg.startsWith('//') ? 'https:' + rawImg : rawImg;
+        if (imgUrl) {
           let imgInput = document.getElementById('f-image');
           if (!imgInput) {
             imgInput = document.createElement('input');
             imgInput.type = 'hidden'; imgInput.id = 'f-image';
             document.getElementById('game-form').appendChild(imgInput);
           }
-          imgInput.value = d.image;
+          imgInput.value = imgUrl;
         }
 
-        // YouTube 검색도 트리거
-        if (document.getElementById('f-youtube') !== null) {
-          document.getElementById('yt-results') && searchYouTube(bggName);
-        }
+        // YouTube 검색 트리거
+        if (document.getElementById('yt-results')) searchYouTube(bggName);
 
         showToast('✅ BGG 정보 자동 입력 완료!');
       } catch(e) {
