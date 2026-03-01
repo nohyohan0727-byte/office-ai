@@ -716,9 +716,32 @@
     }
 
     /* ==================== 카테고리 관리 ==================== */
+    let catCompanyId = null; // 선택된 회사 (super_admin용)
+
     function buildCategoryTab() {
       const el = document.getElementById('cat-content');
+      const isSuperAdmin = authData?.role === 'super_admin';
+
+      // super_admin: 회사 선택 후 카테고리 관리, company_admin: 본인 회사 고정
+      if (isSuperAdmin && !catCompanyId) {
+        catCompanyId = companyList[0]?.id || null;
+      } else if (!isSuperAdmin) {
+        catCompanyId = authData.company_id;
+      }
+
+      const companyOptions = companyList.map(c =>
+        `<option value="${c.id}" ${c.id === catCompanyId ? 'selected' : ''}>${c.name}</option>`
+      ).join('');
+
       el.innerHTML = `
+        ${isSuperAdmin ? `
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem">
+          <label style="margin:0;white-space:nowrap">🏢 회사 선택</label>
+          <select id="cat-company-id" onchange="onCatCompanyChange(this.value)" style="flex:1;max-width:320px">
+            ${companyOptions}
+          </select>
+        </div>` : ''}
+
         <div class="grid-2">
           <div class="card">
             <div class="card-header"><div class="card-header-left"><span>➕</span><span class="card-title">카테고리 생성</span></div></div>
@@ -733,30 +756,57 @@
           </div>
 
           <div class="card">
-            <div class="card-header"><div class="card-header-left"><span>📂</span><span class="card-title">현재 카테고리 목록</span></div></div>
+            <div class="card-header">
+              <div class="card-header-left"><span>📂</span><span class="card-title">카테고리 목록</span></div>
+              <button class="btn btn-secondary btn-sm" onclick="loadCategoryList()">🔄 새로고침</button>
+            </div>
             <div class="card-body">
               <div id="cat-list">
-                ${(authData?.categories || []).map(c => `
-                  <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--border)">
-                    <span>📂</span>
-                    <div style="flex:1">
-                      <div style="font-weight:600;font-size:0.875rem">${c.name}</div>
-                      <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.table_name}</div>
-                    </div>
-                    ${c.can_upload ? '<span style="font-size:0.72rem;color:var(--success)">📤 업로드 가능</span>' : ''}
-                  </div>`).join('') || '<div style="color:var(--text-dim);font-size:0.875rem">카테고리 없음</div>'}
+                <div style="padding:1rem;text-align:center;color:var(--text-dim)">로딩 중...</div>
               </div>
             </div>
           </div>
         </div>`;
+
+      loadCategoryList();
+    }
+
+    async function onCatCompanyChange(companyId) {
+      catCompanyId = companyId;
+      loadCategoryList();
+    }
+
+    async function loadCategoryList() {
+      const listEl = document.getElementById('cat-list');
+      if (!listEl) return;
+      listEl.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-dim)">로딩 중...</div>';
+      try {
+        const data = await callAdmin('list_categories', { company_id: catCompanyId });
+        const cats = Array.isArray(data?.result) ? data.result : [];
+        listEl.innerHTML = cats.length
+          ? cats.map(c => `
+              <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--border)">
+                <span>📂</span>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:0.875rem">${c.name}</div>
+                  <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.table_name}</div>
+                </div>
+                ${c.is_active !== false ? '<span style="font-size:0.72rem;color:var(--success)">✅ 활성</span>' : '<span style="font-size:0.72rem;color:var(--danger)">❌ 비활성</span>'}
+              </div>`).join('')
+          : '<div style="color:var(--text-dim);font-size:0.875rem">카테고리 없음</div>';
+      } catch(e) {
+        listEl.innerHTML = '<div style="color:var(--danger);font-size:0.875rem">로드 실패</div>';
+      }
     }
 
     async function createCategory() {
+      if (!catCompanyId) { showToast('회사를 선택하세요', 'error'); return; }
       const catName = document.getElementById('cat-name').value.trim();
       if (!catName) { showToast('카테고리 이름을 입력하세요', 'error'); return; }
       spin('cc-spinner', true);
       try {
         const data = await callAdmin('create_category', {
+          company_id: catCompanyId,
           name: catName,
           description: document.getElementById('cat-desc').value.trim()
         });
@@ -768,8 +818,14 @@
         el.textContent = ok
           ? `✅ 카테고리 생성 완료\n이름: ${data.result?.name || catName}\n테이블: ${data.result?.table_name || '(자동 생성)'}`
           : (data?.message || '생성 실패');
-        if (ok) showToast('✅ 카테고리 생성 완료');
-        else showToast(data?.message || '실패', 'error');
+        if (ok) {
+          showToast('✅ 카테고리 생성 완료');
+          document.getElementById('cat-name').value = '';
+          document.getElementById('cat-desc').value = '';
+          loadCategoryList();
+        } else {
+          showToast(data?.message || '실패', 'error');
+        }
       } catch (e) {
         spin('cc-spinner', false);
         showToast('오류', 'error');
