@@ -855,17 +855,45 @@
       selectPermUser(userId);
     }
 
+    let permCompanyFilter = null; // super_admin용 회사 필터
+
     function buildPermTab() {
       const el = document.getElementById('perm-content');
-      const roleLabels = { super_admin:'운영자', company_admin:'회사관리자', group_admin:'그룹관리자', user:'사용자' };
-      const userRows = userList.map(u => `
+      const isSuperAdmin = authData?.role === 'super_admin';
+
+      // super_admin: 회사 필터 기본값 설정
+      if (isSuperAdmin && !permCompanyFilter && companyList.length > 0) {
+        permCompanyFilter = companyList[0].id;
+      }
+
+      // 현재 필터에 맞는 유저만 표시
+      const visibleUsers = isSuperAdmin
+        ? userList.filter(u => u.company_id === permCompanyFilter)
+        : userList;
+
+      const userRows = visibleUsers.map(u => {
+        const coName = companyList.find(c => c.id === u.company_id)?.name || '';
+        return `
         <div class="perm-user-row" id="perm-row-${u.id}" onclick="selectPermUser('${u.id}')">
           <div class="perm-user-info">
             <span class="perm-user-name">${u.name || u.email}</span>
             ${getRoleBadgeHTML(u.role)}
           </div>
-          <span class="perm-user-email">${u.email}</span>
-        </div>`).join('') || '<div style="padding:1rem;color:var(--text-dim);font-size:0.85rem">회원 없음</div>';
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.15rem">
+            <span class="perm-user-email">${u.email}</span>
+            ${coName ? `<span style="font-size:0.7rem;color:var(--text-dim)">🏢 ${coName}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('') || '<div style="padding:1rem;color:var(--text-dim);font-size:0.85rem">회원 없음</div>';
+
+      // super_admin: 회사 필터 드롭다운
+      const companyFilter = isSuperAdmin ? `
+        <div style="padding:0.75rem 1.1rem;border-bottom:1px solid var(--border)">
+          <select id="perm-company-filter" onchange="onPermCompanyFilter(this.value)"
+            style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text-white);padding:0.4rem 0.65rem;font-size:0.82rem;font-family:inherit">
+            ${companyList.map(c => `<option value="${c.id}" ${c.id === permCompanyFilter ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+        </div>` : '';
 
       el.innerHTML = `
         <div class="perm-layout">
@@ -873,6 +901,7 @@
             <div class="card-header">
               <div class="card-header-left"><span>👥</span><span class="card-title">회원 선택</span></div>
             </div>
+            ${companyFilter}
             <div class="perm-user-list" id="perm-user-list">${userRows}</div>
           </div>
 
@@ -891,7 +920,7 @@
             <div id="perm-panel-body" class="card-body">
               <div style="padding:2rem;text-align:center;color:var(--text-dim)">
                 <div style="font-size:2rem;margin-bottom:0.5rem">👈</div>
-                왼쪽에서 회원을 선택하면<br>카테고리 권한을 설정할 수 있습니다
+                왼쪽에서 회원을 선택하면<br>역할 및 카테고리 권한을 설정할 수 있습니다
               </div>
             </div>
             <div class="result-box" id="perm-result" style="display:none;margin:1rem 1.25rem"></div>
@@ -899,7 +928,23 @@
         </div>`;
 
       // 이미 선택된 유저가 있으면 복원
-      if (permState.userId) selectPermUser(permState.userId);
+      if (permState.userId && visibleUsers.find(u => u.id === permState.userId)) {
+        selectPermUser(permState.userId);
+      }
+    }
+
+    async function onPermCompanyFilter(companyId) {
+      permCompanyFilter = companyId;
+      // 해당 회사 유저 로드 (userList에 없을 수 있으므로 새로 조회)
+      const data = await callAdmin('list_users', { company_id: companyId });
+      const newUsers = Array.isArray(data?.result) ? data.result : [];
+      // userList에 병합 (중복 제거)
+      newUsers.forEach(u => {
+        if (!userList.find(x => x.id === u.id)) userList.push(u);
+        else Object.assign(userList.find(x => x.id === u.id), u);
+      });
+      permState.userId = null; // 선택 초기화
+      buildPermTab();
     }
 
     async function selectPermUser(userId) {
