@@ -301,7 +301,19 @@
     async function load() {
       const tbl   = currentTab === 'board' ? 'board_games' : 'hand_games';
       const { data, error } = await getDB().from(tbl).select('*').order('name');
-      if (error) { showToast('로드 실패: ' + error.message, true); return; }
+      if (error) {
+        showToast('로드 실패: ' + error.message, true);
+        const hint = error.message.includes('exist')
+          ? '<div style="font-size:11px;color:#555;margin-top:8px;">db/schema.sql 을 Supabase에서 실행해 주세요</div>'
+          : '';
+        document.getElementById('list-area').innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">⚠️</div>
+            <div class="empty-txt">LOAD ERROR</div>
+            ${hint}
+          </div>`;
+        return;
+      }
       allGames = data || [];
       renderStats();
       renderList();
@@ -352,6 +364,9 @@
         return;
       }
 
+      window._gameMap = {};
+      filtered.forEach(g => { window._gameMap[g.id] = g; });
+
       const html = filtered.map(g => gameCardHTML(g)).join('');
       document.getElementById('list-area').innerHTML = `<div class="grid">${html}</div>`;
     }
@@ -400,7 +415,7 @@
           </div>
 
           <div class="gc-actions">
-            <button class="btn-edit" onclick='openModal(${JSON.stringify(g)})'>✏️ 수정</button>
+            <button class="btn-edit" onclick="openModal(window._gameMap[${g.id}])">✏️ 수정</button>
             <button class="btn-del"  onclick="deleteGame(${g.id})">🗑</button>
           </div>
         </div>`;
