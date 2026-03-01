@@ -17,9 +17,10 @@
       color: #ddd;
       padding: 20px;
     }
-    .container { text-align: center; max-width: 480px; width: 100%; }
+    .wrap { text-align: center; max-width: 480px; width: 100%; }
 
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    /* ── 애니메이션 ── */
+    @keyframes float  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
     @keyframes blink  { 50%{opacity:0} }
     @keyframes glitch {
       0%,100%{text-shadow:0 0 10px #00d4ff,0 0 20px #00d4ff}
@@ -27,60 +28,140 @@
       30%{text-shadow:2px 0 #ff006e,-2px 0 #00ff88}
       45%{text-shadow:0 0 10px #00d4ff,0 0 20px #00d4ff}
     }
-    @keyframes popIn { 0%{transform:scale(.6);opacity:0} 80%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+    @keyframes popIn  { 0%{transform:scale(.6);opacity:0} 80%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+    @keyframes shake  { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
 
-    .logo      { font-size: 64px; animation: float 3s ease-in-out infinite; margin-bottom: 16px; }
-    .title     { font-family:'Press Start 2P',monospace; font-size: 14px; color:#00d4ff; text-shadow:0 0 10px #00d4ff; animation:glitch 5s ease-in-out infinite; line-height:2; }
-    .subtitle  { font-family:'Press Start 2P',monospace; font-size: 7px; color:#ffd700; margin-top:8px; margin-bottom:40px; }
-    .blink     { animation: blink 1s step-end infinite; }
+    /* ── 공통 ── */
+    .logo     { font-size:64px; animation:float 3s ease-in-out infinite; margin-bottom:16px; }
+    .title    { font-family:'Press Start 2P',monospace; font-size:14px; color:#00d4ff; animation:glitch 5s ease-in-out infinite; line-height:2; }
+    .subtitle { font-family:'Press Start 2P',monospace; font-size:7px; color:#ffd700; margin-top:8px; margin-bottom:40px; }
+    .blink    { animation:blink 1s step-end infinite; }
+    .footer   { margin-top:32px; font-family:'Press Start 2P',monospace; font-size:6px; color:#333; }
 
+    /* ── 카드 ── */
     .card {
-      background: #151526;
-      border-radius: 20px;
-      padding: 28px 24px;
-      margin-bottom: 16px;
-      border: 2px solid transparent;
-      text-decoration: none;
-      display: block;
-      transition: transform .2s, box-shadow .2s;
-      animation: popIn .4s ease both;
-      cursor: pointer;
+      background:#151526; border-radius:20px; padding:28px 24px; margin-bottom:16px;
+      border:2px solid transparent; text-decoration:none; display:block;
+      transition:transform .2s, box-shadow .2s; animation:popIn .4s ease both;
     }
-    .card:hover { transform: translateY(-6px); }
-    .card-1 { border-color: #cc44ff; box-shadow: 0 0 10px #cc44ff44; animation-delay:.1s; }
-    .card-1:hover { box-shadow: 0 0 24px #cc44ff; }
-    .card-2 { border-color: #00ff88; box-shadow: 0 0 10px #00ff8844; animation-delay:.2s; }
-    .card-2:hover { box-shadow: 0 0 24px #00ff88; }
+    .card:hover { transform:translateY(-6px); }
+    .card-icon  { font-size:40px; margin-bottom:10px; }
+    .card-title { font-weight:900; font-size:18px; margin-bottom:6px; }
+    .card-desc  { font-size:13px; color:#777; line-height:1.6; }
+    .badge { display:inline-block; font-size:10px; padding:3px 10px; border-radius:20px; margin-bottom:10px; font-weight:700; }
 
-    .card-icon  { font-size: 40px; margin-bottom: 10px; }
-    .card-title { font-weight: 900; font-size: 18px; margin-bottom: 6px; }
-    .card-desc  { font-size: 13px; color: #777; line-height: 1.6; }
-    .badge      { display:inline-block; font-size:10px; padding:3px 10px; border-radius:20px; margin-bottom:10px; font-weight:700; }
+    .card-rec  { border-color:#cc44ff; box-shadow:0 0 10px #cc44ff44; animation-delay:.1s; opacity:.55; cursor:default; }
+    .card-info { border-color:#00d4ff; box-shadow:0 0 10px #00d4ff44; animation-delay:.15s; }
+    .card-info:hover { box-shadow:0 0 24px #00d4ff; }
+    .card-base { border-color:#00ff88; box-shadow:0 0 10px #00ff8844; animation-delay:.2s; }
+    .card-base:hover { box-shadow:0 0 24px #00ff88; }
+
+    .card-rec  .card-title { color:#cc44ff; }
+    .card-info .card-title { color:#00d4ff; }
+    .card-base .card-title { color:#00ff88; }
+
     .badge-wip  { background:#ffd70022; color:#ffd700; border:1px solid #ffd700; }
+    .badge-blue { background:#00d4ff22; color:#00d4ff; border:1px solid #00d4ff; }
     .badge-done { background:#00ff8822; color:#00ff88; border:1px solid #00ff88; }
 
-    .card-1 .card-title { color: #cc44ff; }
-    .card-2 .card-title { color: #00ff88; }
+    /* ── 비밀번호 화면 ── */
+    #pw-screen {
+      position:fixed; inset:0; background:#0b0b1a;
+      display:flex; align-items:center; justify-content:center;
+      z-index:100; padding:20px;
+      transition:opacity .3s;
+    }
+    .pw-box {
+      background:#151526; border:2px solid #00d4ff;
+      border-radius:24px; padding:36px 28px;
+      max-width:340px; width:100%; text-align:center;
+      box-shadow:0 0 40px #00d4ff33;
+      animation:popIn .4s ease both;
+    }
+    .pw-title { font-family:'Press Start 2P',monospace; font-size:9px; color:#00d4ff; line-height:2.2; margin-bottom:28px; }
 
-    .footer { margin-top: 32px; font-family:'Press Start 2P',monospace; font-size:6px; color:#333; }
+    /* 핀 도트 */
+    .pin-row { display:flex; justify-content:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .dot { width:16px; height:16px; border-radius:50%; border:2px solid #00d4ff; background:transparent; transition:background .15s, box-shadow .15s; }
+    .dot.on { background:#00d4ff; box-shadow:0 0 8px #00d4ff; }
+
+    /* 입력 표시 */
+    .pw-display { font-family:monospace; font-size:20px; color:#00d4ff; letter-spacing:4px; height:28px; margin-bottom:8px; }
+    .pw-hint { font-size:12px; color:#555; margin-bottom:20px; min-height:18px; }
+    .pw-hint.err { color:#ff006e; animation:shake .4s ease; }
+
+    /* 키패드 */
+    .keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+    .key {
+      height:64px; border-radius:14px; background:#1e1e38;
+      border:1px solid #333; color:#ccc; font-family:'Nunito',sans-serif;
+      font-size:22px; font-weight:900; cursor:pointer;
+      transition:all .12s; display:flex; align-items:center; justify-content:center;
+    }
+    .key:hover  { border-color:#00d4ff; color:#00d4ff; box-shadow:0 0 8px #00d4ff44; }
+    .key:active { transform:scale(.9); }
+    .key.del    { font-size:16px; }
+
+    /* 특수문자 행 */
+    .specials { display:flex; gap:8px; justify-content:center; }
+    .spec {
+      width:48px; height:48px; border-radius:10px; background:#1e1e38;
+      border:1px solid #333; color:#aaa; font-size:16px; font-weight:700;
+      cursor:pointer; transition:all .12s;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .spec:hover  { border-color:#00d4ff; color:#00d4ff; }
+    .spec:active { transform:scale(.88); }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- ══════════════════════════════
+       비밀번호 진입 화면
+       ══════════════════════════════ -->
+  <div id="pw-screen">
+    <div class="pw-box">
+      <div style="font-size:52px; margin-bottom:12px; animation:float 3s ease-in-out infinite;">🎮</div>
+      <div class="pw-title">가라온 브로즈<br>비밀번호 입력</div>
+
+      <div class="pin-row" id="pin-dots"></div>
+      <div class="pw-display" id="pw-display">비밀번호 입력</div>
+      <div class="pw-hint" id="pw-hint">버튼을 눌러 입력하세요</div>
+
+      <!-- 숫자 키패드 -->
+      <div class="keypad" id="keypad"></div>
+
+      <!-- 특수문자 -->
+      <div class="specials" id="specials"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       메인 화면 (비밀번호 통과 후)
+       ══════════════════════════════ -->
+  <div id="main" class="wrap" style="display:none;">
     <div class="logo">🎮</div>
     <div class="title">가라온 브로즈</div>
     <div class="subtitle">PIXEL BASE &nbsp;<span class="blink">_</span></div>
 
-    <!-- 추천 앱 (준비중) -->
-    <div class="card card-1" style="cursor:default; opacity:.6;">
+    <!-- 보드게임 추천 (준비중) -->
+    <div class="card card-rec">
       <div class="badge badge-wip">🚧 준비중</div>
       <div class="card-icon">🎲</div>
       <div class="card-title">보드게임 추천</div>
       <div class="card-desc">인원수와 상황에 맞는<br>최적의 게임을 추천해 드려요!</div>
     </div>
 
-    <!-- 픽셀 기지 (완성) -->
-    <a href="./pixel-base.html" class="card card-2">
+    <!-- 보드게임 정보 (신규) -->
+    <a href="./admin.html" class="card card-info">
+      <div class="badge badge-blue">📋 관리</div>
+      <div class="card-icon">📊</div>
+      <div class="card-title">보드게임 정보</div>
+      <div class="card-desc">게임 목록 조회·등록·수정·삭제<br>보드게임 + 맨손게임 통합 관리</div>
+    </a>
+
+    <!-- 픽셀 기지 -->
+    <a href="./pixel-base.html" class="card card-base">
       <div class="badge badge-done">✅ 오픈</div>
       <div class="card-icon">⚔️</div>
       <div class="card-title">픽셀 기지</div>
@@ -89,5 +170,108 @@
 
     <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
   </div>
+
+  <script>
+    const PW      = '!20150910!';
+    const NUMS    = ['1','2','3','4','5','6','7','8','9','⌫','0',''];
+    const SPECS   = ['!','@','#','$','%','-','_','.'];
+    let   input   = '';
+
+    /* ── 초기화 ── */
+    function init() {
+      // 세션 유지
+      if (sessionStorage.getItem('gb_auth') === '1') { showMain(); return; }
+
+      // 핀 도트 생성 (비밀번호 길이만큼)
+      const dots = document.getElementById('pin-dots');
+      for (let i = 0; i < PW.length; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        d.id = 'dot-' + i;
+        dots.appendChild(d);
+      }
+
+      // 숫자 키패드
+      const kp = document.getElementById('keypad');
+      NUMS.forEach(k => {
+        const btn = document.createElement('button');
+        btn.className = 'key' + (k === '⌫' ? ' del' : '');
+        btn.textContent = k;
+        if (k === '') { btn.style.visibility = 'hidden'; }
+        else btn.onclick = () => press(k);
+        kp.appendChild(btn);
+      });
+
+      // 특수문자
+      const sp = document.getElementById('specials');
+      SPECS.forEach(k => {
+        const btn = document.createElement('button');
+        btn.className = 'spec';
+        btn.textContent = k;
+        btn.onclick = () => press(k);
+        sp.appendChild(btn);
+      });
+    }
+
+    /* ── 키 입력 ── */
+    function press(k) {
+      if (k === '⌫') {
+        input = input.slice(0, -1);
+      } else {
+        input += k;
+      }
+      render();
+
+      if (input === PW) {
+        sessionStorage.setItem('gb_auth', '1');
+        document.getElementById('pw-hint').textContent = '✅ 확인!';
+        document.getElementById('pw-hint').style.color = '#00ff88';
+        setTimeout(showMain, 400);
+      } else if (input.length >= PW.length) {
+        wrong();
+      }
+    }
+
+    /* ── 화면 갱신 ── */
+    function render() {
+      const disp = document.getElementById('pw-display');
+      disp.textContent = input.length ? '●'.repeat(input.length) : '비밀번호 입력';
+
+      for (let i = 0; i < PW.length; i++) {
+        const d = document.getElementById('dot-' + i);
+        if (d) d.className = 'dot' + (i < input.length ? ' on' : '');
+      }
+    }
+
+    /* ── 오류 ── */
+    function wrong() {
+      const hint = document.getElementById('pw-hint');
+      hint.textContent = '❌ 틀렸어요! 다시 해봐요';
+      hint.className = 'pw-hint err';
+      setTimeout(() => {
+        input = '';
+        render();
+        hint.textContent = '버튼을 눌러 입력하세요';
+        hint.className = 'pw-hint';
+      }, 700);
+    }
+
+    /* ── 메인 전환 ── */
+    function showMain() {
+      const pw = document.getElementById('pw-screen');
+      pw.style.opacity = '0';
+      setTimeout(() => { pw.style.display = 'none'; }, 300);
+      document.getElementById('main').style.display = 'block';
+    }
+
+    /* ── 키보드 입력도 지원 ── */
+    document.addEventListener('keydown', e => {
+      if (document.getElementById('pw-screen').style.display === 'none') return;
+      if (e.key === 'Backspace') press('⌫');
+      else if (e.key.length === 1) press(e.key);
+    });
+
+    init();
+  </script>
 </body>
 </html>

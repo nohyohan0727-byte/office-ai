@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 보드게임 정보 — 가라온 브로즈</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:   #0b0b1a;
+      --card: #151526;
+      --card2:#1e1e38;
+      --g:  #00ff88;
+      --b:  #00d4ff;
+      --p:  #cc44ff;
+      --y:  #ffd700;
+      --r:  #ff4466;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); min-height:100vh; font-family:'Nunito',sans-serif; color:#ddd; }
+
+    /* ── 헤더 ── */
+    header {
+      background:var(--card); border-bottom:2px solid var(--b);
+      padding:14px 20px; display:flex; align-items:center; gap:14px;
+      position:sticky; top:0; z-index:50;
+      box-shadow:0 0 20px #00d4ff22;
+    }
+    .back-btn {
+      background:transparent; border:1px solid #333; color:#888;
+      border-radius:10px; padding:8px 14px; font-family:'Nunito',sans-serif;
+      font-weight:700; cursor:pointer; font-size:14px; transition:all .15s;
+    }
+    .back-btn:hover { border-color:var(--b); color:var(--b); }
+    .header-title { font-family:'Press Start 2P',monospace; font-size:10px; color:var(--b); flex:1; }
+    .add-btn {
+      background:var(--g); color:var(--bg); border:none; border-radius:12px;
+      padding:10px 18px; font-family:'Nunito',sans-serif; font-weight:900;
+      font-size:14px; cursor:pointer; transition:all .15s;
+      box-shadow:0 0 10px #00ff8866;
+    }
+    .add-btn:hover { filter:brightness(1.15); }
+
+    /* ── 탭 ── */
+    .tabs { display:flex; gap:0; padding:16px 20px 0; border-bottom:1px solid #222; }
+    .tab {
+      padding:10px 24px; font-weight:900; font-size:14px; cursor:pointer;
+      border-radius:12px 12px 0 0; border:2px solid transparent;
+      border-bottom:none; transition:all .15s; color:#555;
+    }
+    .tab.active-board { border-color:var(--b); background:var(--card); color:var(--b); margin-bottom:-1px; }
+    .tab.active-hand  { border-color:var(--p); background:var(--card); color:var(--p); margin-bottom:-1px; }
+    .tab:not(.active-board):not(.active-hand):hover { color:#999; }
+
+    /* ── 검색 ── */
+    .search-row { padding:16px 20px; display:flex; gap:10px; }
+    .search-input {
+      flex:1; background:var(--card); border:1px solid #333; border-radius:10px;
+      padding:10px 14px; color:#fff; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:14px; outline:none; transition:border .15s;
+    }
+    .search-input:focus { border-color:var(--b); }
+
+    /* ── 통계 ── */
+    .stats { display:flex; gap:10px; padding:0 20px 16px; flex-wrap:wrap; }
+    .stat-chip {
+      background:var(--card); border:1px solid #222; border-radius:10px;
+      padding:8px 14px; font-size:12px; color:#888;
+    }
+    .stat-chip strong { color:#ddd; font-size:14px; margin-right:4px; }
+
+    /* ── 게임 그리드 ── */
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+      gap:14px; padding:0 20px 80px;
+    }
+
+    /* ── 게임 카드 ── */
+    .game-card {
+      background:var(--card); border-radius:16px; border:2px solid #222;
+      padding:18px; transition:border-color .2s, box-shadow .2s;
+      position:relative;
+    }
+    .game-card:hover { border-color:var(--b); box-shadow:0 0 12px #00d4ff33; }
+    .gc-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+    .gc-icon { font-size:36px; flex-shrink:0; }
+    .gc-info { flex:1; min-width:0; }
+    .gc-name { font-weight:900; font-size:16px; color:#fff; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .gc-name-en { font-size:11px; color:#555; margin-bottom:6px; }
+    .gc-tags { display:flex; flex-wrap:wrap; gap:4px; }
+    .tag {
+      font-size:10px; padding:2px 8px; border-radius:20px; font-weight:700;
+      background:#1e1e38; color:#888; border:1px solid #333;
+    }
+    .tag.cat { background:#00d4ff11; color:var(--b); border-color:#00d4ff33; }
+
+    .gc-meta { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
+    .meta-item { font-size:12px; color:#666; }
+    .meta-item span { color:#ccc; font-weight:700; }
+
+    .gc-bars { margin-bottom:14px; }
+    .bar-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .bar-label { font-size:11px; color:#666; width:40px; flex-shrink:0; }
+    .bar-track { flex:1; background:#0d0d1f; border-radius:4px; height:8px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:4px; transition:width .6s ease; }
+    .bar-val { font-size:11px; color:#888; width:20px; text-align:right; flex-shrink:0; }
+
+    .gc-actions { display:flex; gap:8px; }
+    .btn-edit {
+      flex:1; padding:9px; border-radius:10px; border:1px solid var(--b);
+      background:transparent; color:var(--b); font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:13px; cursor:pointer; transition:all .15s;
+    }
+    .btn-edit:hover { background:#00d4ff22; }
+    .btn-del {
+      padding:9px 12px; border-radius:10px; border:1px solid var(--r);
+      background:transparent; color:var(--r); font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:13px; cursor:pointer; transition:all .15s;
+    }
+    .btn-del:hover { background:#ff446622; }
+
+    /* ── 이용 불가 ── */
+    .unavailable { opacity:.45; }
+    .unavailable-badge {
+      position:absolute; top:12px; right:12px; background:#ff446622;
+      color:var(--r); border:1px solid var(--r); border-radius:20px;
+      font-size:10px; padding:2px 8px; font-weight:700;
+    }
+
+    /* ── 빈 상태 ── */
+    .empty { text-align:center; padding:60px 20px; color:#444; }
+    .empty-icon { font-size:56px; margin-bottom:16px; }
+    .empty-txt { font-family:'Press Start 2P',monospace; font-size:8px; }
+
+    /* ── 로딩 ── */
+    .loading { text-align:center; padding:60px; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .spinner { width:40px; height:40px; border:3px solid #222; border-top-color:var(--b); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+
+    /* ── 모달 ── */
+    .modal-bd {
+      position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(6px);
+      z-index:200; display:flex; align-items:center; justify-content:center;
+      padding:16px; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-bd.open { opacity:1; pointer-events:all; }
+    .modal {
+      background:var(--card); border-radius:20px; padding:28px;
+      max-width:500px; width:100%; max-height:90vh; overflow-y:auto;
+      border:2px solid var(--b); box-shadow:0 0 40px #00d4ff33;
+      transform:scale(.95); transition:transform .2s;
+    }
+    .modal-bd.open .modal { transform:scale(1); }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+    .modal-title { font-family:'Press Start 2P',monospace; font-size:9px; color:var(--b); }
+    .modal-close { background:transparent; border:none; color:#666; font-size:22px; cursor:pointer; transition:color .15s; }
+    .modal-close:hover { color:#ddd; }
+
+    /* 폼 */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group.full { grid-column:1/-1; }
+    .form-label { font-size:12px; color:#888; font-weight:700; }
+    .form-input, .form-select, .form-textarea {
+      background:var(--bg); border:2px solid #333; border-radius:10px;
+      padding:10px 12px; color:#fff; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:14px; outline:none; transition:border .15s;
+      width:100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--b); }
+    .form-select option { background:var(--card2); }
+    .form-textarea { resize:vertical; min-height:80px; }
+    .form-range { width:100%; accent-color:var(--b); }
+    .range-val { font-size:12px; color:var(--b); font-weight:900; text-align:right; }
+
+    /* 카테고리 체크박스 */
+    .cat-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .cat-chip {
+      padding:6px 12px; border-radius:20px; border:2px solid #333; background:transparent;
+      color:#777; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s;
+    }
+    .cat-chip.on { border-color:var(--b); color:var(--b); background:#00d4ff11; }
+
+    /* 제출 버튼 */
+    .form-btns { display:flex; gap:10px; margin-top:24px; }
+    .btn-cancel {
+      flex:1; padding:12px; border-radius:12px; border:1px solid #333;
+      background:transparent; color:#888; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:15px; cursor:pointer;
+    }
+    .btn-submit {
+      flex:2; padding:12px; border-radius:12px; border:none;
+      background:var(--g); color:var(--bg); font-family:'Nunito',sans-serif;
+      font-weight:900; font-size:15px; cursor:pointer;
+      box-shadow:0 0 12px #00ff8855; transition:filter .15s;
+    }
+    .btn-submit:hover { filter:brightness(1.15); }
+    .btn-submit:disabled { background:#333; color:#666; box-shadow:none; cursor:not-allowed; }
+
+    /* ── 토스트 ── */
+    .toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+      background:var(--card); border:2px solid var(--g); border-radius:14px;
+      padding:12px 24px; font-weight:700; font-size:14px; color:var(--g);
+      z-index:300; transition:transform .3s; white-space:nowrap;
+      box-shadow:0 0 20px #00ff8844;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+    .toast.err  { border-color:var(--r); color:var(--r); box-shadow:0 0 20px #ff446644; }
+
+    /* ── 반응형 ── */
+    @media(max-width:480px) {
+      .form-grid { grid-template-columns:1fr; }
+      .grid { grid-template-columns:1fr; }
+      .header-title { font-size:7px; }
+    }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--b); border-radius:2px; }
+  </style>
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <header>
+    <button class="back-btn" onclick="location.href='./index.html'">← 뒤로</button>
+    <div class="header-title">보드게임 정보</div>
+    <button class="add-btn" id="add-btn">+ 게임 추가</button>
+  </header>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <div class="tab active-board" id="tab-board" onclick="switchTab('board')">🎲 보드게임</div>
+    <div class="tab" id="tab-hand"  onclick="switchTab('hand')">✋ 맨손게임</div>
+  </div>
+
+  <!-- 검색 -->
+  <div class="search-row">
+    <input class="search-input" id="search" placeholder="🔍 게임 이름 검색..." oninput="renderList()">
+  </div>
+
+  <!-- 통계 -->
+  <div class="stats" id="stats"></div>
+
+  <!-- 게임 목록 -->
+  <div id="list-area">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <!-- 모달 -->
+  <div class="modal-bd" id="modal">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="modal-title">게임 추가</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <form id="game-form" onsubmit="submitForm(event)">
+        <div id="form-fields"></div>
+        <div class="form-btns">
+          <button type="button" class="btn-cancel" onclick="closeModal()">취소</button>
+          <button type="submit" class="btn-submit" id="submit-btn">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 토스트 -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ══════════════════════════════════════
+       상태
+       ══════════════════════════════════════ */
+    let currentTab  = 'board';   // 'board' | 'hand'
+    let allGames    = [];
+    let editingId   = null;
+
+    const BOARD_CATS = ['전략','카드','파티','협력','추리','경제','주사위','競賽','어린이'];
+    const HAND_CATS  = ['언어','신체','추리','창의','조용','시끌벅적','팀전','교육'];
+    const DIFF_LABEL = ['','쉬움','보통','약간 어려움','어려움','매우 어려움'];
+    const FUN_LABEL  = ['','별로','그저 그래','괜찮아','재미있어','최고야!'];
+
+    /* ══════════════════════════════════════
+       초기화
+       ══════════════════════════════════════ */
+    async function init() {
+      // 비밀번호 체크
+      if (sessionStorage.getItem('gb_auth') !== '1') {
+        location.href = './index.html'; return;
+      }
+      await load();
+      document.getElementById('add-btn').onclick = () => openModal(null);
+    }
+
+    /* ══════════════════════════════════════
+       데이터 로드
+       ══════════════════════════════════════ */
+    async function load() {
+      const tbl   = currentTab === 'board' ? 'board_games' : 'hand_games';
+      const { data, error } = await getDB().from(tbl).select('*').order('name');
+      if (error) { showToast('로드 실패: ' + error.message, true); return; }
+      allGames = data || [];
+      renderStats();
+      renderList();
+    }
+
+    /* ══════════════════════════════════════
+       탭 전환
+       ══════════════════════════════════════ */
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('search').value = '';
+      document.getElementById('tab-board').className = 'tab' + (tab==='board' ? ' active-board' : '');
+      document.getElementById('tab-hand').className  = 'tab' + (tab==='hand'  ? ' active-hand'  : '');
+      document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      load();
+    }
+
+    /* ══════════════════════════════════════
+       통계 렌더
+       ══════════════════════════════════════ */
+    function renderStats() {
+      const avail = allGames.filter(g => g.is_available !== false);
+      const avgFun = allGames.length
+        ? (allGames.reduce((s,g) => s + (g.fun_score||0), 0) / allGames.length).toFixed(1)
+        : '-';
+      document.getElementById('stats').innerHTML = `
+        <div class="stat-chip"><strong>${allGames.length}</strong>총 게임</div>
+        <div class="stat-chip"><strong>${avail.length}</strong>이용 가능</div>
+        <div class="stat-chip"><strong>${avgFun}</strong>평균 재미도</div>
+      `;
+    }
+
+    /* ══════════════════════════════════════
+       목록 렌더
+       ══════════════════════════════════════ */
+    function renderList() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const filtered = allGames.filter(g =>
+        g.name.toLowerCase().includes(q) || (g.name_en||'').toLowerCase().includes(q)
+      );
+
+      if (!filtered.length) {
+        document.getElementById('list-area').innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">${q ? '🔍' : '🎲'}</div>
+            <div class="empty-txt">${q ? 'NOT FOUND' : 'NO GAMES YET'}</div>
+          </div>`;
+        return;
+      }
+
+      const html = filtered.map(g => gameCardHTML(g)).join('');
+      document.getElementById('list-area').innerHTML = `<div class="grid">${html}</div>`;
+    }
+
+    /* ── 게임 카드 HTML ── */
+    function gameCardHTML(g) {
+      const isBoard   = currentTab === 'board';
+      const avail     = g.is_available !== false;
+      const cats      = (g.categories || []).map(c => `<span class="tag cat">${c}</span>`).join('');
+      const diffPct   = isBoard ? ((g.difficulty||1) / 5 * 100) : null;
+      const funPct    = ((g.fun_score||1) / 5 * 100);
+      const diffColor = isBoard ? `hsl(${120 - (g.difficulty||1)*20},70%,50%)` : null;
+      const funColor  = `hsl(${(g.fun_score||1)*24},80%,55%)`;
+
+      return `
+        <div class="game-card${avail ? '' : ' unavailable'}">
+          ${!avail ? '<div class="unavailable-badge">이용불가</div>' : ''}
+          <div class="gc-head">
+            <div class="gc-icon">${isBoard ? '🎲' : '✋'}</div>
+            <div class="gc-info">
+              <div class="gc-name" title="${esc(g.name)}">${esc(g.name)}</div>
+              ${g.name_en ? `<div class="gc-name-en">${esc(g.name_en)}</div>` : ''}
+              <div class="gc-tags">${cats}</div>
+            </div>
+          </div>
+
+          <div class="gc-meta">
+            <div class="meta-item">👥 <span>${g.min_players}~${g.max_players}명</span></div>
+            <div class="meta-item">⏱ <span>${g.play_time_min||'?'}분</span></div>
+            ${g.age_min ? `<div class="meta-item">🎂 <span>${g.age_min}세+</span></div>` : ''}
+            ${g.materials ? `<div class="meta-item">📦 <span>${esc(g.materials)}</span></div>` : ''}
+          </div>
+
+          <div class="gc-bars">
+            ${isBoard && diffPct !== null ? `
+            <div class="bar-row">
+              <div class="bar-label">난이도</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${diffPct}%;background:${diffColor}"></div></div>
+              <div class="bar-val">${g.difficulty||'-'}</div>
+            </div>` : ''}
+            <div class="bar-row">
+              <div class="bar-label">재미도</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${funPct}%;background:${funColor}"></div></div>
+              <div class="bar-val">${g.fun_score||'-'}</div>
+            </div>
+          </div>
+
+          <div class="gc-actions">
+            <button class="btn-edit" onclick='openModal(${JSON.stringify(g)})'>✏️ 수정</button>
+            <button class="btn-del"  onclick="deleteGame(${g.id})">🗑</button>
+          </div>
+        </div>`;
+    }
+
+    function esc(s) {
+      return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ══════════════════════════════════════
+       삭제
+       ══════════════════════════════════════ */
+    async function deleteGame(id) {
+      if (!confirm('정말 삭제할까요?')) return;
+      const tbl = currentTab === 'board' ? 'board_games' : 'hand_games';
+      const { error } = await getDB().from(tbl).delete().eq('id', id);
+      if (error) { showToast('삭제 실패: ' + error.message, true); return; }
+      showToast('🗑 삭제 완료!');
+      await load();
+    }
+
+    /* ══════════════════════════════════════
+       모달 열기
+       ══════════════════════════════════════ */
+    function openModal(game) {
+      editingId = game?.id || null;
+      const isBoard = currentTab === 'board';
+      const cats    = isBoard ? BOARD_CATS : HAND_CATS;
+      const selCats = game?.categories || [];
+
+      document.getElementById('modal-title').textContent = game ? '게임 수정' : '게임 추가';
+      document.getElementById('submit-btn').textContent  = game ? '수정 저장' : '+ 등록';
+
+      document.getElementById('form-fields').innerHTML = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">게임 이름 *</label>
+            <input class="form-input" id="f-name" required value="${esc(game?.name||'')}" placeholder="예: 할리갈리">
+          </div>
+          ${isBoard ? `
+          <div class="form-group">
+            <label class="form-label">영어 이름</label>
+            <input class="form-input" id="f-name-en" value="${esc(game?.name_en||'')}" placeholder="Halli Galli">
+          </div>` : '<div></div>'}
+
+          <div class="form-group">
+            <label class="form-label">최소 인원 *</label>
+            <input class="form-input" id="f-min" type="number" min="1" max="20" required value="${game?.min_players||2}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">최대 인원 *</label>
+            <input class="form-input" id="f-max" type="number" min="1" max="99" required value="${game?.max_players||6}">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">평균 플레이 시간 (분)</label>
+            <input class="form-input" id="f-time" type="number" min="1" value="${game?.play_time_min||30}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">권장 연령 (세+)</label>
+            <input class="form-input" id="f-age" type="number" min="1" value="${game?.age_min||8}">
+          </div>
+
+          ${isBoard ? `
+          <div class="form-group">
+            <label class="form-label">난이도 <span class="range-val" id="diff-val">${game?.difficulty||2}</span>/5</label>
+            <input class="form-range" id="f-diff" type="range" min="1" max="5" value="${game?.difficulty||2}"
+              oninput="document.getElementById('diff-val').textContent=this.value">
+          </div>` : ''}
+
+          <div class="form-group">
+            <label class="form-label">재미도 <span class="range-val" id="fun-val">${game?.fun_score||4}</span>/5</label>
+            <input class="form-range" id="f-fun" type="range" min="1" max="5" value="${game?.fun_score||4}"
+              oninput="document.getElementById('fun-val').textContent=this.value">
+          </div>
+
+          ${!isBoard ? `
+          <div class="form-group full">
+            <label class="form-label">준비물</label>
+            <input class="form-input" id="f-materials" value="${esc(game?.materials||'없음')}" placeholder="없음">
+          </div>` : ''}
+
+          <div class="form-group full">
+            <label class="form-label">카테고리</label>
+            <div class="cat-grid" id="cat-grid">
+              ${cats.map(c => `<button type="button" class="cat-chip${selCats.includes(c)?' on':''}" onclick="toggleCat(this)">${c}</button>`).join('')}
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label class="form-label">설명</label>
+            <textarea class="form-textarea" id="f-desc" placeholder="게임 설명...">${esc(game?.description||'')}</textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">규칙 요약</label>
+            <textarea class="form-textarea" id="f-rules" placeholder="간단한 규칙...">${esc(game?.rules||'')}</textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">팁 / 전략</label>
+            <textarea class="form-textarea" id="f-tips" placeholder="승리 팁...">${esc(game?.tips||'')}</textarea>
+          </div>
+
+          ${isBoard ? `
+          <div class="form-group full" style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="f-avail" ${game?.is_available!==false?'checked':''} style="width:18px;height:18px;accent-color:var(--g);">
+            <label for="f-avail" class="form-label" style="margin:0;cursor:pointer;">이용 가능 (체크 해제 시 이용불가 표시)</label>
+          </div>` : ''}
+        </div>
+      `;
+
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function toggleCat(el) {
+      el.classList.toggle('on');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      editingId = null;
+    }
+
+    /* ══════════════════════════════════════
+       폼 제출
+       ══════════════════════════════════════ */
+    async function submitForm(e) {
+      e.preventDefault();
+      const isBoard = currentTab === 'board';
+      const tbl     = isBoard ? 'board_games' : 'hand_games';
+      const btn     = document.getElementById('submit-btn');
+      btn.disabled  = true;
+      btn.textContent = '저장 중...';
+
+      const cats = [...document.querySelectorAll('.cat-chip.on')].map(el => el.textContent);
+
+      const payload = {
+        name:          document.getElementById('f-name').value.trim(),
+        min_players:   parseInt(document.getElementById('f-min').value),
+        max_players:   parseInt(document.getElementById('f-max').value),
+        play_time_min: parseInt(document.getElementById('f-time').value) || null,
+        age_min:       parseInt(document.getElementById('f-age').value)  || null,
+        fun_score:     parseInt(document.getElementById('f-fun').value),
+        categories:    cats,
+        description:   document.getElementById('f-desc').value.trim() || null,
+        rules:         document.getElementById('f-rules').value.trim() || null,
+        tips:          document.getElementById('f-tips').value.trim()  || null,
+      };
+      if (isBoard) {
+        payload.name_en    = document.getElementById('f-name-en')?.value.trim() || null;
+        payload.difficulty = parseInt(document.getElementById('f-diff').value);
+        payload.is_available = document.getElementById('f-avail').checked;
+      } else {
+        payload.materials = document.getElementById('f-materials')?.value.trim() || '없음';
+      }
+
+      let error;
+      if (editingId) {
+        ({ error } = await getDB().from(tbl).update(payload).eq('id', editingId));
+      } else {
+        ({ error } = await getDB().from(tbl).insert(payload));
+      }
+
+      btn.disabled = false;
+      btn.textContent = editingId ? '수정 저장' : '+ 등록';
+
+      if (error) { showToast('저장 실패: ' + error.message, true); return; }
+      showToast(editingId ? '✅ 수정 완료!' : '🎉 등록 완료!');
+      closeModal();
+      await load();
+    }
+
+    /* ══════════════════════════════════════
+       토스트
+       ══════════════════════════════════════ */
+    let toastTimer;
+    function showToast(msg, isErr=false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className   = 'toast' + (isErr ? ' err' : '');
+      requestAnimationFrame(() => t.classList.add('show'));
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    /* 모달 외부 클릭 닫기 */
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    init();
+  </script>
+</body>
+</html>
