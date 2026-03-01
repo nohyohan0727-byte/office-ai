@@ -108,7 +108,7 @@
     /* ── 게임 그리드 ── */
     .grid {
       display:grid;
-      grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));
       gap:14px; padding:0 20px 80px;
     }
 
@@ -130,6 +130,12 @@
       background:#1e1e38; color:#888; border:1px solid #333;
     }
     .tag.cat { background:#00d4ff11; color:var(--b); border-color:#00d4ff33; }
+
+    .gc-thumb {
+      width:100%; height:140px; object-fit:cover; border-radius:10px;
+      margin-bottom:10px; background:var(--card2);
+      display:block;
+    }
 
     .gc-meta { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
     .meta-item { font-size:12px; color:#666; }
@@ -211,6 +217,33 @@
     .form-select option { background:var(--card2); }
     .form-textarea { resize:vertical; min-height:80px; }
     .form-range { width:100%; accent-color:var(--b); }
+
+    /* ── BGG 자동완성 ── */
+    .ac-wrap { position:relative; }
+    .ac-drop {
+      position:absolute; top:100%; left:0; right:0; z-index:100;
+      background:var(--card2); border:2px solid var(--b); border-radius:12px;
+      margin-top:4px; max-height:260px; overflow-y:auto;
+      box-shadow:0 8px 24px #000a; display:none;
+    }
+    .ac-drop.open { display:block; }
+    .ac-item {
+      display:flex; align-items:center; gap:10px; padding:10px 14px;
+      cursor:pointer; border-bottom:1px solid #1e1e38; transition:background .1s;
+    }
+    .ac-item:last-child { border-bottom:none; }
+    .ac-item:hover { background:#00d4ff11; }
+    .ac-thumb { width:36px; height:36px; border-radius:6px; object-fit:cover; background:#1e1e38; flex-shrink:0; }
+    .ac-name { font-weight:800; font-size:13px; color:#ddd; }
+    .ac-year { font-size:11px; color:#555; }
+    .ac-loading { padding:14px; text-align:center; color:#555; font-size:13px; }
+    .bgg-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:#00ff8811; border:1px solid var(--g); color:var(--g);
+      border-radius:6px; padding:3px 8px; font-size:11px; font-weight:700;
+      margin-left:8px; cursor:pointer; vertical-align:middle;
+    }
+    .bgg-badge:hover { background:#00ff8833; }
     .range-val { font-size:12px; color:var(--b); font-weight:900; text-align:right; }
 
     /* 카테고리 체크박스 */
@@ -782,6 +815,7 @@
         <div class="game-card${avail ? '' : ' unavailable'}">
           ${!avail ? '<div class="unavailable-badge">이용불가</div>' : ''}
           ${rvBadge}
+          ${g.image_url ? `<img class="gc-thumb" src="${esc(g.image_url)}" onerror="this.style.display='none'" loading="lazy">` : ''}
           <div class="gc-head">
             <div class="gc-icon">${isBoard ? '🎲' : '✋'}</div>
             <div class="gc-info">
@@ -856,7 +890,12 @@
               게임 이름 *
               <button type="button" class="yt-trigger-btn" onclick="openYTSearch()">🎬 YouTube 검색</button>
             </label>
-            <input class="form-input" id="f-name" required value="${esc(game?.name||'')}" placeholder="예: 할리갈리">
+            <div class="ac-wrap">
+              <input class="form-input" id="f-name" required value="${esc(game?.name||'')}"
+                placeholder="예: Catan, Dixit..." autocomplete="off"
+                oninput="debounceGameSearch(this.value)">
+              <div class="ac-drop" id="ac-drop"></div>
+            </div>
           </div>
           ${isBoard ? `
           <div class="form-group">
@@ -1200,6 +1239,7 @@
         description:   document.getElementById('f-desc').value.trim() || null,
         rules:         document.getElementById('f-rules').value.trim() || null,
         tips:          document.getElementById('f-tips').value.trim()  || null,
+        image_url:     document.getElementById('f-image')?.value || null,
       };
       if (isBoard) {
         payload.name_en     = document.getElementById('f-name-en')?.value.trim() || null;
@@ -1525,6 +1565,110 @@
     }
 
     init();
+
+    /* ══════════════════════════════════════
+       BGG 게임 자동완성
+       ══════════════════════════════════════ */
+    let _acTimer = null;
+    function debounceGameSearch(val) {
+      clearTimeout(_acTimer);
+      const drop = document.getElementById('ac-drop');
+      if (!drop) return;
+      if (val.length < 2) { drop.classList.remove('open'); return; }
+      drop.innerHTML = '<div class="ac-loading">🔍 검색 중...</div>';
+      drop.classList.add('open');
+      _acTimer = setTimeout(() => searchBGG(val), 500);
+    }
+
+    async function searchBGG(q) {
+      const drop = document.getElementById('ac-drop');
+      if (!drop) return;
+      try {
+        const res = await fetch('https://jknetworks.app.n8n.cloud/webhook/garaon-bg-search', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ query: q })
+        });
+        const data = await res.json();
+        const items = data.items || [];
+        if (!items.length) {
+          drop.innerHTML = '<div class="ac-loading">결과 없음</div>';
+          return;
+        }
+        drop.innerHTML = items.map(it => `
+          <div class="ac-item" onclick="selectBGG('${it.id}','${esc(it.name)}')">
+            <div style="display:flex;flex-direction:column;flex:1;">
+              <div class="ac-name">${esc(it.name)}</div>
+              ${it.year ? `<div class="ac-year">${it.year}</div>` : ''}
+            </div>
+            <span style="font-size:10px;color:var(--b);">BGG</span>
+          </div>
+        `).join('');
+      } catch(e) {
+        drop.innerHTML = `<div class="ac-loading" style="color:var(--r);">오류: ${esc(e.message)}</div>`;
+      }
+    }
+
+    async function selectBGG(bggId, bggName) {
+      const drop = document.getElementById('ac-drop');
+      if (drop) drop.classList.remove('open');
+      document.getElementById('f-name').value = bggName;
+      showToast('🔍 BGG에서 정보 가져오는 중...');
+      try {
+        const res = await fetch('https://jknetworks.app.n8n.cloud/webhook/garaon-bg-detail', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ id: bggId })
+        });
+        const d = await res.json();
+
+        // 기본 필드 채우기
+        if (d.description) document.getElementById('f-desc').value = d.description;
+        if (d.min_players) document.getElementById('f-min').value = d.min_players;
+        if (d.max_players) document.getElementById('f-max').value = d.max_players;
+        if (d.play_time_min) document.getElementById('f-time').value = d.play_time_min;
+        if (d.age_min) document.getElementById('f-age').value = d.age_min;
+
+        // 카테고리 매핑 (영어→한국어)
+        const catMap = {
+          'Card Game':'카드', 'Deduction':'추리', 'Party Game':'파티',
+          'Strategy':'전략', 'Cooperative':'협동', 'Family':'가족',
+          'Abstract':'추상', 'Bluffing':'블러핑', 'Memory':'기억',
+          'Word Game':'단어', 'Trivia':'퀴즈', 'Negotiation':'협상',
+        };
+        const matchedCats = (d.categories||[]).map(c => catMap[c]).filter(Boolean);
+        if (matchedCats.length) {
+          document.querySelectorAll('.cat-chip').forEach(btn => {
+            if (matchedCats.includes(btn.textContent.trim())) btn.classList.add('on');
+          });
+        }
+
+        // 이미지 URL 저장 (hidden input으로)
+        if (d.image) {
+          let imgInput = document.getElementById('f-image');
+          if (!imgInput) {
+            imgInput = document.createElement('input');
+            imgInput.type = 'hidden'; imgInput.id = 'f-image';
+            document.getElementById('game-form').appendChild(imgInput);
+          }
+          imgInput.value = d.image;
+        }
+
+        // YouTube 검색도 트리거
+        if (document.getElementById('f-youtube') !== null) {
+          document.getElementById('yt-results') && searchYouTube(bggName);
+        }
+
+        showToast('✅ BGG 정보 자동 입력 완료!');
+      } catch(e) {
+        showToast('BGG 상세 오류: ' + e.message, true);
+      }
+    }
+
+    // 클릭 외부 시 드롭다운 닫기
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.ac-wrap')) {
+        document.getElementById('ac-drop')?.classList.remove('open');
+      }
+    });
   </script>
 </body>
 </html>
