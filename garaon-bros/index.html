@@ -430,6 +430,14 @@
       <div class="card-desc">인원수·난이도·분위기로<br>딱 맞는 게임을 골라드려요!</div>
     </a>
 
+    <!-- 방문자 추가 -->
+    <div class="card card-base" style="cursor:pointer;" onclick="openAddVisitorModal()">
+      <div class="badge badge-done">👥 방문자</div>
+      <div class="card-icon">➕</div>
+      <div class="card-title">방문자 추가</div>
+      <div class="card-desc">새로 온 친구를 등록해요<br>닉네임 + 아바타 선택</div>
+    </div>
+
     <!-- 관리자 -->
     <a href="./gbhq.html" class="card card-info">
       <div class="badge badge-blue">🔧 관리자</div>
@@ -439,6 +447,32 @@
     </a>
 
     <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
+  </div>
+
+  <!-- 방문자 추가 모달 -->
+  <div id="add-visitor-overlay" style="display:none;position:fixed;inset:0;background:#0008;z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)closeAddVisitorModal()">
+    <div style="background:#151526;border-radius:20px;border:2px solid #00ff88;padding:28px 24px;width:min(400px,92vw);max-height:85vh;overflow-y:auto;box-shadow:0 0 40px #00ff8844;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-size:17px;font-weight:900;color:#00ff88;">👥 방문자 추가</div>
+        <button onclick="closeAddVisitorModal()" style="background:none;border:none;color:#555;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+
+      <!-- 아바타 선택 -->
+      <div style="font-size:12px;color:#777;font-weight:700;margin-bottom:8px;">아바타 선택</div>
+      <div id="av-grid-main" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px;margin-bottom:18px;"></div>
+
+      <!-- 닉네임 -->
+      <div style="font-size:12px;color:#777;font-weight:700;margin-bottom:6px;">닉네임 *</div>
+      <input id="av-nickname" type="text" maxlength="12" placeholder="부르는 이름"
+        style="width:100%;background:#0b0b1a;border:2px solid #222;border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;font-family:'Nunito',sans-serif;margin-bottom:18px;outline:none;"
+        onfocus="this.style.borderColor='#00ff88'" onblur="this.style.borderColor='#222'">
+
+      <button onclick="submitAddVisitor()"
+        style="width:100%;background:#00ff88;color:#0b0b1a;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">
+        ✅ 등록하기
+      </button>
+      <div id="av-msg" style="text-align:center;font-size:13px;margin-top:10px;min-height:18px;"></div>
+    </div>
   </div>
 
   <!-- 체크아웃 바 -->
@@ -1025,6 +1059,53 @@
     });
 
     init();
+
+    /* ── 방문자 추가 모달 ── */
+    const AV_EMOJIS = ['🧑','👦','👧','👨','👩','👴','👵','🧒','🤖','👾',
+                       '🦊','🐯','🐸','🐧','🦁','🐻','🐼','🐨','🐺','🦋',
+                       '🐲','🦄','⚡','🌟','🍀','🎯','🎮','🔥','👑','💎'];
+    let _avSel = '🧑';
+
+    function openAddVisitorModal() {
+      _avSel = '🧑';
+      document.getElementById('av-nickname').value = '';
+      document.getElementById('av-msg').textContent = '';
+      // 아바타 그리드 렌더
+      document.getElementById('av-grid-main').innerHTML = AV_EMOJIS.map(e => `
+        <div onclick="pickAv(this,'${e}')" style="
+          cursor:pointer;text-align:center;font-size:24px;padding:6px;
+          border-radius:10px;border:2px solid ${e===_avSel?'#00ff88':'transparent'};
+          background:${e===_avSel?'#00ff8822':'transparent'};transition:all .15s;"
+          data-av="${e}">${e}</div>
+      `).join('');
+      const ov = document.getElementById('add-visitor-overlay');
+      ov.style.display = 'flex';
+      setTimeout(() => document.getElementById('av-nickname').focus(), 100);
+    }
+
+    function pickAv(el, emoji) {
+      _avSel = emoji;
+      document.querySelectorAll('#av-grid-main [data-av]').forEach(d => {
+        const on = d.dataset.av === emoji;
+        d.style.borderColor = on ? '#00ff88' : 'transparent';
+        d.style.background  = on ? '#00ff8822' : 'transparent';
+      });
+    }
+
+    function closeAddVisitorModal() {
+      document.getElementById('add-visitor-overlay').style.display = 'none';
+    }
+
+    async function submitAddVisitor() {
+      const nickname = document.getElementById('av-nickname').value.trim();
+      const msg = document.getElementById('av-msg');
+      if (!nickname) { msg.style.color='#ff4466'; msg.textContent='닉네임을 입력해주세요'; return; }
+      msg.style.color='#777'; msg.textContent='등록 중...';
+      const { error } = await getDB().from('visitors').insert({ nickname, name: nickname, avatar: _avSel });
+      if (error) { msg.style.color='#ff4466'; msg.textContent='오류: '+error.message; return; }
+      msg.style.color='#00ff88'; msg.textContent='✅ 등록됐어요!';
+      setTimeout(closeAddVisitorModal, 900);
+    }
   </script>
 </body>
 </html>
