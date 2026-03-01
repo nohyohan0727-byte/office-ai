@@ -222,6 +222,7 @@
     let authData = null;
     let userList = [];
     let categoryList = [];
+    let companyList = []; // super_admin용 회사 목록
 
     function showToast(msg, type = 'success') {
       const t = document.getElementById('toast');
@@ -291,6 +292,15 @@
         // 역할에 따른 탭 구성
         buildTabs(role);
         document.getElementById('admin-panel').style.display = 'block';
+
+        // super_admin이면 회사 목록 미리 로드
+        if (role === 'super_admin') {
+          const cData = await callAdmin('list_companies', {});
+          companyList = cData?.result || [];
+        } else {
+          // 본인 회사만
+          companyList = [{ id: authData.company_id, name: authData.company || '내 회사' }];
+        }
 
         // 초기 데이터 로드
         loadMembers();
@@ -365,12 +375,22 @@
 
       // 회원 등록 (company_admin 이상)
       if (can(role, 'company_admin')) {
+        const companyOptions = companyList.map(c =>
+          `<option value="${c.id}">${c.name}</option>`
+        ).join('');
+        const isSuperAdmin = role === 'super_admin';
+
         html += `
           <div class="section-sep">새 회원 등록</div>
           <div class="grid-2">
             <div class="card">
               <div class="card-header"><div class="card-header-left"><span>➕</span><span class="card-title">회원 등록</span></div></div>
               <div class="card-body">
+                ${isSuperAdmin ? `
+                <div class="field">
+                  <label>회사 선택</label>
+                  <select id="new-company-id">${companyOptions}</select>
+                </div>` : ''}
                 <div class="row">
                   <div class="field"><label>이메일</label><input type="email" id="new-email" placeholder="user@company.com"></div>
                   <div class="field"><label>이름</label><input type="text" id="new-name" placeholder="홍길동"></div>
@@ -381,7 +401,7 @@
                     <select id="new-role">
                       <option value="user">사용자 (user)</option>
                       <option value="group_admin">그룹관리자 (group_admin)</option>
-                      ${can(role, 'super_admin') ? '<option value="company_admin">회사관리자 (company_admin)</option>' : ''}
+                      ${isSuperAdmin ? '<option value="company_admin">회사관리자 (company_admin)</option>' : ''}
                     </select>
                   </div>
                   <div class="field"><label>초기 토큰</label><input type="number" id="new-tokens" value="1000" min="0"></div>
@@ -396,10 +416,21 @@
             <div class="card">
               <div class="card-header"><div class="card-header-left"><span>🪙</span><span class="card-title">토큰 관리</span></div></div>
               <div class="card-body">
+                ${isSuperAdmin ? `
+                <div class="field">
+                  <label>회사 선택</label>
+                  <select id="token-company-id" onchange="onTokenCompanyChange(this.value)">
+                    <option value="">-- 회사 선택 --</option>
+                    ${companyOptions}
+                  </select>
+                </div>` : ''}
                 <div class="field">
                   <label>회원 선택</label>
-                  <select id="token-user-id">
-                    <option value="">-- 회원 선택 --</option>
+                  <select id="token-user-id" ${isSuperAdmin ? 'disabled' : ''}>
+                    <option value="">${isSuperAdmin ? '-- 회사를 먼저 선택하세요 --' : '-- 회원 선택 --'}</option>
+                    ${!isSuperAdmin ? userList.map(u =>
+                      `<option value="${u.id}">${u.name} (${u.email}) — ${u.tokens_remaining}토큰</option>`
+                    ).join('') : ''}
                   </select>
                 </div>
                 <div class="row">
@@ -419,6 +450,31 @@
       el.innerHTML = html;
     }
 
+    function fillTokenUserDropdown(users) {
+      const sel = document.getElementById('token-user-id');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- 회원 선택 --</option>';
+      users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = `${u.name} (${u.email}) — ${(u.tokens_remaining ?? 0).toLocaleString()}토큰`;
+        sel.appendChild(opt);
+      });
+      sel.disabled = false;
+    }
+
+    async function onTokenCompanyChange(companyId) {
+      const sel = document.getElementById('token-user-id');
+      if (!companyId) {
+        if (sel) { sel.innerHTML = '<option value="">-- 회사를 먼저 선택하세요 --</option>'; sel.disabled = true; }
+        return;
+      }
+      if (sel) { sel.innerHTML = '<option value="">로딩 중...</option>'; sel.disabled = true; }
+      const data = await callAdmin('list_users', { company_id: companyId });
+      const users = Array.isArray(data?.result) ? data.result : (data?.result ? [data.result] : []);
+      fillTokenUserDropdown(users);
+    }
+
     async function loadMembers() {
       if (!authData) return;
       const role = authData.role;
@@ -428,17 +484,8 @@
         const data = await callAdmin('list_users', {});
         userList = Array.isArray(data?.result) ? data.result : (data?.result ? [data.result] : []);
 
-        // 토큰 드롭다운 채우기
-        const sel = document.getElementById('token-user-id');
-        if (sel) {
-          sel.innerHTML = '<option value="">-- 회원 선택 --</option>';
-          userList.forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u.id;
-            opt.textContent = `${u.name} (${u.email}) - ${u.tokens_remaining}토큰`;
-            sel.appendChild(opt);
-          });
-        }
+        // non-super_admin: 토큰 드롭다운 바로 채우기
+        if (role !== 'super_admin') fillTokenUserDropdown(userList);
 
         const canManagePerms = can(authData.role, 'group_admin');
         const tbody = userList.map(u => `
@@ -461,14 +508,21 @@
     }
 
     async function createUser() {
+      const companyEl = document.getElementById('new-company-id');
+      const companyId = companyEl ? companyEl.value : null;
+      if (authData.role === 'super_admin' && !companyId) {
+        showToast('회사를 선택하세요', 'error'); return;
+      }
       spin('cu-spinner', true);
       try {
-        const data = await callAdmin('create_user', {
+        const payload = {
           email: document.getElementById('new-email').value.trim(),
           name: document.getElementById('new-name').value.trim(),
           role: document.getElementById('new-role').value,
           tokens_remaining: parseInt(document.getElementById('new-tokens').value) || 1000
-        });
+        };
+        if (companyId) payload.company_id = companyId;
+        const data = await callAdmin('create_user', payload);
         spin('cu-spinner', false);
         const ok = data?.success;
         const el = document.getElementById('cu-result');
