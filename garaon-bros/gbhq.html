@@ -183,7 +183,7 @@
     .modal-bd.open { opacity:1; pointer-events:all; }
     .modal {
       background:var(--card); border-radius:20px; padding:28px;
-      max-width:500px; width:100%; max-height:90vh; overflow-y:auto;
+      max-width:560px; width:100%; max-height:92vh; overflow-y:auto;
       border:2px solid var(--b); box-shadow:0 0 40px #00d4ff33;
       transform:scale(.95); transition:transform .2s;
     }
@@ -299,15 +299,25 @@
     }
 
     /* ── 아바타 선택 그리드 ── */
-    .avatar-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .avatar-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:8px; }
     .avatar-opt {
-      width:42px; height:42px; border-radius:10px; background:var(--card2);
-      border:2px solid transparent; font-size:22px; cursor:pointer;
+      width:54px; height:54px; border-radius:14px; background:var(--card2);
+      border:2px solid transparent; font-size:28px; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
       transition:all .12s;
     }
-    .avatar-opt:hover { border-color:#555; }
-    .avatar-opt.selected { border-color:var(--g); background:#00ff8811; }
+    .avatar-opt:hover { border-color:#555; transform:scale(1.08); }
+    .avatar-opt.selected { border-color:var(--g); background:#00ff8811; box-shadow:0 0 10px #00ff8844; }
+
+    /* 성별 & 연령대 버튼 pill */
+    .pill-group { display:flex; gap:8px; flex-wrap:wrap; }
+    .pill-btn {
+      padding:8px 18px; border-radius:20px; border:2px solid #333;
+      background:var(--card2); color:#888; font-family:'Nunito',sans-serif;
+      font-weight:800; font-size:14px; cursor:pointer; transition:all .15s;
+    }
+    .pill-btn:hover { border-color:#555; color:#ddd; }
+    .pill-btn.on { border-color:var(--p); color:var(--p); background:#cc44ff18; box-shadow:0 0 8px #cc44ff44; }
 
     /* ── 후기/QR 모달 ── */
     .modal2-bd {
@@ -1129,35 +1139,54 @@
       if (idOrNull !== null) {
         visitor = allVisitors.find(v => v.id === idOrNull);
       }
-      editingVid = visitor?.id || null;
-      selAvatar  = visitor?.avatar || '🧑';
+      editingVid   = visitor?.id || null;
+      selAvatar    = visitor?.avatar || '🧑';
+      selGenderVal = visitor?.gender || '';
 
       document.getElementById('modal-title').textContent = visitor ? '방문자 수정' : '방문자 추가';
       document.getElementById('submit-btn').textContent  = visitor ? '수정 저장' : '+ 등록';
 
+      const ageGroups = ['10대','20대','30대','40대','50대+'];
+      const genders   = [{ v:'남', e:'🙋‍♂️' }, { v:'여', e:'🙋‍♀️' }, { v:'기타', e:'✨' }];
+      const selGender = visitor?.gender || '';
       document.getElementById('form-fields').innerHTML = `
         <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">닉네임 *</label>
-            <input class="form-input" id="v-nickname" required value="${esc(visitor?.nickname||visitor?.name||'')}" placeholder="예: 피카츄, 가온이">
+          <div class="form-group full">
+            <label class="form-label" style="font-size:13px;color:var(--b);">🏷️ 닉네임 <span style="color:var(--p)">*</span></label>
+            <input class="form-input" id="v-nickname" required value="${esc(visitor?.nickname||visitor?.name||'')}"
+              placeholder="예: 피카츄, 가온이 🎮" style="font-size:18px;padding:14px 16px;">
           </div>
           <div class="form-group">
-            <label class="form-label">실명 <span style="font-size:10px;color:#555">(선택)</span></label>
-            <input class="form-input" id="v-name" value="${esc(visitor?.name||'')}" placeholder="예: 김철수">
+            <label class="form-label" style="font-size:13px;color:#888;">👤 실명 <span style="font-size:10px;color:#444">(선택)</span></label>
+            <input class="form-input" id="v-name" value="${esc(visitor?.name||'')}"
+              placeholder="김철수" style="padding:12px 14px;">
           </div>
           <div class="form-group">
-            <label class="form-label">나이</label>
-            <input class="form-input" id="v-age" type="number" min="1" max="120" value="${visitor?.age||''}" placeholder="선택">
+            <label class="form-label" style="font-size:13px;color:#888;">🎂 연령대 <span style="font-size:10px;color:#444">(선택)</span></label>
+            <select class="form-input" id="v-age" style="cursor:pointer;padding:12px 14px;">
+              <option value="">선택 안함</option>
+              ${ageGroups.map(g=>`<option value="${g}" ${(visitor?.age_group)==g?'selected':''}>${g}</option>`).join('')}
+            </select>
           </div>
           <div class="form-group full">
-            <label class="form-label">메모</label>
-            <input class="form-input" id="v-memo" value="${esc(visitor?.memo||'')}" placeholder="예: 전략 게임 좋아함">
+            <label class="form-label" style="font-size:13px;color:#888;">⚧ 성별 <span style="font-size:10px;color:#444">(선택)</span></label>
+            <div class="pill-group" id="gender-pills">
+              ${genders.map(g=>`
+                <button type="button" class="pill-btn${selGender===g.v?' on':''}"
+                  onclick="pickGender(this,'${g.v}')">${g.e} ${g.v}</button>
+              `).join('')}
+            </div>
           </div>
           <div class="form-group full">
-            <label class="form-label">아바타 선택</label>
+            <label class="form-label" style="font-size:13px;color:#888;">📝 메모 <span style="font-size:10px;color:#444">(선택)</span></label>
+            <input class="form-input" id="v-memo" value="${esc(visitor?.memo||'')}"
+              placeholder="예: 전략 게임 좋아함, 빠른 진행 선호 🎯" style="padding:12px 14px;">
+          </div>
+          <div class="form-group full">
+            <label class="form-label" style="font-size:13px;color:var(--y);">🐾 아바타 선택</label>
             <div class="avatar-grid" id="avatar-grid">
-              ${AVATARS.map(a => `
-                <div class="avatar-opt${a === selAvatar ? ' selected' : ''}" onclick="pickAvatar(this,'${a}')">${a}</div>
+              ${AVATARS.map(a=>`
+                <div class="avatar-opt${a===selAvatar?' selected':''}" onclick="pickAvatar(this,'${a}')">${a}</div>
               `).join('')}
             </div>
           </div>
@@ -1170,6 +1199,13 @@
       selAvatar = avatar;
       document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected'));
       el.classList.add('selected');
+    }
+
+    let selGenderVal = '';
+    function pickGender(el, g) {
+      selGenderVal = (selGenderVal === g) ? '' : g;   // 재클릭 시 해제
+      document.querySelectorAll('#gender-pills .pill-btn').forEach(b => b.classList.remove('on'));
+      if (selGenderVal) el.classList.add('on');
     }
 
     async function submitForm(e) {
@@ -1224,10 +1260,11 @@
       if (!nickname) { showToast('닉네임을 입력해 주세요', true); btn.disabled=false; btn.textContent='+ 등록'; return; }
       const payload = {
         nickname,
-        name:   name || null,
-        age:    parseInt(document.getElementById('v-age').value) || null,
-        memo:   document.getElementById('v-memo').value.trim() || null,
-        avatar: selAvatar,
+        name:      name || null,
+        age_group: document.getElementById('v-age').value || null,
+        gender:    selGenderVal || null,
+        memo:      document.getElementById('v-memo').value.trim() || null,
+        avatar:    selAvatar,
       };
       let error;
       if (editingVid) {
@@ -1508,7 +1545,7 @@
        QR 모달
        ══════════════════════════════════════ */
     function openQR(gameId, gameType, gameName) {
-      const base = location.origin + location.pathname.replace('admin.html','');
+      const base = location.origin + location.pathname.replace('gbhq.html','').replace('admin.html','');
       const url  = `${base}review.html?game_id=${gameId}&game_type=${gameType}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=200x200&bgcolor=ffffff&color=0b0b1a`;
       document.getElementById('qr-title').textContent = `📱 ${gameName}`;
