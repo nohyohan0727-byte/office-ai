@@ -131,10 +131,18 @@
     }
     .tag.cat { background:#00d4ff11; color:var(--b); border-color:#00d4ff33; }
 
+    .gc-thumb-wrap {
+      position:relative; width:100%; height:150px; border-radius:10px;
+      margin-bottom:10px; overflow:hidden; background:#111;
+    }
+    .gc-thumb-bg {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; filter:blur(12px) brightness(0.5) saturate(1.4);
+      transform:scale(1.1);
+    }
     .gc-thumb {
-      width:100%; height:140px; object-fit:cover; border-radius:10px;
-      margin-bottom:10px; background:var(--card2);
-      display:block; max-width:100%; flex-shrink:0;
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:contain; display:block;
     }
 
     .gc-meta { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:12px; }
@@ -870,7 +878,7 @@
           ${!avail ? '<div class="unavailable-badge">이용불가</div>' : ''}
           <button class="gc-edit-icon" title="수정" onclick="openModal(window._gameMap[${g.id}])">✏️</button>
           ${rvBadge}
-          ${g.image_url ? `<img class="gc-thumb" src="${esc(g.image_url)}" onerror="this.style.display='none'" loading="lazy">` : ''}
+          ${g.image_url ? `<div class="gc-thumb-wrap"><img class="gc-thumb-bg" src="${esc(g.image_url)}" loading="lazy" aria-hidden="true"><img class="gc-thumb" src="${esc(g.image_url)}" loading="lazy" onerror="this.closest('.gc-thumb-wrap').style.display='none'"></div>` : ''}
           <div class="gc-head">
             <div class="gc-icon">${isBoard ? '🎲' : '✋'}</div>
             <div class="gc-info">
