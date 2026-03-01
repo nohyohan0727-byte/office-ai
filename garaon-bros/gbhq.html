@@ -189,7 +189,10 @@
     }
     .modal-bd.open .modal { transform:scale(1); }
     .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
-    .modal-title { font-family:'Press Start 2P',monospace; font-size:9px; color:var(--b); }
+    .modal-title {
+      font-family:'Nunito',sans-serif; font-size:17px; font-weight:900;
+      color:var(--b); letter-spacing:-.3px;
+    }
     .modal-close { background:transparent; border:none; color:#666; font-size:22px; cursor:pointer; transition:color .15s; }
     .modal-close:hover { color:#ddd; }
 
@@ -519,12 +522,15 @@
   <div class="modal2-bd" id="review-modal" onclick="mayClose2(event,'review-modal')">
     <div class="modal2">
       <div class="modal-head">
-        <div class="modal-title" id="rv-modal-title">게임 후기</div>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:11px;color:#555;font-weight:700;">💬 REVIEW</div>
+          <div class="modal-title" id="rv-modal-title" style="color:var(--y);font-size:19px;">게임 후기</div>
+        </div>
         <button class="modal-close" onclick="closeModal2('review-modal')">✕</button>
       </div>
       <div id="rv-list"></div>
       <div class="review-add-form">
-        <div class="form-label" style="margin-bottom:8px;">✏️ 후기 추가</div>
+        <div style="font-size:15px;font-weight:900;color:var(--g);margin-bottom:12px;">✏️ 후기 추가하기</div>
         <select class="rv-visitor-select" id="rv-visitor"></select>
         <div class="rv-stars" id="rv-stars">
           <span class="rv-star" data-v="1" onclick="setRvStar(1)">★</span>
@@ -543,7 +549,10 @@
   <div class="modal2-bd" id="qr-modal" onclick="mayClose2(event,'qr-modal')">
     <div class="modal2" style="max-width:320px;">
       <div class="modal-head">
-        <div class="modal-title" id="qr-title">QR 코드</div>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:11px;color:#555;font-weight:700;">📱 QR CODE</div>
+          <div class="modal-title" id="qr-title" style="color:var(--b);font-size:19px;">QR 코드</div>
+        </div>
         <button class="modal-close" onclick="closeModal2('qr-modal')">✕</button>
       </div>
       <div class="qr-wrap">
@@ -806,7 +815,7 @@
           <div class="gc-actions">
             <button class="btn-edit" onclick="openModal(window._gameMap[${g.id}])">✏️ 수정</button>
             <button class="btn-edit" style="border-color:var(--p);color:var(--p);" onclick="openReviewsModal(${g.id},'${currentTab}','${esc(g.name)}')">💬 후기 ${rv ? rv.cnt + '개' : ''}</button>
-            <button class="btn-edit" style="border-color:#555;color:#888;flex:0;padding:9px 10px;" title="QR 코드" onclick="openQR(${g.id},'${currentTab}','${esc(g.name)}')">📱</button>
+            <button class="btn-edit" style="border-color:var(--b);color:var(--b);flex:0;padding:9px 12px;font-size:13px;" title="QR 코드" onclick="openQR(${g.id},'${currentTab}','${esc(g.name)}')">📱 QR</button>
             <button class="btn-del"  onclick="deleteGame(${g.id})">🗑</button>
           </div>
         </div>`;
