@@ -456,7 +456,7 @@
         const item = document.createElement('label');
         item.className = 'cat-item';
         item.innerHTML = `
-          <input type="checkbox" class="cat-cb" value="${cat.name}" checked onchange="onCatToggle()">
+          <input type="checkbox" class="cat-cb" value="${cat.table_name}" checked onchange="onCatToggle()">
           <span class="cat-chip">${cat.name}</span>`;
         list.appendChild(item);
       });
