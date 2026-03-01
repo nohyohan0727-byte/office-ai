@@ -584,19 +584,24 @@
         if (role !== 'super_admin') fillTokenUserDropdown(userList);
 
         const canManagePerms = can(authData.role, 'group_admin');
-        const tbody = userList.map(u => `
+        const isSA = authData.role === 'super_admin';
+        const tbody = userList.map(u => {
+          const coName = companyList.find(c => c.id === u.company_id)?.name || u.company_id?.substring(0,8) || '—';
+          return `
           <tr>
             <td>${u.name || '—'}</td>
-            <td style="color:var(--text-dim)">${u.email || '—'}</td>
+            <td style="color:var(--text-dim);font-size:0.8rem">${u.email || '—'}</td>
+            ${isSA ? `<td style="font-size:0.8rem;color:var(--text-dim)">${coName}</td>` : ''}
             <td>${getRoleBadgeHTML(u.role)}</td>
             <td style="font-weight:600">${(u.tokens_remaining ?? 0).toLocaleString()}</td>
-            <td>${u.is_active ? '<span style="color:var(--success)">✅ 활성</span>' : '<span style="color:var(--danger)">❌ 비활성</span>'}</td>
+            <td>${u.is_active ? '<span style="color:var(--success)">✅</span>' : '<span style="color:var(--danger)">❌</span>'}</td>
             <td style="font-size:0.75rem;color:var(--text-dim)">${u.created_at?.substring(0,10) || '—'}</td>
             ${canManagePerms ? `<td><button class="btn btn-secondary btn-sm" onclick="goToPermTab('${u.id}')">🔑 권한</button></td>` : ''}
-          </tr>`).join('');
+          </tr>`;
+        }).join('');
 
         document.getElementById('members-table').innerHTML = userList.length
-          ? `<table><thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>토큰</th><th>상태</th><th>가입일</th>${canManagePerms ? '<th></th>' : ''}</tr></thead><tbody>${tbody}</tbody></table>`
+          ? `<table><thead><tr><th>이름</th><th>이메일</th>${isSA ? '<th>회사</th>' : ''}<th>역할</th><th>토큰</th><th>상태</th><th>가입일</th>${canManagePerms ? '<th></th>' : ''}</tr></thead><tbody>${tbody}</tbody></table>`
           : `<div style="padding:2rem;text-align:center;color:var(--text-dim)">등록된 회원이 없습니다</div>`;
       } catch (e) {
         document.getElementById('members-table').innerHTML = `<div style="padding:1.5rem;color:var(--danger)">로드 실패</div>`;
@@ -784,15 +789,20 @@
         const data = await callAdmin('list_categories', { company_id: catCompanyId });
         const cats = Array.isArray(data?.result) ? data.result : [];
         listEl.innerHTML = cats.length
-          ? cats.map(c => `
+          ? cats.map(c => {
+              const coName = companyList.find(co => co.id === c.company_id)?.name || '—';
+              return `
               <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--border)">
                 <span>📂</span>
                 <div style="flex:1">
-                  <div style="font-weight:600;font-size:0.875rem">${c.name}</div>
-                  <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.table_name}</div>
+                  <div style="font-weight:600;font-size:0.875rem">${c.name}
+                    <span style="font-size:0.72rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem">🏢 ${coName}</span>
+                  </div>
+                  <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.table_name || '(테이블 없음)'}</div>
                 </div>
                 ${c.is_active !== false ? '<span style="font-size:0.72rem;color:var(--success)">✅ 활성</span>' : '<span style="font-size:0.72rem;color:var(--danger)">❌ 비활성</span>'}
-              </div>`).join('')
+              </div>`;
+            }).join('')
           : '<div style="color:var(--text-dim);font-size:0.875rem">카테고리 없음</div>';
       } catch(e) {
         listEl.innerHTML = '<div style="color:var(--danger);font-size:0.875rem">로드 실패</div>';
