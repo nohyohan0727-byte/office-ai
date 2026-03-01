@@ -55,8 +55,8 @@
     .header-title { font-size: 0.95rem; font-weight: 700; }
     .header-title span { color: var(--primary); }
 
-    /* Auth row — 중앙 정렬, 좁은 폭 */
-    .auth-row {
+    /* Auth panel */
+    .auth-panel {
       border-bottom: 1px solid var(--border);
       background: var(--bg-card);
       padding: 0.75rem 1.5rem;
@@ -68,22 +68,19 @@
       display: flex; gap: 0.6rem; align-items: flex-end;
     }
     .auth-inner .field { flex: 1; }
-    .auth-inner .field-cat { flex: 0 0 160px; }
     label {
       display: block; font-size: 0.7rem; font-weight: 600;
       color: var(--text-dim); margin-bottom: 0.25rem;
       text-transform: uppercase; letter-spacing: 0.05em;
     }
-    input, select {
+    input {
       width: 100%; background: var(--bg-input);
       border: 1px solid var(--border); border-radius: 7px;
       color: var(--text-white); font-family: inherit;
       padding: 0.45rem 0.75rem; font-size: 0.85rem;
       transition: border-color 0.2s;
     }
-    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
-    select option { background: #1e293b; }
-    select:disabled { opacity: 0.5; }
+    input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
 
     .btn {
       padding: 0.48rem 1rem; border-radius: 7px;
@@ -121,7 +118,66 @@
     }
     .token-badge.low { color: var(--danger); border-color: rgba(239,68,68,0.3); }
 
-    /* Chat Area — 중앙 좁은 폭 */
+    /* Category panel */
+    .cat-panel {
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,23,42,0.6);
+      padding: 0.55rem 1.5rem;
+      flex-shrink: 0;
+      display: none;
+    }
+    .cat-panel.visible { display: block; }
+    .cat-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex; align-items: center; gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .cat-label {
+      font-size: 0.7rem; font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+    .cat-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .cat-item {
+      display: flex; align-items: center; gap: 0.35rem;
+      cursor: pointer; user-select: none;
+    }
+    .cat-item input[type="checkbox"] {
+      display: none;
+    }
+    .cat-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.22rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.78rem; font-weight: 500;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      background: transparent;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .cat-item input:checked + .cat-chip {
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(59,130,246,0.4);
+      color: #93c5fd;
+    }
+    .cat-chip.all-chip {
+      border-style: dashed;
+    }
+    .cat-item input:checked + .cat-chip.all-chip {
+      background: rgba(16,185,129,0.12);
+      border-color: rgba(16,185,129,0.4);
+      color: #6ee7b7;
+    }
+    .cat-divider {
+      width: 1px; height: 18px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    /* Chat Area */
     .chat-wrap {
       flex: 1; overflow: hidden; display: flex; flex-direction: column;
     }
@@ -167,7 +223,8 @@
       padding: 0.2rem 0.55rem;
       font-size: 0.72rem; color: var(--text-dim);
     }
-    .source-tag span { color: var(--primary); }
+    .source-tag .sim { color: var(--primary); }
+    .source-tag .cat-name { color: var(--accent); font-size: 0.68rem; }
 
     /* Typing */
     .typing { display: flex; align-items: center; gap: 0.3rem; padding: 0.8rem 1rem; }
@@ -255,18 +312,12 @@
     </div>
   </header>
 
-  <!-- Auth Row -->
-  <div class="auth-row">
+  <!-- Auth Panel -->
+  <div class="auth-panel">
     <div class="auth-inner">
       <div class="field">
         <label>API Key</label>
         <input type="password" id="api-key" placeholder="trust_..." autocomplete="off">
-      </div>
-      <div class="field-cat">
-        <label>카테고리</label>
-        <select id="category-select" disabled>
-          <option value="">-- 연결 후 선택 --</option>
-        </select>
       </div>
       <div style="display:flex;align-items:center;gap:0.5rem;padding-bottom:1px">
         <button class="btn btn-primary btn-sm" onclick="validateKey()">🔐 연결</button>
@@ -275,6 +326,14 @@
           <span id="status-text" style="color:var(--text-dim);font-size:0.75rem">미연결</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Category Panel (연결 후 표시) -->
+  <div class="cat-panel" id="cat-panel">
+    <div class="cat-inner">
+      <span class="cat-label">검색 범위</span>
+      <div class="cat-list" id="cat-list"></div>
     </div>
   </div>
 
@@ -311,8 +370,7 @@
     let isAuthenticated = false;
     let isLoading = false;
     let sessionId = 'session-' + Date.now().toString(36);
-    // 카테고리 매핑: display name → table_name
-    let categoryMap = {};
+    let allCategories = []; // { name, table_name, id }
 
     function showToast(msg, type = '') {
       const t = document.getElementById('toast');
@@ -347,7 +405,8 @@
         }
 
         isAuthenticated = true;
-        setAuthStatus(true, `${data.name}`);
+        setAuthStatus(true, data.name);
+        allCategories = data.categories || [];
 
         // 토큰 표시
         const td = document.getElementById('token-display');
@@ -355,24 +414,8 @@
         document.getElementById('token-count').textContent = (data.tokens_remaining || 0).toLocaleString();
         if ((data.tokens_remaining || 0) < 10) td.className = 'token-badge low';
 
-        // 카테고리 드롭다운 구성 (이름만 표시, table_name 은 내부 저장)
-        const sel = document.getElementById('category-select');
-        sel.innerHTML = '';
-        categoryMap = {};
-        const cats = data.categories || [];
-        if (cats.length === 0) {
-          sel.innerHTML = '<option value="">카테고리 없음</option>';
-        } else {
-          cats.forEach((c, i) => {
-            categoryMap[c.name] = c.table_name;
-            const opt = document.createElement('option');
-            opt.value = c.name;
-            opt.textContent = c.name;
-            if (i === 0) opt.selected = true;
-            sel.appendChild(opt);
-          });
-        }
-        sel.disabled = false;
+        // 카테고리 체크박스 렌더링
+        renderCategoryPanel(allCategories);
 
         document.getElementById('msg-input').disabled = false;
         document.getElementById('send-btn').disabled = false;
@@ -384,10 +427,63 @@
       }
     }
 
-    function getSelectedTableName() {
-      const sel = document.getElementById('category-select');
-      const name = sel.value;
-      return categoryMap[name] || name;
+    function renderCategoryPanel(cats) {
+      const panel = document.getElementById('cat-panel');
+      const list = document.getElementById('cat-list');
+      list.innerHTML = '';
+
+      if (cats.length === 0) {
+        panel.classList.add('visible');
+        list.innerHTML = '<span style="color:var(--text-dim);font-size:0.78rem">접근 가능한 카테고리 없음</span>';
+        return;
+      }
+
+      // 전체선택 칩
+      const allItem = document.createElement('label');
+      allItem.className = 'cat-item';
+      allItem.innerHTML = `
+        <input type="checkbox" id="cat-all" checked onchange="onAllToggle(this)">
+        <span class="cat-chip all-chip">✓ 전체</span>`;
+      list.appendChild(allItem);
+
+      // 구분선
+      const divider = document.createElement('div');
+      divider.className = 'cat-divider';
+      list.appendChild(divider);
+
+      // 개별 카테고리 칩
+      cats.forEach(cat => {
+        const item = document.createElement('label');
+        item.className = 'cat-item';
+        item.innerHTML = `
+          <input type="checkbox" class="cat-cb" value="${cat.name}" checked onchange="onCatToggle()">
+          <span class="cat-chip">${cat.name}</span>`;
+        list.appendChild(item);
+      });
+
+      panel.classList.add('visible');
+    }
+
+    function onAllToggle(checkbox) {
+      const cbs = document.querySelectorAll('.cat-cb');
+      cbs.forEach(cb => cb.checked = checkbox.checked);
+    }
+
+    function onCatToggle() {
+      const cbs = document.querySelectorAll('.cat-cb');
+      const allChecked = [...cbs].every(cb => cb.checked);
+      const allCb = document.getElementById('cat-all');
+      if (allCb) allCb.checked = allChecked;
+    }
+
+    // 선택된 카테고리 이름 배열 반환
+    // 전체 선택 또는 전체 체크된 경우 [] (빈 배열 = 서버에서 전체 검색)
+    function getSelectedCategories() {
+      const allCb = document.getElementById('cat-all');
+      if (allCb && allCb.checked) return [];
+
+      const cbs = document.querySelectorAll('.cat-cb:checked');
+      return [...cbs].map(cb => cb.value);
     }
 
     function addMessage(content, type = 'bot', sources = []) {
@@ -416,7 +512,9 @@
         sources.forEach(s => {
           const tag = document.createElement('div');
           tag.className = 'source-tag';
-          tag.innerHTML = `${getFileIcon(s.filename)} ${s.filename} <span>${Math.round((s.similarity||0)*100)}%</span>`;
+          const simPct = Math.round((s.similarity || 0) * 100);
+          const catPart = s.category_name ? `<span class="cat-name">[${s.category_name}]</span> ` : '';
+          tag.innerHTML = `${getFileIcon(s.filename)}${catPart}${s.filename} <span class="sim">${simPct}%</span>`;
           srcDiv.appendChild(tag);
         });
         bubble.appendChild(srcDiv);
@@ -458,10 +556,16 @@
       const msg = input.value.trim();
       if (!msg) return;
 
-      const apiKey = document.getElementById('api-key').value.trim();
-      const tableName = getSelectedTableName();
-      if (!tableName) { showToast('카테고리를 선택하세요', 'error'); return; }
+      const categories = getSelectedCategories();
+      if (allCategories.length > 0) {
+        const checked = document.querySelectorAll('.cat-cb:checked');
+        if (checked.length === 0) {
+          showToast('검색할 카테고리를 하나 이상 선택하세요', 'error');
+          return;
+        }
+      }
 
+      const apiKey = document.getElementById('api-key').value.trim();
       input.value = '';
       input.style.height = 'auto';
       addMessage(msg, 'user');
@@ -473,11 +577,17 @@
         const res = await fetch(`${N8N}/trustrag/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: apiKey, session_id: sessionId, message: msg, category: tableName })
+          body: JSON.stringify({ api_key: apiKey, session_id: sessionId, message: msg, categories })
         });
-        const data = await res.json();
+        const text = await res.text();
         removeTyping();
 
+        if (!text || !text.trim()) {
+          addMessage('서버 응답이 없습니다. 잠시 후 다시 시도하세요.', 'error');
+          return;
+        }
+
+        const data = JSON.parse(text);
         if (!data.success) {
           addMessage(data.message || '오류가 발생했습니다', 'error');
           showToast(data.message || '오류', 'error');

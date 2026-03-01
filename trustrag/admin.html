@@ -485,7 +485,6 @@
             <div class="card-header"><div class="card-header-left"><span>➕</span><span class="card-title">카테고리 생성</span></div></div>
             <div class="card-body">
               <div class="field"><label>카테고리 이름</label><input type="text" id="cat-name" placeholder="KS인증"></div>
-              <div class="field"><label>테이블명 (영문, 소문자, _ 만 허용)</label><input type="text" id="cat-table" placeholder="tr_jknetworks_ks_cert"></div>
               <div class="field"><label>설명 (선택)</label><input type="text" id="cat-desc" placeholder="KS인증 관련 문서"></div>
               <button class="btn btn-success" onclick="createCategory()" style="width:100%">
                 <span class="spinner" id="cc-spinner"></span> ✅ 카테고리 생성
@@ -514,11 +513,12 @@
     }
 
     async function createCategory() {
+      const catName = document.getElementById('cat-name').value.trim();
+      if (!catName) { showToast('카테고리 이름을 입력하세요', 'error'); return; }
       spin('cc-spinner', true);
       try {
         const data = await callAdmin('create_category', {
-          name: document.getElementById('cat-name').value.trim(),
-          table_name: document.getElementById('cat-table').value.trim(),
+          name: catName,
           description: document.getElementById('cat-desc').value.trim()
         });
         spin('cc-spinner', false);
@@ -526,7 +526,9 @@
         const el = document.getElementById('cc-result');
         el.style.display = 'block';
         el.className = `result-box ${ok ? 'success' : 'error'}`;
-        el.textContent = ok ? `✅ 카테고리 생성 완료\n이름: ${document.getElementById('cat-name').value}` : (data?.message || '생성 실패');
+        el.textContent = ok
+          ? `✅ 카테고리 생성 완료\n이름: ${data.result?.name || catName}\n테이블: ${data.result?.table_name || '(자동 생성)'}`
+          : (data?.message || '생성 실패');
         if (ok) showToast('✅ 카테고리 생성 완료');
         else showToast(data?.message || '실패', 'error');
       } catch (e) {
