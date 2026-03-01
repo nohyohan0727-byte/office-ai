@@ -165,10 +165,55 @@
     /* ── 이용 불가 ── */
     .unavailable { opacity:.45; }
     .unavailable-badge {
-      position:absolute; top:12px; right:12px; background:#ff446622;
+      position:absolute; top:12px; left:12px; background:#ff446622;
       color:var(--r); border:1px solid var(--r); border-radius:20px;
-      font-size:10px; padding:2px 8px; font-weight:700;
+      font-size:10px; padding:2px 8px; font-weight:700; z-index:2;
     }
+
+    /* ── 카드 우상단 편집 아이콘 ── */
+    .gc-edit-icon {
+      position:absolute; top:8px; right:10px; z-index:3;
+      background:transparent; border:none; font-size:15px; cursor:pointer;
+      opacity:.4; transition:opacity .2s; padding:4px;
+    }
+    .game-card:hover .gc-edit-icon { opacity:1; }
+
+    /* ── 상세 모달 ── */
+    .detail-modal-bd {
+      position:fixed; inset:0; background:#000a; z-index:1000;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+      padding:16px;
+    }
+    .detail-modal-bd.open { opacity:1; pointer-events:all; }
+    .detail-modal {
+      background:var(--card); border-radius:20px; border:2px solid var(--b);
+      width:100%; max-width:520px; max-height:90vh; overflow-y:auto;
+      transform:scale(.95); transition:transform .2s;
+    }
+    .detail-modal-bd.open .detail-modal { transform:scale(1); }
+    .detail-head {
+      position:sticky; top:0; background:var(--card); z-index:1;
+      display:flex; align-items:center; gap:10px; padding:16px 18px 12px;
+      border-bottom:1px solid #222;
+    }
+    .detail-body { padding:18px; }
+    .detail-section { margin-bottom:18px; }
+    .detail-label { font-size:11px; color:#666; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+    .detail-value { font-size:14px; color:#ddd; line-height:1.6; white-space:pre-wrap; }
+    .detail-meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .detail-meta-item { background:#0d0d1f; border-radius:10px; padding:10px 12px; }
+    .detail-meta-label { font-size:10px; color:#555; margin-bottom:3px; }
+    .detail-meta-val { font-size:16px; font-weight:900; color:#fff; }
+    .detail-cats { display:flex; flex-wrap:wrap; gap:6px; }
+    .yt-link-btn {
+      display:flex; align-items:center; gap:8px; padding:11px 18px;
+      background:#ff000022; border:1px solid #ff4444; border-radius:12px;
+      color:#ff6b6b; font-weight:700; font-size:13px; cursor:pointer;
+      text-decoration:none; font-family:'Nunito',sans-serif;
+      transition:background .15s; width:100%; justify-content:center;
+    }
+    .yt-link-btn:hover { background:#ff000044; }
 
     /* ── 빈 상태 ── */
     .empty { text-align:center; padding:60px 20px; color:#444; }
@@ -602,6 +647,11 @@
   <!-- 토스트 -->
   <div class="toast" id="toast"></div>
 
+  <!-- 게임 상세 모달 (읽기전용) -->
+  <div class="detail-modal-bd" id="detail-modal" onclick="if(event.target===this)closeGameDetail()">
+    <div class="detail-modal" id="detail-modal-inner"></div>
+  </div>
+
   <!-- YouTube 검색 모달 -->
   <div class="yt-modal-bd" id="yt-modal" onclick="if(event.target===this)closeYTModal()">
     <div class="yt-modal">
@@ -818,6 +868,7 @@
       return `
         <div class="game-card${avail ? '' : ' unavailable'}">
           ${!avail ? '<div class="unavailable-badge">이용불가</div>' : ''}
+          <button class="gc-edit-icon" title="수정" onclick="openModal(window._gameMap[${g.id}])">✏️</button>
           ${rvBadge}
           ${g.image_url ? `<img class="gc-thumb" src="${esc(g.image_url)}" onerror="this.style.display='none'" loading="lazy">` : ''}
           <div class="gc-head">
@@ -851,7 +902,7 @@
           </div>
 
           <div class="gc-actions">
-            <button class="btn-edit" onclick="openModal(window._gameMap[${g.id}])">✏️ 수정</button>
+            <button class="btn-edit" onclick="openGameDetail(${g.id})">📋 정보</button>
             <button class="btn-edit" style="border-color:var(--p);color:var(--p);" onclick="openReviewsModal(${g.id},'${currentTab}','${esc(g.name)}')">💬 후기 ${rv ? rv.cnt + '개' : ''}</button>
             <button class="btn-edit" style="border-color:var(--b);color:var(--b);flex:0;padding:9px 12px;font-size:13px;" title="QR 코드" onclick="openQR(${g.id},'${currentTab}','${esc(g.name)}')">📱 QR</button>
             <button class="btn-del"  onclick="deleteGame(${g.id})">🗑</button>
@@ -991,6 +1042,113 @@
     function closeModal() {
       document.getElementById('modal').classList.remove('open');
       editingId = null;
+    }
+
+    /* ══════════════════════════════════════
+       게임 상세 모달 (읽기전용)
+       ══════════════════════════════════════ */
+    function openGameDetail(id) {
+      const g = window._gameMap?.[id];
+      if (!g) return;
+      const isBoard = currentTab === 'board';
+      const rv = window._reviewMap?.[`${id}_${currentTab}`];
+      const cats = (g.categories||[]).map(c => `<span class="tag cat">${esc(c)}</span>`).join('');
+      const stars = rv ? `⭐ ${rv.avg} (${rv.cnt}개 후기)` : '후기 없음';
+
+      const funBar = (val, max=5) => {
+        const pct = (val||0)/max*100;
+        const col = `hsl(${(val||0)*24},80%,55%)`;
+        return `<div class="bar-row" style="margin:0;">
+          <div class="bar-track" style="flex:1;"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+          <div class="bar-val" style="width:24px;text-align:right;">${val||'-'}</div>
+        </div>`;
+      };
+
+      document.getElementById('detail-modal-inner').innerHTML = `
+        <div class="detail-head">
+          <span style="font-size:24px;">${isBoard?'🎲':'✋'}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:900;font-size:17px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(g.name)}</div>
+            ${g.name_en?`<div style="font-size:11px;color:#555;">${esc(g.name_en)}</div>`:''}
+          </div>
+          <button class="modal-close" onclick="closeGameDetail()">✕</button>
+        </div>
+        <div class="detail-body">
+          ${g.image_url?`<img src="${esc(g.image_url)}" style="width:100%;height:160px;object-fit:cover;border-radius:12px;margin-bottom:16px;" onerror="this.style.display='none'" loading="lazy">`:''}
+
+          <div class="detail-meta-grid" style="margin-bottom:16px;">
+            <div class="detail-meta-item">
+              <div class="detail-meta-label">👥 인원</div>
+              <div class="detail-meta-val">${g.min_players}~${g.max_players}명</div>
+            </div>
+            <div class="detail-meta-item">
+              <div class="detail-meta-label">⏱ 시간</div>
+              <div class="detail-meta-val">${g.play_time_min||'?'}분</div>
+            </div>
+            <div class="detail-meta-item">
+              <div class="detail-meta-label">🎂 연령</div>
+              <div class="detail-meta-val">${g.age_min||'?'}세+</div>
+            </div>
+            <div class="detail-meta-item">
+              <div class="detail-meta-label">⭐ 후기</div>
+              <div class="detail-meta-val" style="font-size:13px;">${stars}</div>
+            </div>
+          </div>
+
+          ${cats ? `<div class="detail-section"><div class="detail-label">카테고리</div><div class="detail-cats">${cats}</div></div>` : ''}
+
+          ${isBoard ? `
+          <div class="detail-section">
+            <div class="detail-label">난이도</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${funBar(g.difficulty)}
+            </div>
+          </div>` : ''}
+
+          <div class="detail-section">
+            <div class="detail-label">재미도</div>
+            ${funBar(g.fun_score)}
+          </div>
+
+          ${g.description ? `
+          <div class="detail-section">
+            <div class="detail-label">게임 소개</div>
+            <div class="detail-value">${esc(g.description)}</div>
+          </div>` : ''}
+
+          ${g.rules ? `
+          <div class="detail-section">
+            <div class="detail-label">규칙 요약</div>
+            <div class="detail-value">${esc(g.rules)}</div>
+          </div>` : ''}
+
+          ${g.tips ? `
+          <div class="detail-section">
+            <div class="detail-label">팁 / 전략</div>
+            <div class="detail-value" style="color:var(--g);">${esc(g.tips)}</div>
+          </div>` : ''}
+
+          ${!isBoard && g.materials ? `
+          <div class="detail-section">
+            <div class="detail-label">준비물</div>
+            <div class="detail-value">${esc(g.materials)}</div>
+          </div>` : ''}
+
+          ${g.youtube_url ? `
+          <div class="detail-section">
+            <a class="yt-link-btn" href="${esc(g.youtube_url)}" target="_blank" rel="noopener">
+              ▶ YouTube 영상 바로가기
+            </a>
+          </div>` : ''}
+
+          <button class="btn-edit" style="width:100%;margin-top:4px;" onclick="closeGameDetail();openModal(window._gameMap[${g.id}])">✏️ 수정하기</button>
+        </div>`;
+
+      document.getElementById('detail-modal').classList.add('open');
+    }
+
+    function closeGameDetail() {
+      document.getElementById('detail-modal').classList.remove('open');
     }
 
     /* ══════════════════════════════════════
