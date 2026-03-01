@@ -1590,12 +1590,33 @@
     // 한글 포함 여부 감지
     function isKorean(s) { return /[\uAC00-\uD7A3\u3131-\u318E]/.test(s); }
 
-    // MyMemory 무료 번역 (한→영)
+    // 보드게임 한글→영어 사전 (빠른 로컬 매핑)
+    const KO_GAME_DICT = {
+      '젠가':'Jenga','우노':'UNO','루미큐브':'Rummikub','할리갈리':'Halli Galli',
+      '도블':'Dobble','스플렌더':'Splendor','딕싯':'Dixit','팬데믹':'Pandemic',
+      '코드네임':'Codenames','카르카손':'Carcassonne','블로커스':'Blokus',
+      '텀블링몽키':'Tumbling Monkeys','마피아':'Mafia','클루':'Cluedo',
+      '고스트블리츠':'Ghost Blitz','쿠':'Coup','방탈출':'Escape Room',
+      '아줄':'Azul','티켓투라이드':'Ticket to Ride','뱅':'Bang',
+      '러브레터':'Love Letter','스컬':'Skull','스시고':'Sushi Go',
+      '킹도미노':'Kingdomino','테라포밍마스':'Terraforming Mars',
+      '보난자':'Bohnanza','시타델':'Citadels','탈리스만':'Talisman',
+      '카탄':'Catan','카탄의개척자':'Catan','윙스팬':'Wingspan',
+      '7원더스':'7 Wonders','판도라스박스':'Pandora\'s Box',
+      '트릭스터':'Trickster','픽셔너리':'Pictionary','텔레스트레이션':'Telestrations',
+      '로보77':'Robot 77','마하라자':'Maharaja','스트림스':'Streams',
+    };
+
+    // 번역: 사전 우선 → Google Translate 무료 API → 원문 그대로
     async function translateKoToEn(q) {
+      const trimmed = q.trim().replace(/\s+/g,'');
+      if (KO_GAME_DICT[trimmed]) return KO_GAME_DICT[trimmed];
+      if (KO_GAME_DICT[q.trim()]) return KO_GAME_DICT[q.trim()];
       try {
-        const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=ko|en`);
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=en&dt=t&q=${encodeURIComponent(q)}`;
+        const r = await fetch(url);
         const j = await r.json();
-        return j?.responseData?.translatedText || q;
+        return j?.[0]?.[0]?.[0] || q;
       } catch { return q; }
     }
 
