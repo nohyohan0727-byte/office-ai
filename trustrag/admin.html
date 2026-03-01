@@ -107,6 +107,35 @@
 
     .section-sep { font-size: 0.78rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
     .section-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* 권한 관리 레이아웃 */
+    .perm-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.25rem; align-items: start; }
+    @media (max-width: 700px) { .perm-layout { grid-template-columns: 1fr; } }
+    .perm-left { height: fit-content; }
+    .perm-user-list { max-height: 480px; overflow-y: auto; }
+    .perm-user-row {
+      padding: 0.7rem 1.1rem; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    .perm-user-row:hover { background: rgba(255,255,255,0.03); }
+    .perm-user-row.selected { background: rgba(59,130,246,0.1); border-left: 3px solid var(--primary); }
+    .perm-user-info { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
+    .perm-user-name { font-size: 0.88rem; font-weight: 600; }
+    .perm-user-email { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* 카테고리 권한 체크박스 */
+    .perm-cat-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.7rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .perm-cat-row:last-child { border-bottom: none; }
+    .perm-cat-main { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
+    .perm-cat-main input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+    .perm-cat-name { font-size: 0.875rem; font-weight: 500; }
+    .perm-upload-label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem; color: var(--text-dim); }
+    .perm-upload-label input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--success); }
+    .perm-upload-disabled { opacity: 0.35; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -411,7 +440,7 @@
           });
         }
 
-        const roleLabels = { super_admin: '운영자', company_admin: '회사관리자', group_admin: '그룹관리자', user: '사용자' };
+        const canManagePerms = can(authData.role, 'group_admin');
         const tbody = userList.map(u => `
           <tr>
             <td>${u.name || '—'}</td>
@@ -420,10 +449,11 @@
             <td style="font-weight:600">${(u.tokens_remaining ?? 0).toLocaleString()}</td>
             <td>${u.is_active ? '<span style="color:var(--success)">✅ 활성</span>' : '<span style="color:var(--danger)">❌ 비활성</span>'}</td>
             <td style="font-size:0.75rem;color:var(--text-dim)">${u.created_at?.substring(0,10) || '—'}</td>
+            ${canManagePerms ? `<td><button class="btn btn-secondary btn-sm" onclick="goToPermTab('${u.id}')">🔑 권한</button></td>` : ''}
           </tr>`).join('');
 
         document.getElementById('members-table').innerHTML = userList.length
-          ? `<table><thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>토큰</th><th>상태</th><th>가입일</th></tr></thead><tbody>${tbody}</tbody></table>`
+          ? `<table><thead><tr><th>이름</th><th>이메일</th><th>역할</th><th>토큰</th><th>상태</th><th>가입일</th>${canManagePerms ? '<th></th>' : ''}</tr></thead><tbody>${tbody}</tbody></table>`
           : `<div style="padding:2rem;text-align:center;color:var(--text-dim)">등록된 회원이 없습니다</div>`;
       } catch (e) {
         document.getElementById('members-table').innerHTML = `<div style="padding:1.5rem;color:var(--danger)">로드 실패</div>`;
@@ -538,63 +568,216 @@
     }
 
     /* ==================== 권한 관리 ==================== */
-    function buildPermTab() {
-      const el = document.getElementById('perm-content');
-      const cats = authData?.categories || [];
-      el.innerHTML = `
-        <div class="card">
-          <div class="card-header"><div class="card-header-left"><span>🔑</span><span class="card-title">카테고리 접근 권한 부여</span></div></div>
-          <div class="card-body">
-            <div class="row">
-              <div class="field">
-                <label>회원 선택</label>
-                <select id="perm-user-sel">
-                  <option value="">-- 회원 선택 --</option>
-                  ${userList.map(u => `<option value="${u.id}">${u.name} (${u.email}) — ${{ super_admin:'운영자', company_admin:'회사관리자', group_admin:'그룹관리자', user:'사용자' }[u.role] || u.role}</option>`).join('')}
-                </select>
-              </div>
-              <div class="field">
-                <label>카테고리</label>
-                <select id="perm-cat-sel">
-                  <option value="">-- 카테고리 선택 --</option>
-                  ${cats.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('')}
-                </select>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.5rem">
-              <input type="checkbox" id="perm-upload" style="width:auto;cursor:pointer">
-              <label style="margin:0;text-transform:none;letter-spacing:0;cursor:pointer" for="perm-upload">업로드 권한 부여</label>
-            </div>
-            <button class="btn btn-primary" onclick="grantPermission()" style="width:100%">
-              <span class="spinner" id="gp-spinner"></span> 🔑 권한 부여
-            </button>
-            <div class="result-box" id="gp-result" style="display:none"></div>
-          </div>
-        </div>`;
+    let permState = { userId: null, userName: '', original: {}, current: {} };
+    // original/current: { [categoryId]: { access: bool, can_upload: bool } }
+
+    function goToPermTab(userId) {
+      switchTab('perms');
+      selectPermUser(userId);
     }
 
-    async function grantPermission() {
-      const userId = document.getElementById('perm-user-sel').value;
-      const catId = document.getElementById('perm-cat-sel').value;
-      if (!userId || !catId) { showToast('회원과 카테고리를 선택하세요', 'error'); return; }
-      spin('gp-spinner', true);
+    function buildPermTab() {
+      const el = document.getElementById('perm-content');
+      const roleLabels = { super_admin:'운영자', company_admin:'회사관리자', group_admin:'그룹관리자', user:'사용자' };
+      const userRows = userList.map(u => `
+        <div class="perm-user-row" id="perm-row-${u.id}" onclick="selectPermUser('${u.id}')">
+          <div class="perm-user-info">
+            <span class="perm-user-name">${u.name || u.email}</span>
+            ${getRoleBadgeHTML(u.role)}
+          </div>
+          <span class="perm-user-email">${u.email}</span>
+        </div>`).join('') || '<div style="padding:1rem;color:var(--text-dim);font-size:0.85rem">회원 없음</div>';
+
+      el.innerHTML = `
+        <div class="perm-layout">
+          <div class="card perm-left">
+            <div class="card-header">
+              <div class="card-header-left"><span>👥</span><span class="card-title">회원 선택</span></div>
+            </div>
+            <div class="perm-user-list" id="perm-user-list">${userRows}</div>
+          </div>
+
+          <div class="card perm-right">
+            <div class="card-header">
+              <div class="card-header-left">
+                <span>🔑</span>
+                <span class="card-title" id="perm-panel-title">회원을 선택하세요</span>
+              </div>
+              <div id="perm-save-area" style="display:none">
+                <button class="btn btn-primary btn-sm" onclick="savePermissions()">
+                  <span class="spinner" id="perm-save-spinner"></span> 💾 저장
+                </button>
+              </div>
+            </div>
+            <div id="perm-panel-body" class="card-body">
+              <div style="padding:2rem;text-align:center;color:var(--text-dim)">
+                <div style="font-size:2rem;margin-bottom:0.5rem">👈</div>
+                왼쪽에서 회원을 선택하면<br>카테고리 권한을 설정할 수 있습니다
+              </div>
+            </div>
+            <div class="result-box" id="perm-result" style="display:none;margin:1rem 1.25rem"></div>
+          </div>
+        </div>`;
+
+      // 이미 선택된 유저가 있으면 복원
+      if (permState.userId) selectPermUser(permState.userId);
+    }
+
+    async function selectPermUser(userId) {
+      const user = userList.find(u => u.id === userId);
+      if (!user) return;
+
+      permState.userId = userId;
+      permState.userName = user.name || user.email;
+
+      // 유저 행 하이라이트
+      document.querySelectorAll('.perm-user-row').forEach(r => r.classList.remove('selected'));
+      const row = document.getElementById(`perm-row-${userId}`);
+      if (row) row.classList.add('selected');
+
+      // 제목 업데이트
+      const title = document.getElementById('perm-panel-title');
+      if (title) title.textContent = `${permState.userName} 권한 설정`;
+
+      // 패널 로딩 상태
+      const body = document.getElementById('perm-panel-body');
+      if (body) body.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--text-dim)">권한 조회 중...</div>';
+
       try {
-        const data = await callAdmin('grant_permission', {
-          user_id: userId,
-          category_id: catId,
-          can_upload: document.getElementById('perm-upload').checked
+        const data = await callAdmin('get_user_permissions', { user_id: userId });
+        const perms = data?.result || [];
+
+        // 현재 권한 상태 초기화
+        permState.original = {};
+        permState.current = {};
+        perms.forEach(p => {
+          permState.original[p.category_id] = { access: true, can_upload: p.can_upload };
+          permState.current[p.category_id] = { access: true, can_upload: p.can_upload };
         });
-        spin('gp-spinner', false);
-        const ok = data?.success;
-        const el = document.getElementById('gp-result');
-        el.style.display = 'block';
-        el.className = `result-box ${ok ? 'success' : 'error'}`;
-        el.textContent = ok ? '✅ 권한이 부여되었습니다' : (data?.message || '권한 부여 실패');
-        if (ok) showToast('✅ 권한 부여 완료');
-        else showToast(data?.message || '실패', 'error');
+
+        renderPermCheckboxes();
+
+        const saveArea = document.getElementById('perm-save-area');
+        if (saveArea) saveArea.style.display = 'block';
+        const result = document.getElementById('perm-result');
+        if (result) result.style.display = 'none';
       } catch (e) {
-        spin('gp-spinner', false);
-        showToast('오류', 'error');
+        if (body) body.innerHTML = '<div style="padding:1.5rem;color:var(--danger)">권한 조회 실패</div>';
+      }
+    }
+
+    function renderPermCheckboxes() {
+      const cats = authData?.categories || [];
+      const body = document.getElementById('perm-panel-body');
+      if (!body) return;
+
+      if (cats.length === 0) {
+        body.innerHTML = '<div style="padding:1.5rem;color:var(--text-dim)">접근 가능한 카테고리가 없습니다</div>';
+        return;
+      }
+
+      const rows = cats.map(c => {
+        const catId = c.category_id || c.id;
+        const state = permState.current[catId] || { access: false, can_upload: false };
+        return `
+          <div class="perm-cat-row" id="perm-cat-${catId}">
+            <label class="perm-cat-main">
+              <input type="checkbox" class="perm-access-cb" data-cat="${catId}"
+                ${state.access ? 'checked' : ''} onchange="onPermAccessChange('${catId}', this.checked)">
+              <span class="perm-cat-name">📂 ${c.name}</span>
+            </label>
+            <label class="perm-upload-label ${state.access ? '' : 'perm-upload-disabled'}" id="perm-upload-label-${catId}">
+              <input type="checkbox" class="perm-upload-cb" data-cat="${catId}"
+                ${state.can_upload ? 'checked' : ''} ${state.access ? '' : 'disabled'}
+                onchange="onPermUploadChange('${catId}', this.checked)">
+              <span>📤 업로드</span>
+            </label>
+          </div>`;
+      }).join('');
+
+      body.innerHTML = rows;
+    }
+
+    function onPermAccessChange(catId, checked) {
+      if (!permState.current[catId]) permState.current[catId] = { access: false, can_upload: false };
+      permState.current[catId].access = checked;
+      if (!checked) {
+        permState.current[catId].can_upload = false;
+        const uploadCb = document.querySelector(`.perm-upload-cb[data-cat="${catId}"]`);
+        if (uploadCb) { uploadCb.checked = false; uploadCb.disabled = true; }
+        const uploadLabel = document.getElementById(`perm-upload-label-${catId}`);
+        if (uploadLabel) uploadLabel.classList.add('perm-upload-disabled');
+      } else {
+        const uploadCb = document.querySelector(`.perm-upload-cb[data-cat="${catId}"]`);
+        if (uploadCb) uploadCb.disabled = false;
+        const uploadLabel = document.getElementById(`perm-upload-label-${catId}`);
+        if (uploadLabel) uploadLabel.classList.remove('perm-upload-disabled');
+      }
+    }
+
+    function onPermUploadChange(catId, checked) {
+      if (!permState.current[catId]) permState.current[catId] = { access: false, can_upload: false };
+      permState.current[catId].can_upload = checked;
+    }
+
+    async function savePermissions() {
+      if (!permState.userId) return;
+      spin('perm-save-spinner', true);
+
+      const cats = authData?.categories || [];
+      const ops = [];
+
+      cats.forEach(c => {
+        const catId = c.category_id || c.id;
+        const orig = permState.original[catId] || { access: false, can_upload: false };
+        const curr = permState.current[catId] || { access: false, can_upload: false };
+
+        if (!orig.access && curr.access) {
+          // 새로 권한 부여
+          ops.push({ type: 'grant', catId, can_upload: curr.can_upload });
+        } else if (orig.access && !curr.access) {
+          // 권한 제거
+          ops.push({ type: 'revoke', catId });
+        } else if (orig.access && curr.access && orig.can_upload !== curr.can_upload) {
+          // 업로드 권한 변경 (재부여로 upsert)
+          ops.push({ type: 'grant', catId, can_upload: curr.can_upload });
+        }
+      });
+
+      if (ops.length === 0) {
+        spin('perm-save-spinner', false);
+        showToast('변경 사항이 없습니다', '');
+        return;
+      }
+
+      try {
+        const results = await Promise.all(ops.map(op => {
+          if (op.type === 'grant') {
+            return callAdmin('grant_permission', { user_id: permState.userId, category_id: op.catId, can_upload: op.can_upload });
+          } else {
+            return callAdmin('revoke_permission', { user_id: permState.userId, category_id: op.catId });
+          }
+        }));
+
+        spin('perm-save-spinner', false);
+        const failed = results.filter(r => !r?.success);
+        const el = document.getElementById('perm-result');
+        el.style.display = 'block';
+
+        if (failed.length === 0) {
+          el.className = 'result-box success';
+          el.textContent = `✅ ${ops.length}건 저장 완료`;
+          showToast(`✅ 권한 저장 완료`);
+          // original을 current로 동기화
+          permState.original = JSON.parse(JSON.stringify(permState.current));
+        } else {
+          el.className = 'result-box error';
+          el.textContent = `⚠️ ${ops.length - failed.length}건 성공, ${failed.length}건 실패`;
+          showToast('일부 저장 실패', 'error');
+        }
+      } catch (e) {
+        spin('perm-save-spinner', false);
+        showToast('저장 오류', 'error');
       }
     }
 
