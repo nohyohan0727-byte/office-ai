@@ -833,7 +833,8 @@
     }
 
     /* ==================== 권한 관리 ==================== */
-    let permState = { userId: null, userName: '', original: {}, current: {} };
+    let permState = { userId: null, userName: '', userCompanyId: null, categories: [], original: {}, current: {} };
+    // categories: 선택된 유저의 회사 카테고리 목록
     // original/current: { [categoryId]: { access: bool, can_upload: bool } }
 
     function goToPermTab(userId) {
@@ -894,6 +895,7 @@
 
       permState.userId = userId;
       permState.userName = user.name || user.email;
+      permState.userCompanyId = user.company_id || authData.company_id;
 
       // 유저 행 하이라이트
       document.querySelectorAll('.perm-user-row').forEach(r => r.classList.remove('selected'));
@@ -909,10 +911,15 @@
       if (body) body.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--text-dim)">권한 조회 중...</div>';
 
       try {
-        const data = await callAdmin('get_user_permissions', { user_id: userId });
-        const perms = data?.result || [];
+        // 유저 회사의 카테고리 + 유저 현재 권한을 병렬 조회
+        const [catData, permData] = await Promise.all([
+          callAdmin('list_categories', { company_id: permState.userCompanyId }),
+          callAdmin('get_user_permissions', { user_id: userId })
+        ]);
 
-        // 현재 권한 상태 초기화
+        permState.categories = Array.isArray(catData?.result) ? catData.result : [];
+
+        const perms = permData?.result || [];
         permState.original = {};
         permState.current = {};
         perms.forEach(p => {
@@ -932,17 +939,17 @@
     }
 
     function renderPermCheckboxes() {
-      const cats = authData?.categories || [];
+      const cats = permState.categories;
       const body = document.getElementById('perm-panel-body');
       if (!body) return;
 
       if (cats.length === 0) {
-        body.innerHTML = '<div style="padding:1.5rem;color:var(--text-dim)">접근 가능한 카테고리가 없습니다</div>';
+        body.innerHTML = '<div style="padding:1.5rem;color:var(--text-dim)">이 회사에 등록된 카테고리가 없습니다</div>';
         return;
       }
 
       const rows = cats.map(c => {
-        const catId = c.category_id || c.id;
+        const catId = c.id || c.category_id;
         const state = permState.current[catId] || { access: false, can_upload: false };
         return `
           <div class="perm-cat-row" id="perm-cat-${catId}">
@@ -989,11 +996,11 @@
       if (!permState.userId) return;
       spin('perm-save-spinner', true);
 
-      const cats = authData?.categories || [];
+      const cats = permState.categories;
       const ops = [];
 
       cats.forEach(c => {
-        const catId = c.category_id || c.id;
+        const catId = c.id || c.category_id;
         const orig = permState.original[catId] || { access: false, can_upload: false };
         const curr = permState.current[catId] || { access: false, can_upload: false };
 
