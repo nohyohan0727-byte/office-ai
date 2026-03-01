@@ -34,7 +34,7 @@
       font-weight:700; cursor:pointer; font-size:14px; transition:all .15s;
     }
     .back-btn:hover { border-color:var(--b); color:var(--b); }
-    .header-title { font-family:'Press Start 2P',monospace; font-size:10px; color:var(--b); flex:1; }
+    .header-title { font-family:'Nunito',sans-serif; font-size:16px; font-weight:900; color:var(--b); flex:1; }
     .add-btn {
       background:var(--g); color:var(--bg); border:none; border-radius:12px;
       padding:10px 18px; font-family:'Nunito',sans-serif; font-weight:900;
@@ -1006,20 +1006,22 @@
       document.getElementById('yt-modal').classList.remove('open');
     }
 
-    async function searchYouTube(query) {
-      try {
-        const res  = await fetch(CONFIG.N8N_WEBHOOK.replace('garaon-call','garaon-yt-search'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'n8n 오류');
-        renderYTResults(data.items || [], query);
-      } catch(e) {
-        document.getElementById('yt-results').innerHTML =
-          `<div class="yt-loading" style="color:var(--r);">오류: ${esc(e.message)}</div>`;
-      }
+    function searchYouTube(query) {
+      const q = encodeURIComponent(query + ' 보드게임 방법');
+      const ytUrl = `https://www.youtube.com/results?search_query=${q}`;
+      document.getElementById('yt-results').innerHTML = `
+        <div style="text-align:center;padding:24px 0;">
+          <div style="font-size:36px;margin-bottom:12px;">🎬</div>
+          <div style="color:#aaa;font-size:14px;line-height:1.8;margin-bottom:20px;">
+            유튜브에서 <strong style="color:#fff;">"${esc(query)} 보드게임 방법"</strong> 검색 결과를 열어드릴게요.<br>
+            마음에 드는 영상의 URL을 복사해서 아래 YouTube URL 칸에 붙여넣으세요.
+          </div>
+          <button onclick="window.open('${ytUrl}','_blank')"
+            style="background:#ff0000;color:#fff;border:none;border-radius:12px;padding:12px 28px;
+                   font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;">
+            ▶ YouTube에서 검색 열기
+          </button>
+        </div>`;
     }
 
     function renderYTResults(items, query) {
@@ -1608,8 +1610,16 @@
         }
 
         const bggUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(searchQ)}&type=boardgame`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
-        const xml  = await res.text();
+        let xml;
+        try {
+          const r1 = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
+          xml = await r1.text();
+          if (!xml.includes('<items')) throw new Error('bad');
+        } catch {
+          // 폴백: allorigins.win
+          const r2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(bggUrl)}`);
+          xml = await r2.text();
+        }
         const doc  = new DOMParser().parseFromString(xml, 'application/xml');
         const items = [...doc.querySelectorAll('item[type="boardgame"]')].slice(0,10).map(el => ({
           id:   el.getAttribute('objectid') || el.getAttribute('id'),
@@ -1641,11 +1651,19 @@
       showToast('🔍 BGG에서 정보 가져오는 중...');
       try {
         const bggUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&stats=0`;
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
-        const xml  = await res.text();
+        let xml, resStatus = 200;
+        try {
+          const r1 = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
+          resStatus = r1.status;
+          xml = await r1.text();
+          if (!xml.includes('<items')) throw new Error('bad');
+        } catch {
+          const r2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(bggUrl)}`);
+          xml = await r2.text();
+        }
 
         // BGG가 캐시 준비 중일 때 202 반환
-        if (res.status === 202 || xml.includes('try again')) {
+        if (resStatus === 202 || xml.includes('try again')) {
           showToast('⏳ BGG 서버가 준비 중... 잠시 후 다시 클릭해주세요.', true);
           return;
         }
