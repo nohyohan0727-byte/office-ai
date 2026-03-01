@@ -1020,8 +1020,15 @@
 
           ${isBoard ? `
           <div class="form-group full">
-            <label class="form-label">🖼 이미지 URL (선택)</label>
-            <input class="form-input" id="f-image" value="${esc(game?.image_url||'')}" placeholder="https://..." oninput="updateImgPreview(this.value)">
+            <label class="form-label">🖼 이미지 (선택)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="form-input" id="f-image" value="${esc(game?.image_url||'')}" placeholder="URL 직접 입력..." oninput="updateImgPreview(this.value)" style="flex:1;">
+              <label style="cursor:pointer;background:#1e1e38;border:1px solid #444;border-radius:8px;padding:8px 12px;font-size:12px;color:#aaa;white-space:nowrap;flex-shrink:0;">
+                📁 파일
+                <input type="file" accept="image/*" style="display:none;" onchange="uploadGameImage(this)">
+              </label>
+            </div>
+            <div id="img-upload-status" style="font-size:11px;color:#888;margin-top:4px;display:none;"></div>
             <div id="img-preview" style="margin-top:8px;${game?.image_url ? '' : 'display:none;'}">
               <img id="img-preview-el" src="${esc(game?.image_url||'')}" style="height:80px;border-radius:8px;object-fit:cover;border:1px solid #333;" onerror="this.parentElement.style.display='none'">
             </div>
@@ -1842,6 +1849,29 @@
       } else {
         wrap.style.display = 'none';
       }
+    }
+
+    async function uploadGameImage(input) {
+      const file = input.files?.[0];
+      if (!file) return;
+      const status = document.getElementById('img-upload-status');
+      status.style.display = '';
+      status.textContent = '⏳ 업로드 중...';
+
+      const ext  = file.name.split('.').pop();
+      const path = `games/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { data, error } = await getDB().storage.from('game-images').upload(path, file, { upsert: true });
+
+      if (error) {
+        status.textContent = '❌ 업로드 실패: ' + error.message;
+        return;
+      }
+      const { data: pub } = getDB().storage.from('game-images').getPublicUrl(path);
+      const url = pub.publicUrl;
+      document.getElementById('f-image').value = url;
+      updateImgPreview(url);
+      status.textContent = '✅ 업로드 완료!';
+      setTimeout(() => { status.style.display = 'none'; }, 2000);
     }
 
     async function testAIWebhook() {
