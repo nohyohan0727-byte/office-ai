@@ -59,7 +59,7 @@
     .filter-group { margin-bottom: 1.5rem; }
     .filter-label { font-size: 0.83rem; color: var(--dim); font-weight: 700; margin-bottom: 0.6rem; display: block; }
     .pills { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-    .pill { background: var(--card2); border: 1px solid var(--border); border-radius: 50px; padding: 0.4rem 0.95rem; font-size: 0.83rem; cursor: pointer; transition: all 0.18s; user-select: none; font-family: inherit; }
+    .pill { -webkit-appearance: none; appearance: none; background: var(--card2); border: 1px solid var(--border); border-radius: 50px; padding: 0.4rem 0.95rem; font-size: 0.83rem; cursor: pointer; transition: all 0.18s; user-select: none; font-family: inherit; }
     .pill:hover { border-color: rgba(255,255,255,0.22); }
     .pill.on { background: var(--pp); color: #000; border-color: var(--pp); font-weight: 800; }
     .pill.on.blue { background: var(--b); border-color: var(--b); }
@@ -142,7 +142,7 @@
 
 <header class="header">
   <div class="header-title">GAME RECOMMEND</div>
-  <a href="index.html" class="header-back">← 메인</a>
+  <a href="index.html" class="header-back">🏠 홈</a>
 </header>
 
 <main class="main">
@@ -334,21 +334,26 @@
 
   /* ── 초기화 ── */
   async function initData() {
-    const [bgRes, hgRes, vRes] = await Promise.all([
-      getDB().from('board_games').select('*').eq('is_available', true).order('name'),
-      getDB().from('hand_games').select('*').order('name'),
-      getDB().from('visitors').select('*').order('name'),
-    ]);
-    _allBoard    = bgRes.data   || [];
-    _allHand     = hgRes.data   || [];
-    _allVisitors = vRes.data    || [];
+    try {
+      const [bgRes, hgRes, vRes] = await Promise.all([
+        getDB().from('board_games').select('*').eq('is_available', true).order('name'),
+        getDB().from('hand_games').select('*').order('name'),
+        getDB().from('visitors').select('*').order('name'),
+      ]);
+      _allBoard    = bgRes.data   || [];
+      _allHand     = hgRes.data   || [];
+      _allVisitors = vRes.data    || [];
 
-    // 리뷰 집계
-    const { data: rvData } = await getDB().from('game_reviews').select('game_id,game_type,visitor_id,rating');
-    buildReviewMap(rvData || []);
-
-    renderMemberGrid();
-    go('s0');
+      // 리뷰 집계
+      const { data: rvData } = await getDB().from('game_reviews').select('game_id,game_type,visitor_id,rating');
+      buildReviewMap(rvData || []);
+    } catch(e) {
+      console.warn('DB 로드 실패, 빈 데이터로 진행합니다:', e);
+      _allBoard = []; _allHand = []; _allVisitors = [];
+    } finally {
+      renderMemberGrid();
+      go('s0');
+    }
   }
 
   function buildReviewMap(reviews) {
