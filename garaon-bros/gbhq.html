@@ -892,11 +892,14 @@
           <div class="form-group">
             <label class="form-label" style="display:flex;justify-content:space-between;align-items:center;">
               게임 이름 *
-              <button type="button" class="yt-trigger-btn" onclick="openYTSearch()">🎬 YouTube 검색</button>
+              <span style="display:flex;gap:6px;align-items:center;">
+                <button type="button" class="yt-trigger-btn" style="font-size:10px;padding:3px 8px;" onclick="testAIWebhook()">🤖 AI 연결확인</button>
+                <button type="button" class="yt-trigger-btn" onclick="openYTSearch()">🎬 YouTube 검색</button>
+              </span>
             </label>
             <div class="ac-wrap">
               <input class="form-input" id="f-name" required value="${esc(game?.name||'')}"
-                placeholder="예: Catan, Dixit..." autocomplete="off"
+                placeholder="게임 이름 입력 (한국어/영어)..." autocomplete="off"
                 oninput="debounceGameSearch(this.value)">
               <div class="ac-drop" id="ac-drop"></div>
             </div>
@@ -1574,176 +1577,98 @@
     init();
 
     /* ══════════════════════════════════════
-       BGG 게임 자동완성
+       AI 게임 자동완성 (n8n + OpenAI)
        ══════════════════════════════════════ */
+    const AI_WEBHOOK = 'https://jknetworks.app.n8n.cloud/webhook/garaon-bg-search';
     let _acTimer = null;
+
     function debounceGameSearch(val) {
       clearTimeout(_acTimer);
       const drop = document.getElementById('ac-drop');
       if (!drop) return;
       if (val.length < 2) { drop.classList.remove('open'); return; }
-      drop.innerHTML = '<div class="ac-loading">🔍 검색 중...</div>';
+      drop.innerHTML = '<div class="ac-loading">🤖 AI 검색 중...</div>';
       drop.classList.add('open');
-      _acTimer = setTimeout(() => searchBGG(val), 500);
+      _acTimer = setTimeout(() => searchGame(val), 600);
     }
 
-    // 한글 포함 여부 감지
-    function isKorean(s) { return /[\uAC00-\uD7A3\u3131-\u318E]/.test(s); }
-
-    // 보드게임 한글→영어 사전 (빠른 로컬 매핑)
-    const KO_GAME_DICT = {
-      '젠가':'Jenga','우노':'UNO','루미큐브':'Rummikub','할리갈리':'Halli Galli',
-      '도블':'Dobble','스플렌더':'Splendor','딕싯':'Dixit','팬데믹':'Pandemic',
-      '코드네임':'Codenames','카르카손':'Carcassonne','블로커스':'Blokus',
-      '텀블링몽키':'Tumbling Monkeys','마피아':'Mafia','클루':'Cluedo',
-      '고스트블리츠':'Ghost Blitz','쿠':'Coup','방탈출':'Escape Room',
-      '아줄':'Azul','티켓투라이드':'Ticket to Ride','뱅':'Bang',
-      '러브레터':'Love Letter','스컬':'Skull','스시고':'Sushi Go',
-      '킹도미노':'Kingdomino','테라포밍마스':'Terraforming Mars',
-      '보난자':'Bohnanza','시타델':'Citadels','탈리스만':'Talisman',
-      '카탄':'Catan','카탄의개척자':'Catan','윙스팬':'Wingspan',
-      '7원더스':'7 Wonders','판도라스박스':'Pandora\'s Box',
-      '트릭스터':'Trickster','픽셔너리':'Pictionary','텔레스트레이션':'Telestrations',
-      '로보77':'Robot 77','마하라자':'Maharaja','스트림스':'Streams',
-    };
-
-    // 번역: 사전 우선 → Google Translate 무료 API → 원문 그대로
-    async function translateKoToEn(q) {
-      const trimmed = q.trim().replace(/\s+/g,'');
-      if (KO_GAME_DICT[trimmed]) return KO_GAME_DICT[trimmed];
-      if (KO_GAME_DICT[q.trim()]) return KO_GAME_DICT[q.trim()];
-      try {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=en&dt=t&q=${encodeURIComponent(q)}`;
-        const r = await fetch(url);
-        const j = await r.json();
-        return j?.[0]?.[0]?.[0] || q;
-      } catch { return q; }
-    }
-
-    async function searchBGG(q) {
+    async function searchGame(q) {
       const drop = document.getElementById('ac-drop');
       if (!drop) return;
       try {
-        let searchQ = q;
-        if (isKorean(q)) {
-          drop.innerHTML = '<div class="ac-loading">🌐 번역 중...</div>';
-          searchQ = await translateKoToEn(q);
-        }
-
-        const bggUrl = `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(searchQ)}&type=boardgame`;
-        let xml;
-        try {
-          const r1 = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
-          xml = await r1.text();
-          if (!xml.includes('<items')) throw new Error('bad');
-        } catch {
-          // 폴백: allorigins.win
-          const r2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(bggUrl)}`);
-          xml = await r2.text();
-        }
-        const doc  = new DOMParser().parseFromString(xml, 'application/xml');
-        const items = [...doc.querySelectorAll('item[type="boardgame"]')].slice(0,10).map(el => ({
-          id:   el.getAttribute('objectid') || el.getAttribute('id'),
-          name: el.querySelector('name[type="primary"]')?.getAttribute('value') || '',
-          year: el.querySelector('yearpublished')?.getAttribute('value') || ''
-        })).filter(it => it.name);
-        if (!items.length) {
-          drop.innerHTML = `<div class="ac-loading">결과 없음${isKorean(q) ? ` (번역: "${esc(searchQ)}")` : ''}</div>`;
+        const r = await fetch(AI_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q })
+        });
+        if (!r.ok) {
+          drop.innerHTML = `<div class="ac-loading" style="color:#ff6b6b;">⚠️ AI 연결 오류 (${r.status})<br><small>n8n에서 워크플로우를 ON/OFF 해주세요</small></div>`;
           return;
         }
-        drop.innerHTML = items.map(it => `
-          <div class="ac-item" onclick="selectBGG('${it.id}','${esc(it.name)}')">
-            <div style="display:flex;flex-direction:column;flex:1;">
-              <div class="ac-name">${esc(it.name)}</div>
-              ${it.year ? `<div class="ac-year">${it.year}</div>` : ''}
+        const d = await r.json();
+        if (d.error) {
+          drop.innerHTML = `<div class="ac-loading">검색 결과 없음: "${esc(q)}"</div>`;
+          return;
+        }
+        const displayName = d.name_ko || d.name_en || q;
+        const info = [
+          d.min_players && d.max_players ? `👥 ${d.min_players}-${d.max_players}명` : '',
+          d.play_time_min ? `⏱ ${d.play_time_min}분` : '',
+          d.age_min ? `🎂 ${d.age_min}세+` : '',
+        ].filter(Boolean).join('  ');
+        drop.innerHTML = `
+          <div class="ac-item" onclick='selectGame(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+            <div style="display:flex;flex-direction:column;flex:1;gap:4px;">
+              <div class="ac-name">${esc(displayName)}</div>
+              ${d.name_en ? `<div class="ac-year">${esc(d.name_en)}</div>` : ''}
+              ${info ? `<div style="font-size:11px;color:var(--b);margin-top:2px;">${info}</div>` : ''}
             </div>
-            <span style="font-size:10px;color:var(--b);">BGG</span>
-          </div>
-        `).join('');
+            <span style="font-size:10px;color:#a78bfa;">AI</span>
+          </div>`;
       } catch(e) {
-        drop.innerHTML = `<div class="ac-loading" style="color:var(--r);">오류: ${esc(e.message)}</div>`;
+        drop.innerHTML = `<div class="ac-loading" style="color:#ff6b6b;">오류: ${esc(e.message)}</div>`;
       }
     }
 
-    async function selectBGG(bggId, bggName) {
+    function selectGame(d) {
       const drop = document.getElementById('ac-drop');
       if (drop) drop.classList.remove('open');
-      document.getElementById('f-name').value = bggName;
-      showToast('🔍 BGG에서 정보 가져오는 중...');
+      const displayName = d.name_ko || d.name_en || '';
+      document.getElementById('f-name').value = displayName;
+      if (d.description) document.getElementById('f-desc').value = d.description;
+      if (d.min_players) document.getElementById('f-min').value = d.min_players;
+      if (d.max_players) document.getElementById('f-max').value = d.max_players;
+      if (d.play_time_min) document.getElementById('f-time').value = d.play_time_min;
+      if (d.age_min) document.getElementById('f-age').value = d.age_min;
+      if (d.categories?.length) {
+        document.querySelectorAll('.cat-chip').forEach(btn => {
+          if (d.categories.includes(btn.textContent.trim())) btn.classList.add('on');
+        });
+      }
+      if (document.getElementById('yt-results')) searchYouTube(displayName);
+      showToast('✅ AI 정보 자동 입력 완료!');
+    }
+
+    async function testAIWebhook() {
+      showToast('🤖 AI 연결 테스트 중...');
       try {
-        const bggUrl = `https://boardgamegeek.com/xmlapi2/thing?id=${bggId}&stats=0`;
-        let xml, resStatus = 200;
-        try {
-          const r1 = await fetch(`https://corsproxy.io/?${encodeURIComponent(bggUrl)}`);
-          resStatus = r1.status;
-          xml = await r1.text();
-          if (!xml.includes('<items')) throw new Error('bad');
-        } catch {
-          const r2 = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(bggUrl)}`);
-          xml = await r2.text();
-        }
-
-        // BGG가 캐시 준비 중일 때 202 반환
-        if (resStatus === 202 || xml.includes('try again')) {
-          showToast('⏳ BGG 서버가 준비 중... 잠시 후 다시 클릭해주세요.', true);
-          return;
-        }
-
-        const doc  = new DOMParser().parseFromString(xml, 'application/xml');
-        const item = doc.querySelector('item');
-        if (!item) { showToast('BGG 정보를 찾을 수 없어요.', true); return; }
-
-        // 설명 (HTML 엔티티 디코딩 + 500자 제한)
-        const rawDesc = item.querySelector('description')?.textContent || '';
-        const desc = rawDesc
-          .replace(/&amp;#10;/g, '\n').replace(/&#10;/g, '\n')
-          .replace(/&amp;mdash;/g, '—').replace(/&amp;/g, '&')
-          .replace(/<[^>]+>/g, '').trim();
-        if (desc) document.getElementById('f-desc').value = desc.slice(0, 500);
-
-        // 플레이어 수 / 시간 / 최소 나이
-        const getVal = sel => item.querySelector(sel)?.getAttribute('value') || '';
-        if (getVal('minplayers')) document.getElementById('f-min').value = getVal('minplayers');
-        if (getVal('maxplayers')) document.getElementById('f-max').value = getVal('maxplayers');
-        if (getVal('minplaytime')) document.getElementById('f-time').value = getVal('minplaytime');
-        if (getVal('minage')) document.getElementById('f-age').value = getVal('minage');
-
-        // 카테고리 매핑 (영어→한국어)
-        const catMap = {
-          'Card Game':'카드', 'Deduction':'추리', 'Party Game':'파티',
-          'Strategy':'전략', 'Cooperative':'협동', 'Family':'가족',
-          'Abstract':'추상', 'Bluffing':'블러핑', 'Memory':'기억',
-          'Word Game':'단어', 'Trivia':'퀴즈', 'Negotiation':'협상',
-        };
-        const bggCats = [...item.querySelectorAll('link[type="boardgamecategory"]')]
-                           .map(el => el.getAttribute('value'));
-        const matchedCats = bggCats.map(c => catMap[c]).filter(Boolean);
-        if (matchedCats.length) {
-          document.querySelectorAll('.cat-chip').forEach(btn => {
-            if (matchedCats.includes(btn.textContent.trim())) btn.classList.add('on');
-          });
-        }
-
-        // 이미지 URL (BGG는 //로 시작하는 프로토콜 상대 URL 사용)
-        const rawImg = item.querySelector('image')?.textContent?.trim()
-                    || item.querySelector('thumbnail')?.textContent?.trim() || '';
-        const imgUrl = rawImg.startsWith('//') ? 'https:' + rawImg : rawImg;
-        if (imgUrl) {
-          let imgInput = document.getElementById('f-image');
-          if (!imgInput) {
-            imgInput = document.createElement('input');
-            imgInput.type = 'hidden'; imgInput.id = 'f-image';
-            document.getElementById('game-form').appendChild(imgInput);
+        const r = await fetch(AI_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: '젠가' })
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.name_ko || d.name_en) {
+            showToast(`✅ AI 연결 OK! "${d.name_ko||d.name_en}" 정보 수신됨`);
+          } else {
+            showToast('⚠️ 응답 받았지만 데이터 없음', true);
           }
-          imgInput.value = imgUrl;
+        } else {
+          showToast(`❌ 오류 ${r.status} — n8n에서 워크플로우를 OFF→ON 해주세요`, true);
         }
-
-        // YouTube 검색 트리거
-        if (document.getElementById('yt-results')) searchYouTube(bggName);
-
-        showToast('✅ BGG 정보 자동 입력 완료!');
       } catch(e) {
-        showToast('BGG 상세 오류: ' + e.message, true);
+        showToast('❌ 연결 실패: ' + e.message, true);
       }
     }
 
