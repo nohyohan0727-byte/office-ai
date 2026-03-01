@@ -269,6 +269,35 @@
     .vca-memo { font-size:12px; color:#666; text-align:center; margin-bottom:10px; min-height:16px; }
     .vca-actions { display:flex; gap:6px; }
 
+    /* ── 방문 기록 섹션 ── */
+    .visit-history-section { margin:0 20px 80px; }
+    .vh-header {
+      background:var(--card2); border:1px solid #333; border-radius:12px;
+      padding:12px 16px; font-weight:700; font-size:14px; color:#aaa;
+      cursor:pointer; display:flex; justify-content:space-between;
+      align-items:center; transition:color .15s;
+    }
+    .vh-header:hover { color:#fff; }
+    .vh-toggle-icon { font-size:11px; transition:transform .2s; }
+    .vh-body { display:none; padding:8px 0; }
+    .vh-body.open { display:block; }
+    .vh-date-group { margin-bottom:16px; }
+    .vh-date-label {
+      font-size:12px; color:var(--g); font-weight:700;
+      padding:4px 0 8px; border-bottom:1px solid #1e1e38; margin-bottom:8px;
+    }
+    .vh-visitor-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px; }
+    .vh-chip {
+      background:#1e1e38; border:1px solid #333; border-radius:20px;
+      padding:4px 12px; font-size:12px; font-weight:700; color:#ccc;
+      display:flex; align-items:center; gap:6px;
+    }
+    .vh-chip-emoji { font-size:16px; }
+    .vh-time { font-size:11px; color:#555; margin-top:2px; }
+    .vh-snack-row {
+      font-size:11px; color:#888; padding:2px 0 0 2px;
+    }
+
     /* ── 아바타 선택 그리드 ── */
     .avatar-grid { display:flex; flex-wrap:wrap; gap:8px; }
     .avatar-opt {
@@ -1049,9 +1078,17 @@
       renderVisitorList();
     }
 
+    function vLabel(v) {
+      const nick = v.nickname || v.name || '?';
+      return v.nickname && v.name ? `${v.nickname}<span style="font-size:11px;color:#666;"> (${v.name})</span>` : nick;
+    }
+    function vSearchText(v) {
+      return ((v.nickname||'') + ' ' + (v.name||'')).toLowerCase();
+    }
+
     function renderVisitorList() {
       const q = document.getElementById('search').value.toLowerCase();
-      const filtered = allVisitors.filter(v => v.name.toLowerCase().includes(q));
+      const filtered = allVisitors.filter(v => vSearchText(v).includes(q));
       if (!filtered.length) {
         document.getElementById('list-area').innerHTML = `
           <div class="empty">
@@ -1065,7 +1102,7 @@
           ${filtered.map(v => `
             <div class="visitor-card-admin">
               <div class="vca-avatar">${v.avatar || '🧑'}</div>
-              <div class="vca-name">${esc(v.name)}</div>
+              <div class="vca-name">${vLabel(v)}</div>
               ${v.age ? `<div class="vca-age">${v.age}세</div>` : '<div class="vca-age"></div>'}
               <div class="vca-memo">${esc(v.memo || '')}</div>
               <div class="vca-actions">
@@ -1074,7 +1111,16 @@
               </div>
             </div>
           `).join('')}
+        </div>
+        <div class="visit-history-section">
+          <div class="vh-header" onclick="toggleVisitHistory(this)">
+            📅 방문 기록 <span class="vh-toggle-icon">▼</span>
+          </div>
+          <div class="vh-body" id="visit-history-body">
+            <div style="color:#555;font-size:13px;padding:16px;text-align:center;">로딩 중...</div>
+          </div>
         </div>`;
+      loadVisitHistory();
     }
 
     /* 방문자 모달 열기 */
@@ -1092,8 +1138,12 @@
       document.getElementById('form-fields').innerHTML = `
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">이름 / 닉네임 *</label>
-            <input class="form-input" id="v-name" required value="${esc(visitor?.name||'')}" placeholder="예: 김철수 or 피카츄">
+            <label class="form-label">닉네임 *</label>
+            <input class="form-input" id="v-nickname" required value="${esc(visitor?.nickname||visitor?.name||'')}" placeholder="예: 피카츄, 가온이">
+          </div>
+          <div class="form-group">
+            <label class="form-label">실명 <span style="font-size:10px;color:#555">(선택)</span></label>
+            <input class="form-input" id="v-name" value="${esc(visitor?.name||'')}" placeholder="예: 김철수">
           </div>
           <div class="form-group">
             <label class="form-label">나이</label>
@@ -1169,10 +1219,12 @@
     async function submitVisitorForm() {
       const btn = document.getElementById('submit-btn');
       btn.disabled = true; btn.textContent = '저장 중...';
-      const name = document.getElementById('v-name').value.trim();
-      if (!name) { showToast('이름을 입력해 주세요', true); btn.disabled=false; btn.textContent='+ 등록'; return; }
+      const nickname = document.getElementById('v-nickname').value.trim();
+      const name     = document.getElementById('v-name').value.trim();
+      if (!nickname) { showToast('닉네임을 입력해 주세요', true); btn.disabled=false; btn.textContent='+ 등록'; return; }
       const payload = {
-        name,
+        nickname,
+        name:   name || null,
         age:    parseInt(document.getElementById('v-age').value) || null,
         memo:   document.getElementById('v-memo').value.trim() || null,
         avatar: selAvatar,
@@ -1187,6 +1239,77 @@
       if (error) { showToast('저장 실패: ' + error.message, true); return; }
       showToast(editingVid ? '✅ 수정 완료!' : '🎉 등록 완료!');
       closeModal(); await loadVisitors();
+    }
+
+    function toggleVisitHistory(headerEl) {
+      const body = document.getElementById('visit-history-body');
+      const icon = headerEl.querySelector('.vh-toggle-icon');
+      body.classList.toggle('open');
+      icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+    }
+
+    async function loadVisitHistory() {
+      const db = getDB();
+      if (!db) return;
+      try {
+        // 방문 기록 + 방문자 정보
+        const { data: logs } = await db
+          .from('visit_logs')
+          .select('*, visitors(id,name,nickname,avatar)')
+          .order('visit_date', { ascending: false })
+          .limit(90);
+        // 호출 기록
+        const { data: calls } = await db
+          .from('call_history')
+          .select('*')
+          .order('called_at', { ascending: false })
+          .limit(200);
+
+        const callsByDate = {};
+        (calls || []).forEach(c => {
+          const d = (c.visit_date || (c.called_at||'').slice(0,10));
+          if (!callsByDate[d]) callsByDate[d] = [];
+          callsByDate[d].push(c);
+        });
+
+        const grouped = {};
+        (logs || []).forEach(l => {
+          const d = l.visit_date;
+          if (!grouped[d]) grouped[d] = [];
+          grouped[d].push(l);
+        });
+
+        const body = document.getElementById('visit-history-body');
+        if (!Object.keys(grouped).length) {
+          body.innerHTML = '<div style="color:#555;font-size:13px;padding:12px;text-align:center;">방문 기록이 없어요</div>';
+          return;
+        }
+
+        body.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
+          const visitors = grouped[date];
+          const dayCallsRaw = callsByDate[date] || [];
+          const snackSummary = dayCallsRaw.length
+            ? dayCallsRaw.map(c=>`${c.menu_emoji||'📦'}${c.menu_label}${c.qty>1?' x'+c.qty:''}`).join(' · ')
+            : null;
+          return `
+            <div class="vh-date-group">
+              <div class="vh-date-label">📅 ${date}</div>
+              <div class="vh-visitor-chips">
+                ${visitors.map(l => {
+                  const v = l.visitors || {};
+                  const nick = v.nickname || v.name || '?';
+                  const fullName = v.nickname && v.name ? `${v.nickname}(${v.name})` : nick;
+                  const dur = l.duration_min ? `${Math.floor(l.duration_min/60)}h${l.duration_min%60}m` : null;
+                  return `<div class="vh-chip">
+                    <span class="vh-chip-emoji">${v.avatar||'🧑'}</span>
+                    <span>${esc(fullName)}${dur?` <span style="color:#00ff88;font-size:10px;">${dur}</span>`:''}</span>
+                  </div>`;
+                }).join('')}
+              </div>
+              ${snackSummary ? `<div class="vh-snack-row">🍿 ${snackSummary}</div>` : ''}
+            </div>`;
+        }).join('');
+      } catch(e) { console.warn('방문기록 로드 실패:', e); }
     }
 
     async function deleteVisitor(id) {
@@ -1215,7 +1338,10 @@
       }
       const sel = document.getElementById('rv-visitor');
       sel.innerHTML = '<option value="">-- 방문자 선택 --</option>' +
-        allVisitors.map(v => `<option value="${v.id}">${v.avatar||'🧑'} ${esc(v.name)}</option>`).join('');
+        allVisitors.map(v => {
+          const label = v.nickname && v.name ? `${v.nickname}(${v.name})` : (v.nickname || v.name || '?');
+          return `<option value="${v.id}">${v.avatar||'🧑'} ${esc(label)}</option>`;
+        }).join('');
 
       await loadReviews();
       document.getElementById('review-modal').classList.add('open');

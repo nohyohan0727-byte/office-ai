@@ -40,6 +40,22 @@
     .blink    { animation:blink 1s step-end infinite; }
     .footer   { margin-top:32px; font-family:'Press Start 2P',monospace; font-size:6px; color:#333; }
 
+    /* ── 체크아웃 바 ── */
+    #checkout-bar {
+      display:none; position:fixed; bottom:0; left:0; right:0; z-index:80;
+      background:#0f0f20; border-top:1px solid #00ff8844;
+      padding:12px 20px; align-items:center; justify-content:space-between;
+      gap:12px; max-width:480px; margin:0 auto;
+    }
+    #checkout-bar-names { font-size:13px; color:#00ff88; font-weight:700; flex:1; }
+    #checkout-btn {
+      background:linear-gradient(135deg,#ff4466,#cc0033);
+      color:#fff; border:none; border-radius:12px; padding:10px 18px;
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:14px;
+      cursor:pointer; white-space:nowrap; transition:filter .15s;
+    }
+    #checkout-btn:hover { filter:brightness(1.15); }
+
     /* ── 카드 ── */
     .card {
       background:#151526; border-radius:20px; padding:28px 24px; margin-bottom:16px;
@@ -105,6 +121,52 @@
     .key:active { transform:scale(.9); }
     .key.del    { font-size:16px; }
 
+
+    /* ── 체크인 화면 ── */
+    #checkin-screen {
+      position:fixed; inset:0; background:#0b0b1a;
+      display:none; align-items:center; justify-content:center;
+      z-index:95; padding:20px; overflow-y:auto;
+    }
+    .checkin-box { max-width:460px; width:100%; text-align:center; padding:20px 0; }
+    .checkin-title {
+      font-family:'Press Start 2P',monospace; font-size:9px;
+      color:#00ff88; line-height:2.2; margin-bottom:8px;
+    }
+    .checkin-sub { font-size:13px; color:#555; margin-bottom:22px; }
+    .checkin-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+      margin-bottom:20px;
+    }
+    .checkin-card {
+      background:#151526; border:2px solid #333; border-radius:16px;
+      padding:14px 8px; cursor:pointer; text-align:center;
+      transition:all .15s; position:relative; user-select:none;
+    }
+    .checkin-card.on { border-color:#00ff88; background:#00ff8818; }
+    .checkin-card-emoji { font-size:28px; margin-bottom:6px; display:block; }
+    .checkin-card-name { font-size:11px; font-weight:700; color:#aaa; line-height:1.4; }
+    .checkin-card.on .checkin-card-name { color:#00ff88; }
+    .checkin-check {
+      position:absolute; top:5px; right:8px; font-size:13px;
+      color:#00ff88; opacity:0; transition:opacity .15s;
+    }
+    .checkin-card.on .checkin-check { opacity:1; }
+    .checkin-empty { color:#555; font-size:13px; padding:30px 0; grid-column:1/-1; }
+    .checkin-btns { display:flex; gap:10px; }
+    .checkin-start {
+      flex:1; background:linear-gradient(135deg,#00ff88,#00cc66);
+      color:#0b0b1a; border:none; border-radius:14px; padding:15px;
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:15px;
+      cursor:pointer; transition:filter .15s;
+    }
+    .checkin-start:hover { filter:brightness(1.1); }
+    .checkin-skip {
+      background:#151526; border:1px solid #333; border-radius:14px;
+      padding:15px 18px; color:#555; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:13px; cursor:pointer; transition:all .15s;
+    }
+    .checkin-skip:hover { border-color:#666; color:#aaa; }
 
     /* ── 집주인 호출 버튼 (우측상단) ── */
     .top-right-area {
@@ -335,6 +397,24 @@
   </div>
 
   <!-- ══════════════════════════════
+       체크인 화면 (비밀번호 통과 직후)
+       ══════════════════════════════ -->
+  <div id="checkin-screen">
+    <div class="checkin-box">
+      <div style="font-size:48px;margin-bottom:12px;">👥</div>
+      <div class="checkin-title">오늘은 누가 왔나요?</div>
+      <div class="checkin-sub">방문자를 선택하고 시작하세요</div>
+      <div class="checkin-grid" id="checkin-grid">
+        <div class="checkin-empty">로딩 중...</div>
+      </div>
+      <div class="checkin-btns">
+        <button class="checkin-start" id="checkin-start-btn" onclick="startCheckin()">오늘 시작! 🎮</button>
+        <button class="checkin-skip" onclick="skipCheckin()">건너뛰기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
        메인 화면 (비밀번호 통과 후)
        ══════════════════════════════ -->
   <div id="main" class="wrap" style="display:none;">
@@ -367,6 +447,12 @@
     </a>
 
     <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
+  </div>
+
+  <!-- 체크아웃 바 -->
+  <div id="checkout-bar">
+    <div id="checkout-bar-names">🎮 이용 중</div>
+    <button id="checkout-btn" onclick="checkOut()">👋 오늘 종료</button>
   </div>
 
   <!-- ══════════════════════════════
@@ -523,11 +609,123 @@
       const pw = document.getElementById('pw-screen');
       pw.style.opacity = '0';
       setTimeout(() => { pw.style.display = 'none'; }, 300);
-      document.getElementById('main').style.display = 'block';
       document.getElementById('top-right-area').style.display = 'flex';
-      // 설정 버튼은 최상위 관리자만
       document.getElementById('call-settings-btn').style.display = isAdmin ? 'flex' : 'none';
       loadCallMenu();
+
+      const today = new Date().toISOString().slice(0, 10);
+      if (sessionStorage.getItem('gb_checkin') === today) {
+        document.getElementById('main').style.display = 'block';
+      } else {
+        initCheckin();
+      }
+    }
+
+    /* ══════════════════════════════
+       방문자 체크인
+       ══════════════════════════════ */
+    let _checkinSel = new Set();
+
+    function vDisplayName(v) {
+      if (v.nickname && v.name) return `${v.nickname}<br><small style="font-size:9px;opacity:.7">${v.name}</small>`;
+      return v.nickname || v.name || '?';
+    }
+
+    async function initCheckin() {
+      document.getElementById('checkin-screen').style.display = 'flex';
+      _checkinSel.clear();
+      const db = getDB();
+      let visitors = [];
+      if (db) {
+        try {
+          const { data } = await db.from('visitors').select('id,name,nickname,avatar').order('name');
+          visitors = data || [];
+        } catch(e) {}
+      }
+      const grid = document.getElementById('checkin-grid');
+      if (!visitors.length) {
+        grid.innerHTML = '<div class="checkin-empty">등록된 방문자가 없어요<br>어드민에서 먼저 등록해 주세요</div>';
+        return;
+      }
+      window._checkinVisitors = visitors;
+      grid.innerHTML = visitors.map(v => `
+        <div class="checkin-card" id="cc-${v.id}" onclick="toggleCheckin(${v.id})">
+          <span class="checkin-check">✓</span>
+          <span class="checkin-card-emoji">${v.avatar || '🧑'}</span>
+          <div class="checkin-card-name">${vDisplayName(v)}</div>
+        </div>`).join('');
+    }
+
+    function toggleCheckin(id) {
+      const el = document.getElementById('cc-' + id);
+      if (_checkinSel.has(id)) { _checkinSel.delete(id); el.classList.remove('on'); }
+      else                      { _checkinSel.add(id);    el.classList.add('on'); }
+      const n = _checkinSel.size;
+      document.getElementById('checkin-start-btn').textContent =
+        n > 0 ? `오늘 시작! (${n}명) 🎮` : '오늘 시작! 🎮';
+    }
+
+    function startCheckin()  { doneCheckin([..._checkinSel]); }
+    function skipCheckin()   { doneCheckin([]); }
+
+    async function doneCheckin(ids) {
+      const today = new Date().toISOString().slice(0, 10);
+      const now   = new Date().toISOString();
+      sessionStorage.setItem('gb_checkin', today);
+      sessionStorage.setItem('gb_today_visitors', JSON.stringify(ids));
+      sessionStorage.setItem('gb_checkin_time', now);
+      document.getElementById('checkin-screen').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+
+      // 체크인 로그 저장 (check_in_at 포함)
+      if (ids.length > 0) {
+        const db = getDB();
+        if (db) {
+          try {
+            await db.from('visit_logs').upsert(
+              ids.map(id => ({ visitor_id: id, visit_date: today, check_in_at: now })),
+              { onConflict: 'visitor_id,visit_date', ignoreDuplicates: false }
+            );
+          } catch(e) { console.warn('visit_logs 저장 실패:', e); }
+        }
+        // 오늘 방문자 이름 표시
+        const names = (window._checkinVisitors || [])
+          .filter(v => ids.includes(v.id))
+          .map(v => v.nickname || v.name).join(', ');
+        if (names) showToast(`✅ ${names} — 방문 등록!`);
+        document.getElementById('checkout-bar-names').textContent = `🎮 ${names || '방문자'} 이용 중`;
+        document.getElementById('checkout-bar').style.display = 'flex';
+      }
+    }
+
+    async function checkOut() {
+      const ids  = JSON.parse(sessionStorage.getItem('gb_today_visitors') || '[]');
+      const inAt = sessionStorage.getItem('gb_checkin_time');
+      if (!ids.length) return;
+
+      const now   = new Date();
+      const outAt = now.toISOString();
+      const inMs  = inAt ? (now - new Date(inAt)) : 0;
+      const durMin = Math.round(inMs / 60000);
+
+      const db = getDB();
+      if (db) {
+        try {
+          const today = new Date().toISOString().slice(0, 10);
+          for (const id of ids) {
+            await db.from('visit_logs')
+              .update({ check_out_at: outAt, duration_min: durMin })
+              .eq('visitor_id', id).eq('visit_date', today);
+          }
+        } catch(e) { console.warn('checkout 저장 실패:', e); }
+      }
+
+      const h = Math.floor(durMin / 60), m = durMin % 60;
+      const timeStr = h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+      showToast(`👋 ${timeStr} 이용 완료! 또 오세요~`);
+      document.getElementById('checkout-bar').style.display = 'none';
+      sessionStorage.removeItem('gb_today_visitors');
+      sessionStorage.removeItem('gb_checkin_time');
     }
 
     /* ══════════════════════════════
@@ -726,12 +924,14 @@
       const db = getDB();
       if (db) {
         try {
+          const vdate = new Date().toISOString().slice(0, 10);
           await db.from('call_history').insert(
             entries.map(({ item, qty }) => ({
               menu_id:     item.id || null,
               menu_label:  item.label,
               menu_emoji:  item.emoji || '📦',
               qty,
+              visit_date:  vdate,
               custom_text: (item.label === '기타' || item.id === 'etc') ? customText || null : null,
             }))
           );
