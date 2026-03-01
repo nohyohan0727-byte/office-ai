@@ -316,19 +316,21 @@
       renderFileList();
 
       try {
-        const filedata = await new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = e => res(e.target.result.split(',')[1]);
-          reader.onerror = rej;
-          reader.readAsDataURL(f.file);
-        });
+        // base64 인코딩 없이 raw binary 전송 (FormData multipart)
+        const formData = new FormData();
+        formData.append('api_key', apiKey);
+        formData.append('category', tableName);
+        formData.append('filename', f.file.name);
+        formData.append('filesize', String(f.file.size));
+        formData.append('mimetype', f.file.type || 'application/octet-stream');
+        formData.append('file', f.file);
 
-        f.progress = 55; renderFileList();
+        f.progress = 30; renderFileList();
 
         const resp = await fetch(`${N8N}/trustrag/upload`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: apiKey, category: tableName, filename: f.file.name, filedata, filesize: f.file.size, mimetype: f.file.type || 'application/octet-stream' })
+          // Content-Type 헤더 생략: 브라우저가 multipart/form-data + boundary 자동 설정
+          body: formData
         });
         const data = await resp.json();
         f.progress = 100;
