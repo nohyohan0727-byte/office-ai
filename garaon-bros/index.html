@@ -573,13 +573,14 @@
       document.getElementById('call-overlay').classList.remove('open');
     }
 
+    const ETC_ITEM = { id: 'etc', emoji: '✏️', label: '직접 입력' };
+
     function renderCallGrid() {
       const grid = document.getElementById('call-grid');
-      if (!_callItems.length) {
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#555;padding:20px;">메뉴 없음</div>';
-        return;
-      }
-      grid.innerHTML = _callItems.map(item => {
+      // DB 항목 + 항상 "직접 입력" 마지막에 고정
+      const hasEtcInDB = _callItems.some(i => i.id === 'etc' || i.label === '기타' || i.label === '직접 입력');
+      const items = hasEtcInDB ? _callItems : [..._callItems, ETC_ITEM];
+      grid.innerHTML = items.map(item => {
         const qty = _cart[item.id] ? _cart[item.id].qty : 0;
         return `
           <div class="call-item${qty > 0 ? ' has-qty' : ''}" onclick="tapCallItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
