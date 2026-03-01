@@ -419,7 +419,6 @@
             <span>🏢</span>
             <div style="flex:1">
               <div style="font-weight:600;font-size:0.875rem">${c.name}${c.name_en && c.name_en !== c.name ? `<span style="color:var(--text-dim);font-weight:400;margin-left:0.4rem;font-size:0.8rem">(${c.name_en})</span>` : ''}</div>
-              <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.slug}</div>
             </div>
           </div>`;
     }
@@ -694,7 +693,7 @@
         el.style.display = 'block';
         el.className = `result-box ${ok ? 'success' : 'error'}`;
         el.textContent = ok
-          ? `✅ 회사 생성 완료\n영문명: ${nameEn}\n한글명: ${name}\nID: ${data.result?.id}\n슬러그: ${data.result?.slug}\n플랜: ${data.result?.plan}`
+          ? `✅ 회사 생성 완료\n영문명: ${nameEn}\n한글명: ${name}\n플랜: ${data.result?.plan}`
           : (data?.message || '생성 실패');
         if (ok) {
           showToast('✅ 회사 생성 완료');
@@ -798,7 +797,6 @@
                   <div style="font-weight:600;font-size:0.875rem">${c.name}
                     <span style="font-size:0.72rem;font-weight:400;color:var(--text-dim);margin-left:0.4rem">🏢 ${coName}</span>
                   </div>
-                  <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.table_name || '(테이블 없음)'}</div>
                 </div>
                 ${c.is_active !== false ? '<span style="font-size:0.72rem;color:var(--success)">✅ 활성</span>' : '<span style="font-size:0.72rem;color:var(--danger)">❌ 비활성</span>'}
               </div>`;
@@ -826,7 +824,7 @@
         el.style.display = 'block';
         el.className = `result-box ${ok ? 'success' : 'error'}`;
         el.textContent = ok
-          ? `✅ 카테고리 생성 완료\n이름: ${data.result?.name || catName}\n테이블: ${data.result?.table_name || '(자동 생성)'}`
+          ? `✅ 카테고리 생성 완료\n이름: ${data.result?.name || catName}`
           : (data?.message || '생성 실패');
         if (ok) {
           showToast('✅ 카테고리 생성 완료');
