@@ -1837,6 +1837,8 @@
       if (document.getElementById('yt-results')) searchYouTube(displayName);
       if (d.image_url) updateImgPreview(d.image_url);
       showToast('✅ AI 정보 자동 입력 완료!');
+      // 브라우저에서 Wikipedia 이미지 조회 (n8n Cloud IP 차단 우회)
+      if (d.name_en) fetchWikiImage(d.name_en);
     }
 
     function updateImgPreview(url) {
@@ -1849,6 +1851,24 @@
       } else {
         wrap.style.display = 'none';
       }
+    }
+
+    async function fetchWikiImage(nameEn) {
+      try {
+        const res = await fetch(
+          'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(nameEn),
+          { headers: { 'Accept': 'application/json' } }
+        );
+        if (!res.ok) return;
+        const d = await res.json();
+        const url = d.thumbnail?.source || d.originalimage?.source;
+        if (!url) return;
+        const imgEl = document.getElementById('f-image');
+        if (imgEl && !imgEl.value) {   // 이미 값이 있으면 덮어쓰지 않음
+          imgEl.value = url;
+          updateImgPreview(url);
+        }
+      } catch(e) { /* 무시 */ }
     }
 
     async function uploadGameImage(input) {
