@@ -521,20 +521,33 @@
     </div>
   </div>
 
-  <!-- 오늘 방문자 추가 모달 (늦게 온 친구 체크인) -->
+  <!-- 오늘 세션 관리 모달 -->
   <div id="add-visitor-overlay" style="display:none;position:fixed;inset:0;background:#0008;z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)closeAddVisitorModal()">
-    <div style="background:#151526;border-radius:20px;border:2px solid #00ff88;padding:28px 24px;width:min(420px,92vw);max-height:85vh;overflow-y:auto;box-shadow:0 0 40px #00ff8844;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <div style="font-size:17px;font-weight:900;color:#00ff88;">👥 방문자 추가</div>
+    <div style="background:#151526;border-radius:20px;border:2px solid #00ff88;padding:24px 20px;width:min(420px,92vw);max-height:88vh;overflow-y:auto;box-shadow:0 0 40px #00ff8844;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div style="font-size:17px;font-weight:900;color:#00ff88;">👥 오늘 세션</div>
         <button onclick="closeAddVisitorModal()" style="background:none;border:none;color:#555;font-size:20px;cursor:pointer;">✕</button>
       </div>
-      <div style="font-size:13px;color:#555;margin-bottom:18px;">오늘 세션에 추가할 친구를 선택하세요</div>
-      <div id="latecome-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:20px;">
-        <div style="color:#555;font-size:13px;grid-column:1/-1;text-align:center;padding:20px 0;">로딩 중...</div>
+
+      <!-- 현재 참여 중 -->
+      <div style="font-size:12px;font-weight:700;color:#555;letter-spacing:1px;margin-bottom:8px;">지금 참여 중</div>
+      <div id="session-current" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #222;">
+        <div style="color:#444;font-size:13px;align-self:center;">로딩 중...</div>
       </div>
+
+      <!-- 추가 가능한 친구 -->
+      <div style="font-size:12px;font-weight:700;color:#555;letter-spacing:1px;margin-bottom:8px;">추가할 친구</div>
+      <div id="latecome-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:16px;">
+        <div style="color:#444;font-size:13px;grid-column:1/-1;padding:8px 0;">로딩 중...</div>
+      </div>
+
       <button onclick="confirmLateCheckin()"
-        style="width:100%;background:#00ff88;color:#0b0b1a;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">
-        ✅ 오늘 세션에 추가
+        style="width:100%;background:#00ff88;color:#0b0b1a;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;margin-bottom:10px;">
+        ✅ 선택한 친구 추가
+      </button>
+      <button onclick="closeAddVisitorModal();checkOut();"
+        style="width:100%;background:transparent;color:#ff4466;border:2px solid #ff4466;border-radius:14px;padding:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;">
+        👋 오늘 세션 종료
       </button>
       <div id="av-msg" style="text-align:center;font-size:13px;margin-top:10px;min-height:18px;"></div>
     </div>
@@ -546,8 +559,8 @@
     <button id="checkout-btn" onclick="checkOut()">👋 오늘 종료</button>
   </div>
 
-  <!-- 방문자 추가 (좌측상단) -->
-  <button id="visitor-fab" onclick="openAddVisitorModal()">👥 방문자 추가</button>
+  <!-- 오늘 세션 (좌측상단) -->
+  <button id="visitor-fab" onclick="openAddVisitorModal()">👥 오늘 세션</button>
 
   <!-- ══════════════════════════════
        집주인 호출 (우측상단)
@@ -1139,7 +1152,7 @@
       document.getElementById('welcome-overlay').style.display = 'none';
     }
 
-    /* ── 오늘 방문자 추가 (늦게 온 친구 체크인) ── */
+    /* ── 오늘 세션 관리 모달 ── */
     let _lateSel = new Set();
 
     async function openAddVisitorModal() {
@@ -1149,25 +1162,43 @@
 
       const todayIds = new Set(JSON.parse(sessionStorage.getItem('gb_today_visitors') || '[]'));
       const { data } = await getDB().from('visitors').select('id,name,nickname,avatar').order('name');
-      const notYet = (data || []).filter(v => !todayIds.has(v.id));
+      const all = data || [];
+      const inSession = all.filter(v => todayIds.has(v.id));
+      const notYet    = all.filter(v => !todayIds.has(v.id));
 
+      // 현재 참여 중
+      const curEl = document.getElementById('session-current');
+      if (!inSession.length) {
+        curEl.innerHTML = '<div style="color:#444;font-size:13px;">아직 아무도 없어요</div>';
+      } else {
+        curEl.innerHTML = inSession.map(v => {
+          const label = v.nickname || v.name || '?';
+          return `<div style="display:flex;align-items:center;gap:6px;background:#0b0b1a;border:1px solid #333;border-radius:20px;padding:6px 12px;">
+            <span style="font-size:18px;">${v.avatar||'🧑'}</span>
+            <span style="font-size:13px;font-weight:700;color:#00ff88;">${label}</span>
+          </div>`;
+        }).join('');
+      }
+
+      // 추가 가능한 친구
       const grid = document.getElementById('latecome-grid');
       if (!notYet.length) {
-        grid.innerHTML = '<div style="color:#555;font-size:13px;grid-column:1/-1;text-align:center;padding:20px 0;">모두 이미 체크인했어요!</div>';
-        return;
+        const msg = all.length ? '모두 이미 참여 중이에요 🎉' : '등록된 방문자가 없어요';
+        grid.innerHTML = `<div style="color:#444;font-size:13px;grid-column:1/-1;padding:8px 0;">${msg}</div>`;
+      } else {
+        grid.innerHTML = notYet.map(v => {
+          const label = v.nickname || v.name || '?';
+          return `<div id="lc-${v.id}" onclick="toggleLate(${v.id})" style="
+            cursor:pointer;background:#0b0b1a;border:2px solid #222;border-radius:12px;
+            padding:12px 6px;text-align:center;transition:all .15s;" data-name="${label}">
+            <div style="font-size:26px;margin-bottom:4px;">${v.avatar||'🧑'}</div>
+            <div style="font-size:12px;font-weight:700;color:#bbb;">${label}</div>
+          </div>`;
+        }).join('');
       }
-      grid.innerHTML = notYet.map(v => {
-        const label = v.nickname || v.name || '?';
-        return `<div id="lc-${v.id}" onclick="toggleLate(${v.id},'${label}')" style="
-          cursor:pointer;background:#0b0b1a;border:2px solid #222;border-radius:14px;
-          padding:14px 8px;text-align:center;transition:all .15s;" data-name="${label}">
-          <div style="font-size:28px;margin-bottom:6px;">${v.avatar||'🧑'}</div>
-          <div style="font-size:13px;font-weight:700;color:#ccc;">${label}</div>
-        </div>`;
-      }).join('');
     }
 
-    function toggleLate(id, name) {
+    function toggleLate(id) {
       const el = document.getElementById(`lc-${id}`);
       if (_lateSel.has(id)) {
         _lateSel.delete(id);
@@ -1186,14 +1217,12 @@
 
     async function confirmLateCheckin() {
       const msg = document.getElementById('av-msg');
-      if (!_lateSel.size) { msg.style.color='#ff4466'; msg.textContent='친구를 선택해주세요'; return; }
+      if (!_lateSel.size) { msg.style.color='#ff4466'; msg.textContent='추가할 친구를 선택해주세요'; return; }
 
-      // sessionStorage에 추가
       const current = JSON.parse(sessionStorage.getItem('gb_today_visitors') || '[]');
       const newIds  = [...new Set([...current, ..._lateSel])];
       sessionStorage.setItem('gb_today_visitors', JSON.stringify(newIds));
 
-      // DB visit_logs 기록
       const today = new Date().toISOString().slice(0,10);
       const now   = new Date().toISOString();
       try {
@@ -1203,16 +1232,16 @@
         );
       } catch(e) { console.warn('visit_logs 저장 실패:', e); }
 
-      // 체크아웃 바 이름 갱신
       const { data } = await getDB().from('visitors').select('id,name,nickname').in('id', newIds);
       const names = (data||[]).map(v => v.nickname || v.name).join(', ');
       document.getElementById('checkout-bar-names').textContent = `🎮 ${names} 이용 중`;
       document.getElementById('checkout-bar').style.display = 'flex';
 
-      const addedNames = [...document.querySelectorAll('#latecome-grid [data-name]')]
-        .filter(el => _lateSel.has(Number(el.id.replace('lc-',''))))
-        .map(el => el.dataset.name).join(', ');
-      showToast(`✅ ${addedNames} — 추가됐어요!`);
+      const added = [..._lateSel].map(id => {
+        const el = document.getElementById(`lc-${id}`);
+        return el ? el.dataset.name : '';
+      }).filter(Boolean).join(', ');
+      showToast(`✅ ${added} — 추가됐어요!`);
       closeAddVisitorModal();
     }
   </script>
