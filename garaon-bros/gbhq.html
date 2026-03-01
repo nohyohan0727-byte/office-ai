@@ -1757,7 +1757,7 @@
        QR 모달
        ══════════════════════════════════════ */
     function openQR(gameId, gameType, gameName) {
-      const base = location.origin + location.pathname.replace('gbhq.html','').replace('admin.html','');
+      const base = location.origin + location.pathname.replace(/[^/]+$/, '');
       const url  = `${base}review.html?game_id=${gameId}&game_type=${gameType}`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=200x200&bgcolor=ffffff&color=0b0b1a`;
       document.getElementById('qr-title').textContent = `📱 ${gameName}`;
