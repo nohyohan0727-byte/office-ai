@@ -361,6 +361,33 @@
       const el = document.getElementById('member-content');
       let html = '';
 
+      const noCompany = role === 'super_admin' && companyList.length === 0;
+
+      // 회사가 없을 때 최상단에 안내 배너 + 회사 등록 섹션 먼저 표시
+      if (noCompany) {
+        html += `
+          <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:0.75rem">
+            <span style="font-size:1.3rem;line-height:1">🏢</span>
+            <div>
+              <div style="font-weight:700;color:#fbbf24;margin-bottom:0.25rem">등록된 회사가 없습니다</div>
+              <div style="font-size:0.84rem;color:var(--text-dim)">회원을 등록하려면 먼저 회사를 생성해야 합니다. 아래 양식에서 회사를 등록하세요.</div>
+            </div>
+          </div>`;
+        html += buildCompanySection([]);
+        html += `
+          <div class="card" style="margin-top:1.25rem">
+            <div class="card-header">
+              <div class="card-header-left"><span>👥</span><span class="card-title">회원 목록</span></div>
+              <button class="btn btn-secondary btn-sm" onclick="loadMembers()">🔄 새로고침</button>
+            </div>
+            <div class="table-wrap" id="members-table">
+              <div style="padding:2rem;text-align:center;color:var(--text-dim)">로딩 중...</div>
+            </div>
+          </div>`;
+        el.innerHTML = html;
+        return;
+      }
+
       // 회원 목록 (전체 보기)
       html += `
         <div class="card">
@@ -373,14 +400,76 @@
           </div>
         </div>`;
 
+      // 회사 관리 (super_admin 전용)
+      if (role === 'super_admin') {
+        html += buildCompanySection(companyList);
+      }
+
       // 회원 등록 (company_admin 이상)
       if (can(role, 'company_admin')) {
-        const companyOptions = companyList.map(c =>
-          `<option value="${c.id}">${c.name}</option>`
-        ).join('');
-        const isSuperAdmin = role === 'super_admin';
+        html += buildMemberRegSection(role);
+      }
 
-        html += `
+      el.innerHTML = html;
+    }
+
+    function buildCompanySection(companies) {
+      const companyRows = companies.map(c => `
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+            <span>🏢</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:0.875rem">${c.name}</div>
+              <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.slug}</div>
+            </div>
+          </div>`).join('') || '<div style="color:var(--text-dim);font-size:0.875rem">등록된 회사 없음</div>';
+
+      return `
+          <div class="section-sep">회사 관리</div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-header-left"><span>🏢</span><span class="card-title">회사 생성</span></div></div>
+              <div class="card-body">
+                <div class="field">
+                  <label>회사명</label>
+                  <input type="text" id="co-name" placeholder="JK Networks" oninput="onCompanyNameInput(this.value)">
+                </div>
+                <div class="field">
+                  <label>슬러그 (URL 식별자)</label>
+                  <input type="text" id="co-slug" placeholder="jknetworks" oninput="this.dataset.manuallyEdited='true'"
+                    title="소문자, 숫자, 하이픈만 사용 가능">
+                  <div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.25rem">소문자·숫자·하이픈만 · 고유해야 함 (예: jknetworks, samsung-electronics)</div>
+                </div>
+                <div class="field">
+                  <label>플랜</label>
+                  <select id="co-plan">
+                    <option value="starter">Starter</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+                <button class="btn btn-success" onclick="createCompany()" style="width:100%">
+                  <span class="spinner" id="co-spinner"></span> 🏢 회사 생성
+                </button>
+                <div class="result-box" id="co-result" style="display:none"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-header-left"><span>🏢</span><span class="card-title">회사 목록</span></div>
+                <button class="btn btn-secondary btn-sm" onclick="refreshCompanyList()">🔄 새로고침</button>
+              </div>
+              <div id="company-list-body" class="card-body">${companyRows}</div>
+            </div>
+          </div>`;
+    }
+
+    function buildMemberRegSection(role) {
+      const companyOptions = companyList.map(c =>
+        `<option value="${c.id}">${c.name}</option>`
+      ).join('');
+      const isSuperAdmin = role === 'super_admin';
+      return `
           <div class="section-sep">새 회원 등록</div>
           <div class="grid-2">
             <div class="card">
@@ -445,9 +534,6 @@
               </div>
             </div>
           </div>`;
-      }
-
-      el.innerHTML = html;
     }
 
     function fillTokenUserDropdown(users) {
@@ -558,6 +644,70 @@
         spin('tk-spinner', false);
         showToast('오류', 'error');
       }
+    }
+
+    function onCompanyNameInput(value) {
+      const slugEl = document.getElementById('co-slug');
+      if (!slugEl || slugEl.dataset.manuallyEdited === 'true') return;
+      // 영문/숫자만 추출해 슬러그 자동 생성 (한글 이름은 비워둠)
+      const auto = value.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+      slugEl.value = auto;
+    }
+
+    async function createCompany() {
+      const name = document.getElementById('co-name')?.value.trim();
+      const slug = document.getElementById('co-slug')?.value.trim();
+      const plan = document.getElementById('co-plan')?.value || 'starter';
+      if (!name) { showToast('회사명을 입력하세요', 'error'); return; }
+      if (!slug) { showToast('슬러그를 입력하세요', 'error'); return; }
+      if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug) && slug.length > 1) {
+        showToast('슬러그는 소문자·숫자·하이픈만 사용 가능합니다', 'error'); return;
+      }
+      spin('co-spinner', true);
+      try {
+        const data = await callAdmin('create_company', { name, slug, plan });
+        spin('co-spinner', false);
+        const ok = data?.success;
+        const el = document.getElementById('co-result');
+        el.style.display = 'block';
+        el.className = `result-box ${ok ? 'success' : 'error'}`;
+        el.textContent = ok
+          ? `✅ 회사 생성 완료\n이름: ${data.result?.name}\nID: ${data.result?.id}\n슬러그: ${data.result?.slug}\n플랜: ${data.result?.plan}`
+          : (data?.message || '생성 실패');
+        if (ok) {
+          showToast('✅ 회사 생성 완료');
+          // companyList 갱신 후 탭 전체 재빌드 (no-company 배너 제거 포함)
+          const cData = await callAdmin('list_companies', {});
+          companyList = cData?.result || [];
+          loadMembers();
+        } else {
+          showToast(data?.message || '실패', 'error');
+        }
+      } catch (e) {
+        spin('co-spinner', false);
+        showToast('오류: ' + e.message, 'error');
+      }
+    }
+
+    async function refreshCompanyList() {
+      const cData = await callAdmin('list_companies', {});
+      companyList = cData?.result || [];
+      const listBody = document.getElementById('company-list-body');
+      if (!listBody) return;
+      const rows = companyList.map(c => `
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+          <span>🏢</span>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:0.875rem">${c.name}</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);font-family:monospace">${c.slug}</div>
+          </div>
+        </div>`).join('') || '<div style="color:var(--text-dim);font-size:0.875rem">등록된 회사 없음</div>';
+      listBody.innerHTML = rows;
+      showToast('✅ 회사 목록 갱신됨');
     }
 
     /* ==================== 카테고리 관리 ==================== */
