@@ -50,9 +50,10 @@
       border-radius:12px 12px 0 0; border:2px solid transparent;
       border-bottom:none; transition:all .15s; color:#555;
     }
-    .tab.active-board { border-color:var(--b); background:var(--card); color:var(--b); margin-bottom:-1px; }
-    .tab.active-hand  { border-color:var(--p); background:var(--card); color:var(--p); margin-bottom:-1px; }
-    .tab:not(.active-board):not(.active-hand):hover { color:#999; }
+    .tab.active-board    { border-color:var(--b); background:var(--card); color:var(--b); margin-bottom:-1px; }
+    .tab.active-hand     { border-color:var(--p); background:var(--card); color:var(--p); margin-bottom:-1px; }
+    .tab.active-visitor  { border-color:var(--g); background:var(--card); color:var(--g); margin-bottom:-1px; }
+    .tab:not(.active-board):not(.active-hand):not(.active-visitor):hover { color:#999; }
 
     /* ── 검색 ── */
     .search-row { padding:16px 20px; display:flex; gap:10px; }
@@ -211,6 +212,101 @@
     .toast.show { transform:translateX(-50%) translateY(0); }
     .toast.err  { border-color:var(--r); color:var(--r); box-shadow:0 0 20px #ff446644; }
 
+    /* ── 리뷰 평점 배지 ── */
+    .review-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:#ffd70011; border:1px solid #ffd70033;
+      color:var(--y); border-radius:20px; font-size:11px; font-weight:700;
+      padding:3px 10px; margin-bottom:10px;
+    }
+
+    /* ── 방문자 그리드 ── */
+    .visitor-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+      gap:12px; padding:0 20px 80px;
+    }
+    .visitor-card-admin {
+      background:var(--card); border-radius:14px; border:2px solid #222;
+      padding:16px; transition:border-color .2s; position:relative;
+    }
+    .visitor-card-admin:hover { border-color:var(--g); }
+    .vca-avatar { font-size:40px; text-align:center; margin-bottom:8px; }
+    .vca-name { font-weight:900; font-size:15px; color:#fff; text-align:center; margin-bottom:2px; }
+    .vca-age  { font-size:11px; color:#555; text-align:center; margin-bottom:4px; }
+    .vca-memo { font-size:12px; color:#666; text-align:center; margin-bottom:10px; min-height:16px; }
+    .vca-actions { display:flex; gap:6px; }
+
+    /* ── 아바타 선택 그리드 ── */
+    .avatar-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .avatar-opt {
+      width:42px; height:42px; border-radius:10px; background:var(--card2);
+      border:2px solid transparent; font-size:22px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .12s;
+    }
+    .avatar-opt:hover { border-color:#555; }
+    .avatar-opt.selected { border-color:var(--g); background:#00ff8811; }
+
+    /* ── 후기/QR 모달 ── */
+    .modal2-bd {
+      position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(6px);
+      z-index:300; display:flex; align-items:center; justify-content:center;
+      padding:16px; opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal2-bd.open { opacity:1; pointer-events:all; }
+    .modal2 {
+      background:var(--card); border-radius:20px; padding:24px;
+      max-width:440px; width:100%; max-height:88vh; overflow-y:auto;
+      transform:scale(.95); transition:transform .2s;
+    }
+    .modal2-bd.open .modal2 { transform:scale(1); }
+
+    /* 후기 아이템 */
+    .review-item {
+      display:flex; gap:10px; align-items:flex-start;
+      padding:12px 0; border-bottom:1px solid #1e1e38;
+    }
+    .review-item:last-child { border-bottom:none; }
+    .ri-avatar { font-size:28px; flex-shrink:0; }
+    .ri-body { flex:1; min-width:0; }
+    .ri-name { font-weight:900; font-size:13px; color:#ddd; }
+    .ri-stars { color:var(--y); font-size:13px; }
+    .ri-comment { font-size:12px; color:#888; margin-top:3px; line-height:1.5; }
+    .ri-date { font-size:10px; color:#444; margin-top:3px; }
+
+    /* 후기 추가 폼 */
+    .review-add-form { border-top:2px solid #1e1e38; margin-top:16px; padding-top:16px; }
+    .rv-visitor-select {
+      width:100%; background:var(--bg); border:2px solid #333; border-radius:10px;
+      padding:10px 12px; color:#fff; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:14px; outline:none; margin-bottom:12px;
+    }
+    .rv-visitor-select:focus { border-color:var(--g); }
+    .rv-stars { display:flex; gap:6px; margin-bottom:10px; }
+    .rv-star {
+      font-size:28px; cursor:pointer; color:#333; transition:color .1s;
+      user-select:none;
+    }
+    .rv-star.on { color:var(--y); }
+    .rv-comment {
+      width:100%; background:var(--bg); border:2px solid #333; border-radius:10px;
+      padding:10px 12px; color:#fff; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:13px; outline:none; resize:none; min-height:60px;
+      margin-bottom:12px;
+    }
+    .rv-comment:focus { border-color:var(--g); }
+    .rv-submit {
+      width:100%; padding:11px; border-radius:10px; border:none;
+      background:var(--g); color:var(--bg); font-family:'Nunito',sans-serif;
+      font-weight:900; font-size:14px; cursor:pointer; transition:filter .15s;
+    }
+    .rv-submit:disabled { background:#333; color:#666; cursor:not-allowed; }
+
+    /* QR 이미지 */
+    .qr-wrap { text-align:center; padding:16px 0; }
+    .qr-wrap img { border-radius:12px; background:#fff; padding:8px; }
+    .qr-url { font-size:11px; color:#555; margin-top:8px; word-break:break-all; }
+
     /* ── 반응형 ── */
     @media(max-width:480px) {
       .form-grid { grid-template-columns:1fr; }
@@ -233,13 +329,14 @@
 
   <!-- 탭 -->
   <div class="tabs">
-    <div class="tab active-board" id="tab-board" onclick="switchTab('board')">🎲 보드게임</div>
-    <div class="tab" id="tab-hand"  onclick="switchTab('hand')">✋ 맨손게임</div>
+    <div class="tab active-board" id="tab-board"    onclick="switchTab('board')">🎲 보드게임</div>
+    <div class="tab" id="tab-hand"                  onclick="switchTab('hand')">✋ 맨손게임</div>
+    <div class="tab" id="tab-visitor"               onclick="switchTab('visitor')">👥 방문자</div>
   </div>
 
   <!-- 검색 -->
   <div class="search-row">
-    <input class="search-input" id="search" placeholder="🔍 게임 이름 검색..." oninput="renderList()">
+    <input class="search-input" id="search" placeholder="🔍 게임 이름 검색..." oninput="currentTab==='visitor' ? renderVisitorList() : renderList()">
   </div>
 
   <!-- 통계 -->
@@ -267,6 +364,45 @@
     </div>
   </div>
 
+  <!-- 후기 모달 -->
+  <div class="modal2-bd" id="review-modal" onclick="mayClose2(event,'review-modal')">
+    <div class="modal2">
+      <div class="modal-head">
+        <div class="modal-title" id="rv-modal-title">게임 후기</div>
+        <button class="modal-close" onclick="closeModal2('review-modal')">✕</button>
+      </div>
+      <div id="rv-list"></div>
+      <div class="review-add-form">
+        <div class="form-label" style="margin-bottom:8px;">✏️ 후기 추가</div>
+        <select class="rv-visitor-select" id="rv-visitor"></select>
+        <div class="rv-stars" id="rv-stars">
+          <span class="rv-star" data-v="1" onclick="setRvStar(1)">★</span>
+          <span class="rv-star" data-v="2" onclick="setRvStar(2)">★</span>
+          <span class="rv-star" data-v="3" onclick="setRvStar(3)">★</span>
+          <span class="rv-star" data-v="4" onclick="setRvStar(4)">★</span>
+          <span class="rv-star" data-v="5" onclick="setRvStar(5)">★</span>
+        </div>
+        <textarea class="rv-comment" id="rv-comment" placeholder="한마디 후기 (선택)"></textarea>
+        <button class="rv-submit" id="rv-submit" onclick="submitGameReview()">💬 후기 등록</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR 모달 -->
+  <div class="modal2-bd" id="qr-modal" onclick="mayClose2(event,'qr-modal')">
+    <div class="modal2" style="max-width:320px;">
+      <div class="modal-head">
+        <div class="modal-title" id="qr-title">QR 코드</div>
+        <button class="modal-close" onclick="closeModal2('qr-modal')">✕</button>
+      </div>
+      <div class="qr-wrap">
+        <img id="qr-img" src="" alt="QR" width="200" height="200">
+        <div class="qr-url" id="qr-url"></div>
+      </div>
+      <div style="font-size:12px;color:#555;text-align:center;margin-top:8px;">스캔하면 후기 페이지로 이동해요!</div>
+    </div>
+  </div>
+
   <!-- 토스트 -->
   <div class="toast" id="toast"></div>
 
@@ -274,9 +410,23 @@
     /* ══════════════════════════════════════
        상태
        ══════════════════════════════════════ */
-    let currentTab  = 'board';   // 'board' | 'hand'
+    let currentTab  = 'board';   // 'board' | 'hand' | 'visitor'
     let allGames    = [];
     let editingId   = null;
+
+    // 방문자
+    let allVisitors  = [];
+    let editingVid   = null;
+    let selAvatar    = '🧑';
+
+    // 후기 모달
+    let rvGameId     = null;
+    let rvGameType   = null;
+    let rvRating     = 0;
+
+    const AVATARS = ['🧑','👦','👧','👨','👩','👴','👵','🧒','🤖','👾',
+                     '🦊','🐯','🐸','🐧','🦁','🐻','🐼','🐨','🐺','🦋',
+                     '🐲','🦄','⚡','🌟','🍀','🎯','🎮','🔥','👑','💎'];
 
     const BOARD_CATS = ['전략','카드','파티','협력','추리','경제','주사위','競賽','어린이'];
     const HAND_CATS  = ['언어','신체','추리','창의','조용','시끌벅적','팀전','교육'];
@@ -287,23 +437,28 @@
        초기화
        ══════════════════════════════════════ */
     async function init() {
-      // 비밀번호 체크
       if (sessionStorage.getItem('gb_auth') !== '1') {
         location.href = './index.html'; return;
       }
       await load();
-      document.getElementById('add-btn').onclick = () => openModal(null);
+      document.getElementById('add-btn').onclick = () => {
+        if (currentTab === 'visitor') openVisitorModal(null);
+        else openModal(null);
+      };
     }
 
     /* ══════════════════════════════════════
        데이터 로드
        ══════════════════════════════════════ */
     async function load() {
-      const tbl   = currentTab === 'board' ? 'board_games' : 'hand_games';
-      const { data, error } = await getDB().from(tbl).select('*').order('name');
-      if (error) {
-        showToast('로드 실패: ' + error.message, true);
-        const hint = error.message.includes('exist')
+      const tbl = currentTab === 'board' ? 'board_games' : 'hand_games';
+      const [gameRes, rvRes] = await Promise.all([
+        getDB().from(tbl).select('*').order('name'),
+        getDB().from('game_reviews').select('game_id,rating').eq('game_type', currentTab)
+      ]);
+      if (gameRes.error) {
+        showToast('로드 실패: ' + gameRes.error.message, true);
+        const hint = gameRes.error.message.includes('exist')
           ? '<div style="font-size:11px;color:#555;margin-top:8px;">db/schema.sql 을 Supabase에서 실행해 주세요</div>'
           : '';
         document.getElementById('list-area').innerHTML = `
@@ -314,7 +469,21 @@
           </div>`;
         return;
       }
-      allGames = data || [];
+      allGames = gameRes.data || [];
+
+      // 리뷰 집계
+      window._reviewMap = {};
+      (rvRes.data || []).forEach(r => {
+        const key = `${r.game_id}_${currentTab}`;
+        if (!window._reviewMap[key]) window._reviewMap[key] = { sum:0, cnt:0 };
+        window._reviewMap[key].sum += r.rating;
+        window._reviewMap[key].cnt += 1;
+      });
+      Object.keys(window._reviewMap).forEach(k => {
+        const rv = window._reviewMap[k];
+        rv.avg = (rv.sum / rv.cnt).toFixed(1);
+      });
+
       renderStats();
       renderList();
     }
@@ -325,10 +494,23 @@
     function switchTab(tab) {
       currentTab = tab;
       document.getElementById('search').value = '';
-      document.getElementById('tab-board').className = 'tab' + (tab==='board' ? ' active-board' : '');
-      document.getElementById('tab-hand').className  = 'tab' + (tab==='hand'  ? ' active-hand'  : '');
-      document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-      load();
+      document.getElementById('tab-board').className   = 'tab' + (tab==='board'   ? ' active-board'   : '');
+      document.getElementById('tab-hand').className    = 'tab' + (tab==='hand'    ? ' active-hand'    : '');
+      document.getElementById('tab-visitor').className = 'tab' + (tab==='visitor' ? ' active-visitor' : '');
+      document.getElementById('stats').innerHTML = '';
+
+      const addBtn = document.getElementById('add-btn');
+      if (tab === 'visitor') {
+        addBtn.textContent = '+ 방문자 추가';
+        document.getElementById('search').placeholder = '🔍 방문자 이름 검색...';
+        document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        loadVisitors();
+      } else {
+        addBtn.textContent = '+ 게임 추가';
+        document.getElementById('search').placeholder = '🔍 게임 이름 검색...';
+        document.getElementById('list-area').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        load();
+      }
     }
 
     /* ══════════════════════════════════════
@@ -380,10 +562,13 @@
       const funPct    = ((g.fun_score||1) / 5 * 100);
       const diffColor = isBoard ? `hsl(${120 - (g.difficulty||1)*20},70%,50%)` : null;
       const funColor  = `hsl(${(g.fun_score||1)*24},80%,55%)`;
+      const rv        = window._reviewMap?.[`${g.id}_${currentTab}`];
+      const rvBadge   = rv ? `<div class="review-badge">⭐ ${rv.avg} <span style="color:#888;">(${rv.cnt}개 후기)</span></div>` : '';
 
       return `
         <div class="game-card${avail ? '' : ' unavailable'}">
           ${!avail ? '<div class="unavailable-badge">이용불가</div>' : ''}
+          ${rvBadge}
           <div class="gc-head">
             <div class="gc-icon">${isBoard ? '🎲' : '✋'}</div>
             <div class="gc-info">
@@ -416,6 +601,8 @@
 
           <div class="gc-actions">
             <button class="btn-edit" onclick="openModal(window._gameMap[${g.id}])">✏️ 수정</button>
+            <button class="btn-edit" style="border-color:var(--p);color:var(--p);" onclick="openReviewsModal(${g.id},'${currentTab}','${esc(g.name)}')">💬 후기 ${rv ? rv.cnt + '개' : ''}</button>
+            <button class="btn-edit" style="border-color:#555;color:#888;flex:0;padding:9px 10px;" title="QR 코드" onclick="openQR(${g.id},'${currentTab}','${esc(g.name)}')">📱</button>
             <button class="btn-del"  onclick="deleteGame(${g.id})">🗑</button>
           </div>
         </div>`;
@@ -539,18 +726,126 @@
     }
 
     /* ══════════════════════════════════════
-       폼 제출
+       토스트
        ══════════════════════════════════════ */
+    let toastTimer;
+    function showToast(msg, isErr=false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className   = 'toast' + (isErr ? ' err' : '');
+      requestAnimationFrame(() => t.classList.add('show'));
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    /* 모달 외부 클릭 닫기 */
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    function mayClose2(e, id) {
+      if (e.target === e.currentTarget) closeModal2(id);
+    }
+    function closeModal2(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    /* ══════════════════════════════════════
+       방문자 관리
+       ══════════════════════════════════════ */
+    async function loadVisitors() {
+      const { data, error } = await getDB().from('visitors').select('*').order('name');
+      if (error) {
+        document.getElementById('list-area').innerHTML =
+          '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-txt">LOAD ERROR</div></div>';
+        return;
+      }
+      allVisitors = data || [];
+      renderVisitorList();
+    }
+
+    function renderVisitorList() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const filtered = allVisitors.filter(v => v.name.toLowerCase().includes(q));
+      if (!filtered.length) {
+        document.getElementById('list-area').innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">${q ? '🔍' : '👥'}</div>
+            <div class="empty-txt">${q ? 'NOT FOUND' : 'NO VISITORS YET'}</div>
+          </div>`;
+        return;
+      }
+      document.getElementById('list-area').innerHTML = `
+        <div class="visitor-grid">
+          ${filtered.map(v => `
+            <div class="visitor-card-admin">
+              <div class="vca-avatar">${v.avatar || '🧑'}</div>
+              <div class="vca-name">${esc(v.name)}</div>
+              ${v.age ? `<div class="vca-age">${v.age}세</div>` : '<div class="vca-age"></div>'}
+              <div class="vca-memo">${esc(v.memo || '')}</div>
+              <div class="vca-actions">
+                <button class="btn-edit" style="flex:1;" onclick="openVisitorModal(${v.id})">✏️ 수정</button>
+                <button class="btn-del" onclick="deleteVisitor(${v.id})">🗑</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    /* 방문자 모달 열기 */
+    async function openVisitorModal(idOrNull) {
+      let visitor = null;
+      if (idOrNull !== null) {
+        visitor = allVisitors.find(v => v.id === idOrNull);
+      }
+      editingVid = visitor?.id || null;
+      selAvatar  = visitor?.avatar || '🧑';
+
+      document.getElementById('modal-title').textContent = visitor ? '방문자 수정' : '방문자 추가';
+      document.getElementById('submit-btn').textContent  = visitor ? '수정 저장' : '+ 등록';
+
+      document.getElementById('form-fields').innerHTML = `
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">이름 / 닉네임 *</label>
+            <input class="form-input" id="v-name" required value="${esc(visitor?.name||'')}" placeholder="예: 김철수 or 피카츄">
+          </div>
+          <div class="form-group">
+            <label class="form-label">나이</label>
+            <input class="form-input" id="v-age" type="number" min="1" max="120" value="${visitor?.age||''}" placeholder="선택">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">메모</label>
+            <input class="form-input" id="v-memo" value="${esc(visitor?.memo||'')}" placeholder="예: 전략 게임 좋아함">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">아바타 선택</label>
+            <div class="avatar-grid" id="avatar-grid">
+              ${AVATARS.map(a => `
+                <div class="avatar-opt${a === selAvatar ? ' selected' : ''}" onclick="pickAvatar(this,'${a}')">${a}</div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function pickAvatar(el, avatar) {
+      selAvatar = avatar;
+      document.querySelectorAll('.avatar-opt').forEach(a => a.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
     async function submitForm(e) {
       e.preventDefault();
+      if (currentTab === 'visitor') { await submitVisitorForm(); return; }
+
       const isBoard = currentTab === 'board';
       const tbl     = isBoard ? 'board_games' : 'hand_games';
       const btn     = document.getElementById('submit-btn');
-      btn.disabled  = true;
-      btn.textContent = '저장 중...';
+      btn.disabled  = true; btn.textContent = '저장 중...';
 
       const cats = [...document.querySelectorAll('.cat-chip.on')].map(el => el.textContent);
-
       const payload = {
         name:          document.getElementById('f-name').value.trim(),
         min_players:   parseInt(document.getElementById('f-min').value),
@@ -577,33 +872,138 @@
       } else {
         ({ error } = await getDB().from(tbl).insert(payload));
       }
-
-      btn.disabled = false;
-      btn.textContent = editingId ? '수정 저장' : '+ 등록';
-
+      btn.disabled = false; btn.textContent = editingId ? '수정 저장' : '+ 등록';
       if (error) { showToast('저장 실패: ' + error.message, true); return; }
       showToast(editingId ? '✅ 수정 완료!' : '🎉 등록 완료!');
-      closeModal();
-      await load();
+      closeModal(); await load();
+    }
+
+    async function submitVisitorForm() {
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true; btn.textContent = '저장 중...';
+      const name = document.getElementById('v-name').value.trim();
+      if (!name) { showToast('이름을 입력해 주세요', true); btn.disabled=false; btn.textContent='+ 등록'; return; }
+      const payload = {
+        name,
+        age:    parseInt(document.getElementById('v-age').value) || null,
+        memo:   document.getElementById('v-memo').value.trim() || null,
+        avatar: selAvatar,
+      };
+      let error;
+      if (editingVid) {
+        ({ error } = await getDB().from('visitors').update(payload).eq('id', editingVid));
+      } else {
+        ({ error } = await getDB().from('visitors').insert(payload));
+      }
+      btn.disabled = false; btn.textContent = editingVid ? '수정 저장' : '+ 등록';
+      if (error) { showToast('저장 실패: ' + error.message, true); return; }
+      showToast(editingVid ? '✅ 수정 완료!' : '🎉 등록 완료!');
+      closeModal(); await loadVisitors();
+    }
+
+    async function deleteVisitor(id) {
+      if (!confirm('방문자를 삭제할까요? (후기는 유지됩니다)')) return;
+      const { error } = await getDB().from('visitors').delete().eq('id', id);
+      if (error) { showToast('삭제 실패: ' + error.message, true); return; }
+      showToast('🗑 삭제 완료!');
+      await loadVisitors();
     }
 
     /* ══════════════════════════════════════
-       토스트
+       후기 모달
        ══════════════════════════════════════ */
-    let toastTimer;
-    function showToast(msg, isErr=false) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.className   = 'toast' + (isErr ? ' err' : '');
-      requestAnimationFrame(() => t.classList.add('show'));
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+    async function openReviewsModal(gameId, gameType, gameName) {
+      rvGameId   = gameId;
+      rvGameType = gameType;
+      rvRating   = 0;
+      document.getElementById('rv-modal-title').textContent = `💬 ${gameName} 후기`;
+      document.getElementById('rv-comment').value = '';
+      document.querySelectorAll('.rv-star').forEach(s => s.classList.remove('on'));
+
+      // 방문자 드롭다운
+      if (!allVisitors.length) {
+        const { data } = await getDB().from('visitors').select('id,name,avatar').order('name');
+        allVisitors = data || [];
+      }
+      const sel = document.getElementById('rv-visitor');
+      sel.innerHTML = '<option value="">-- 방문자 선택 --</option>' +
+        allVisitors.map(v => `<option value="${v.id}">${v.avatar||'🧑'} ${esc(v.name)}</option>`).join('');
+
+      await loadReviews();
+      document.getElementById('review-modal').classList.add('open');
     }
 
-    /* 모달 외부 클릭 닫기 */
-    document.getElementById('modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeModal();
-    });
+    async function loadReviews() {
+      const { data } = await getDB()
+        .from('game_reviews')
+        .select('*')
+        .eq('game_id', rvGameId)
+        .eq('game_type', rvGameType)
+        .order('played_at', { ascending: false });
+
+      const reviews = data || [];
+      if (!reviews.length) {
+        document.getElementById('rv-list').innerHTML =
+          '<div style="color:#555;font-size:13px;text-align:center;padding:16px 0;">아직 후기가 없어요</div>';
+        return;
+      }
+      document.getElementById('rv-list').innerHTML = reviews.map(r => `
+        <div class="review-item">
+          <div class="ri-avatar">${r.visitor_emoji || '🧑'}</div>
+          <div class="ri-body">
+            <div class="ri-name">${esc(r.visitor_name)} <span class="ri-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div>
+            ${r.comment ? `<div class="ri-comment">${esc(r.comment)}</div>` : ''}
+            <div class="ri-date">${new Date(r.played_at).toLocaleDateString('ko-KR')}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setRvStar(n) {
+      rvRating = n;
+      document.querySelectorAll('.rv-star').forEach(s => {
+        s.classList.toggle('on', Number(s.dataset.v) <= n);
+      });
+    }
+
+    async function submitGameReview() {
+      const visitorId = document.getElementById('rv-visitor').value;
+      if (!visitorId) { showToast('방문자를 선택해 주세요', true); return; }
+      if (!rvRating)  { showToast('별점을 눌러 주세요', true);    return; }
+      const visitor = allVisitors.find(v => String(v.id) === String(visitorId));
+      const btn = document.getElementById('rv-submit');
+      btn.disabled = true; btn.textContent = '등록 중...';
+      const { error } = await getDB().from('game_reviews').insert({
+        game_id:      rvGameId,
+        game_type:    rvGameType,
+        visitor_id:   parseInt(visitorId),
+        visitor_name: visitor?.name || '알 수 없음',
+        visitor_emoji:visitor?.avatar || '🧑',
+        rating:       rvRating,
+        comment:      document.getElementById('rv-comment').value.trim() || null,
+      });
+      btn.disabled = false; btn.textContent = '💬 후기 등록';
+      if (error) { showToast('저장 실패: ' + error.message, true); return; }
+      showToast('💬 후기 등록 완료!');
+      document.getElementById('rv-comment').value = '';
+      rvRating = 0;
+      document.querySelectorAll('.rv-star').forEach(s => s.classList.remove('on'));
+      await loadReviews();
+      await load(); // 리뷰 배지 갱신
+    }
+
+    /* ══════════════════════════════════════
+       QR 모달
+       ══════════════════════════════════════ */
+    function openQR(gameId, gameType, gameName) {
+      const base = location.origin + location.pathname.replace('admin.html','');
+      const url  = `${base}review.html?game_id=${gameId}&game_type=${gameType}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(url)}&size=200x200&bgcolor=ffffff&color=0b0b1a`;
+      document.getElementById('qr-title').textContent = `📱 ${gameName}`;
+      document.getElementById('qr-img').src = qrUrl;
+      document.getElementById('qr-url').textContent = url;
+      document.getElementById('qr-modal').classList.add('open');
+    }
 
     init();
   </script>

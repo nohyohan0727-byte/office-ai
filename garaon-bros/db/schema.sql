@@ -60,3 +60,33 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 -- RLS 비활성화 (공개 앱 - 별도 인증 없음)
 ALTER TABLE board_games DISABLE ROW LEVEL SECURITY;
 ALTER TABLE hand_games  DISABLE ROW LEVEL SECURITY;
+
+-- ─────────────────────────────────────────
+-- 방문자 & 후기 테이블 (2026-03-01 추가)
+-- ─────────────────────────────────────────
+
+-- 방문자
+CREATE TABLE IF NOT EXISTS visitors (
+  id         BIGSERIAL PRIMARY KEY,
+  name       TEXT NOT NULL,
+  age        INTEGER,
+  avatar     TEXT DEFAULT '🧑',
+  memo       TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 게임 후기
+CREATE TABLE IF NOT EXISTS game_reviews (
+  id            BIGSERIAL PRIMARY KEY,
+  game_id       BIGINT NOT NULL,
+  game_type     TEXT NOT NULL CHECK (game_type IN ('board','hand')),
+  visitor_id    BIGINT REFERENCES visitors(id) ON DELETE SET NULL,
+  visitor_name  TEXT NOT NULL,
+  visitor_emoji TEXT DEFAULT '🧑',
+  rating        INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment       TEXT,
+  played_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE visitors     DISABLE ROW LEVEL SECURITY;
+ALTER TABLE game_reviews DISABLE ROW LEVEL SECURITY;

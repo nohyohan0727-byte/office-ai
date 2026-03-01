@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💬 게임 후기 — 가라온 브로즈</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:   #0b0b1a;
+      --card: #151526;
+      --card2:#1e1e38;
+      --g:  #00ff88;
+      --b:  #00d4ff;
+      --p:  #cc44ff;
+      --y:  #ffd700;
+      --r:  #ff4466;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      background:var(--bg); min-height:100vh;
+      font-family:'Nunito',sans-serif; color:#ddd;
+      display:flex; flex-direction:column; align-items:center;
+      padding:24px 16px 60px;
+    }
+
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes popIn { 0%{transform:scale(.7);opacity:0} 80%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .wrap { width:100%; max-width:420px; animation:fadeUp .4s ease; }
+
+    /* 헤더 */
+    .logo { font-size:52px; animation:float 3s ease-in-out infinite; text-align:center; margin-bottom:8px; }
+    .title { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--b); text-align:center; line-height:2; margin-bottom:4px; }
+    .game-name-display {
+      text-align:center; font-size:20px; font-weight:900; color:#fff;
+      margin:16px 0 4px;
+    }
+    .game-avg {
+      text-align:center; font-size:14px; color:var(--y); margin-bottom:24px; min-height:20px;
+    }
+
+    /* 섹션 제목 */
+    .sec-title {
+      font-family:'Press Start 2P',monospace; font-size:7px; color:var(--b);
+      margin-bottom:12px; letter-spacing:.05em;
+    }
+
+    /* 방문자 그리드 */
+    .visitor-grid {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:28px;
+    }
+    .visitor-card {
+      background:var(--card); border:2px solid #333; border-radius:16px;
+      padding:14px 8px; text-align:center; cursor:pointer;
+      transition:all .15s; animation:popIn .3s ease both;
+    }
+    .visitor-card:hover { border-color:var(--b); }
+    .visitor-card.selected {
+      border-color:var(--g); background:#00ff8811;
+      box-shadow:0 0 14px #00ff8844;
+    }
+    .vc-avatar { font-size:32px; margin-bottom:6px; }
+    .vc-name { font-weight:900; font-size:13px; color:#ddd; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .vc-age { font-size:11px; color:#555; margin-top:2px; }
+    .selected-check { font-size:14px; margin-top:4px; color:var(--g); min-height:18px; }
+
+    /* 별점 */
+    .stars-row {
+      display:flex; justify-content:center; gap:10px; margin-bottom:8px;
+    }
+    .star {
+      font-size:42px; cursor:pointer; transition:transform .1s;
+      color:#333; line-height:1;
+      user-select:none;
+    }
+    .star:hover, .star.on { color:var(--y); }
+    .star:active { transform:scale(.88); }
+    .star-label { text-align:center; font-size:13px; color:#666; margin-bottom:20px; min-height:18px; }
+
+    /* 코멘트 */
+    .comment-input {
+      width:100%; background:var(--card); border:2px solid #333; border-radius:12px;
+      padding:12px 14px; color:#fff; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:14px; outline:none; resize:none;
+      transition:border .15s; min-height:80px;
+    }
+    .comment-input:focus { border-color:var(--b); }
+
+    /* 제출 */
+    .submit-btn {
+      width:100%; margin-top:20px; padding:16px;
+      border-radius:14px; border:none;
+      background:var(--g); color:var(--bg);
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:16px;
+      cursor:pointer; transition:filter .15s;
+      box-shadow:0 0 16px #00ff8866;
+    }
+    .submit-btn:hover { filter:brightness(1.1); }
+    .submit-btn:disabled { background:#333; color:#666; box-shadow:none; cursor:not-allowed; }
+
+    /* 로딩 */
+    .loading { text-align:center; padding:40px; }
+    .spinner { width:36px; height:36px; border:3px solid #222; border-top-color:var(--b); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
+
+    /* 완료 화면 */
+    .done-screen {
+      display:none; text-align:center; padding:40px 20px;
+      animation:popIn .5s ease;
+    }
+    .done-icon { font-size:72px; margin-bottom:16px; }
+    .done-title { font-family:'Press Start 2P',monospace; font-size:9px; color:var(--g); line-height:2.2; margin-bottom:20px; }
+    .done-msg { font-size:14px; color:#888; line-height:1.7; margin-bottom:28px; }
+    .done-btn {
+      display:inline-block; padding:12px 28px; border-radius:12px;
+      border:2px solid var(--b); color:var(--b); background:transparent;
+      font-family:'Nunito',sans-serif; font-weight:900; font-size:14px;
+      cursor:pointer; text-decoration:none; transition:all .15s;
+    }
+    .done-btn:hover { background:#00d4ff22; }
+
+    /* 에러 */
+    .err-msg { background:#ff446622; border:1px solid var(--r); border-radius:10px;
+      padding:10px 14px; color:var(--r); font-size:13px; margin-bottom:16px; display:none; }
+
+    /* 토스트 */
+    .toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+      background:var(--card); border:2px solid var(--r); border-radius:12px;
+      padding:10px 20px; font-weight:700; font-size:13px; color:var(--r);
+      z-index:300; transition:transform .3s;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+
+    /* 섹션 박스 */
+    .section { margin-bottom:28px; }
+  </style>
+</head>
+<body>
+
+<div class="wrap" id="main-wrap">
+  <div class="logo">💬</div>
+  <div class="title">게임 후기 남기기</div>
+  <div class="game-name-display" id="game-name">로딩 중...</div>
+  <div class="game-avg" id="game-avg"></div>
+
+  <!-- 로딩 -->
+  <div class="loading" id="loading"><div class="spinner"></div></div>
+
+  <!-- 폼 -->
+  <div id="review-form" style="display:none;">
+
+    <!-- 1. 방문자 선택 -->
+    <div class="section">
+      <div class="sec-title">01. 나는 누구?</div>
+      <div class="visitor-grid" id="visitor-grid"></div>
+    </div>
+
+    <!-- 2. 별점 -->
+    <div class="section">
+      <div class="sec-title">02. 재미 점수</div>
+      <div class="stars-row" id="stars-row">
+        <span class="star" data-v="1" onclick="setStar(1)">★</span>
+        <span class="star" data-v="2" onclick="setStar(2)">★</span>
+        <span class="star" data-v="3" onclick="setStar(3)">★</span>
+        <span class="star" data-v="4" onclick="setStar(4)">★</span>
+        <span class="star" data-v="5" onclick="setStar(5)">★</span>
+      </div>
+      <div class="star-label" id="star-label">별을 눌러 점수를 주세요!</div>
+    </div>
+
+    <!-- 3. 코멘트 -->
+    <div class="section">
+      <div class="sec-title">03. 한마디 (선택)</div>
+      <textarea class="comment-input" id="comment" placeholder="이 게임 어땠어요? 자유롭게 써봐요 😊"></textarea>
+    </div>
+
+    <div class="err-msg" id="err-msg"></div>
+    <button class="submit-btn" id="submit-btn" onclick="submitReview()">✅ 후기 등록!</button>
+  </div>
+</div>
+
+<!-- 완료 화면 -->
+<div class="done-screen" id="done-screen">
+  <div class="done-icon">🎉</div>
+  <div class="done-title">후기 완료!</div>
+  <div class="done-msg" id="done-msg">후기가 등록됐어요.<br>다음에도 놀러 와요!</div>
+  <button class="done-btn" onclick="resetForm()">🎮 또 후기 남기기</button>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const STAR_LABELS = ['', '별로예요 😕', '그저 그래요 😐', '괜찮아요 🙂', '재미있어요 😄', '최고예요! 🤩'];
+
+  const params   = new URLSearchParams(location.search);
+  const gameId   = parseInt(params.get('game_id'));
+  const gameType = params.get('game_type') || 'board';
+
+  let visitors      = [];
+  let selectedId    = null;
+  let selectedName  = '';
+  let selectedEmoji = '🧑';
+  let rating        = 0;
+
+  /* ── 초기화 ── */
+  async function init() {
+    if (!gameId) {
+      document.getElementById('game-name').textContent = '게임 정보 없음';
+      document.getElementById('loading').innerHTML = '<p style="color:#555;text-align:center;">URL에 game_id 파라미터가 필요해요.</p>';
+      return;
+    }
+
+    const tbl = gameType === 'board' ? 'board_games' : 'hand_games';
+
+    // 게임 정보 로드
+    const { data: gData } = await getDB().from(tbl).select('name').eq('id', gameId).single();
+    if (gData) document.getElementById('game-name').textContent = (gameType === 'board' ? '🎲 ' : '✋ ') + gData.name;
+
+    // 평균 평점 로드
+    const { data: rData } = await getDB()
+      .from('game_reviews')
+      .select('rating')
+      .eq('game_id', gameId)
+      .eq('game_type', gameType);
+    if (rData && rData.length > 0) {
+      const avg = (rData.reduce((s, r) => s + r.rating, 0) / rData.length).toFixed(1);
+      document.getElementById('game-avg').textContent = `⭐ ${avg}점 (${rData.length}개 후기)`;
+    } else {
+      document.getElementById('game-avg').textContent = '아직 후기가 없어요. 첫 후기를 남겨보세요!';
+    }
+
+    // 방문자 목록 로드
+    const { data: vData } = await getDB().from('visitors').select('*').order('name');
+    visitors = vData || [];
+    renderVisitors();
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('review-form').style.display = 'block';
+  }
+
+  /* ── 방문자 렌더 ── */
+  function renderVisitors() {
+    const grid = document.getElementById('visitor-grid');
+    if (!visitors.length) {
+      grid.innerHTML = '<p style="color:#555;grid-column:1/-1;text-align:center;font-size:13px;">등록된 방문자가 없어요.<br>관리자에게 문의해 주세요!</p>';
+      return;
+    }
+    grid.innerHTML = visitors.map((v, i) => `
+      <div class="visitor-card" id="vc-${v.id}" onclick="selectVisitor(${v.id})"
+           style="animation-delay:${i * 0.05}s">
+        <div class="vc-avatar">${v.avatar || '🧑'}</div>
+        <div class="vc-name">${esc(v.name)}</div>
+        ${v.age ? `<div class="vc-age">${v.age}세</div>` : ''}
+        <div class="selected-check" id="check-${v.id}"></div>
+      </div>
+    `).join('');
+  }
+
+  /* ── 방문자 선택 ── */
+  function selectVisitor(id) {
+    // 토글
+    if (selectedId === id) {
+      selectedId = null; selectedName = ''; selectedEmoji = '🧑';
+      document.querySelectorAll('.visitor-card').forEach(c => {
+        c.classList.remove('selected');
+      });
+      document.querySelectorAll('[id^="check-"]').forEach(c => c.textContent = '');
+      return;
+    }
+    selectedId = id;
+    const v = visitors.find(x => x.id === id);
+    selectedName  = v?.name  || '';
+    selectedEmoji = v?.avatar || '🧑';
+
+    document.querySelectorAll('.visitor-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('[id^="check-"]').forEach(c => c.textContent = '');
+    document.getElementById('vc-' + id).classList.add('selected');
+    document.getElementById('check-' + id).textContent = '✅';
+  }
+
+  /* ── 별점 ── */
+  function setStar(n) {
+    rating = n;
+    document.querySelectorAll('.star').forEach(s => {
+      s.classList.toggle('on', Number(s.dataset.v) <= n);
+    });
+    document.getElementById('star-label').textContent = STAR_LABELS[n];
+  }
+
+  /* ── 제출 ── */
+  async function submitReview() {
+    const errEl = document.getElementById('err-msg');
+    errEl.style.display = 'none';
+
+    if (!selectedId) { showErr('이름을 선택해 주세요!'); return; }
+    if (!rating)      { showErr('별점을 눌러 주세요!');    return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = '등록 중...';
+
+    const comment = document.getElementById('comment').value.trim() || null;
+    const { error } = await getDB().from('game_reviews').insert({
+      game_id:      gameId,
+      game_type:    gameType,
+      visitor_id:   selectedId,
+      visitor_name: selectedName,
+      visitor_emoji:selectedEmoji,
+      rating,
+      comment,
+    });
+
+    btn.disabled = false; btn.textContent = '✅ 후기 등록!';
+
+    if (error) { showErr('저장 실패: ' + error.message); return; }
+
+    // 완료 화면
+    document.getElementById('main-wrap').style.display = 'none';
+    const done = document.getElementById('done-screen');
+    done.style.display = 'block';
+    document.getElementById('done-msg').innerHTML =
+      `<strong>${selectedEmoji} ${selectedName}</strong> 님의 후기가 등록됐어요!<br>다음에도 놀러 와요 😊`;
+  }
+
+  /* ── 폼 리셋 ── */
+  function resetForm() {
+    selectedId = null; selectedName = ''; selectedEmoji = '🧑'; rating = 0;
+    document.getElementById('comment').value = '';
+    document.querySelectorAll('.visitor-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('[id^="check-"]').forEach(c => c.textContent = '');
+    document.querySelectorAll('.star').forEach(s => s.classList.remove('on'));
+    document.getElementById('star-label').textContent = '별을 눌러 점수를 주세요!';
+    document.getElementById('err-msg').style.display = 'none';
+
+    document.getElementById('done-screen').style.display = 'none';
+    document.getElementById('main-wrap').style.display = 'flex';
+    document.getElementById('main-wrap').style.flexDirection = 'column';
+    document.getElementById('main-wrap').style.alignItems = 'center';
+
+    // 평균 갱신
+    init();
+  }
+
+  function showErr(msg) {
+    const el = document.getElementById('err-msg');
+    el.textContent = '⚠️ ' + msg;
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    requestAnimationFrame(() => t.classList.add('show'));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  init();
+</script>
+</body>
+</html>
