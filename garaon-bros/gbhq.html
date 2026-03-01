@@ -1809,6 +1809,7 @@
       if (drop) drop.classList.remove('open');
       const displayName = d.name_ko || d.name_en || '';
       document.getElementById('f-name').value = displayName;
+      const nameEnEl = document.getElementById('f-name-en'); if (d.name_en && nameEnEl) nameEnEl.value = d.name_en;
       if (d.description) document.getElementById('f-desc').value = d.description;
       if (d.min_players) document.getElementById('f-min').value = d.min_players;
       if (d.max_players) document.getElementById('f-max').value = d.max_players;
