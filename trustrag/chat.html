@@ -36,8 +36,8 @@
     .header {
       background: rgba(15,23,42,0.95);
       border-bottom: 1px solid var(--border);
-      padding: 0 1.25rem;
-      height: 58px;
+      padding: 0 1.5rem;
+      height: 56px;
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
       backdrop-filter: blur(10px);
@@ -55,105 +55,124 @@
     .header-title { font-size: 0.95rem; font-weight: 700; }
     .header-title span { color: var(--primary); }
 
-    /* Settings Panel */
-    .settings-panel {
-      background: var(--bg-card);
+    /* Auth row — 중앙 정렬, 좁은 폭 */
+    .auth-row {
       border-bottom: 1px solid var(--border);
-      padding: 0.9rem 1.25rem;
-      display: flex; gap: 0.75rem; align-items: flex-end;
+      background: var(--bg-card);
+      padding: 0.75rem 1.5rem;
       flex-shrink: 0;
     }
-    .settings-panel .field { flex: 1; }
-    .settings-panel .field-sm { flex: 0.6; }
+    .auth-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex; gap: 0.6rem; align-items: flex-end;
+    }
+    .auth-inner .field { flex: 1; }
+    .auth-inner .field-cat { flex: 0 0 160px; }
     label {
-      display: block; font-size: 0.72rem; font-weight: 600;
-      color: var(--text-dim); margin-bottom: 0.3rem;
+      display: block; font-size: 0.7rem; font-weight: 600;
+      color: var(--text-dim); margin-bottom: 0.25rem;
       text-transform: uppercase; letter-spacing: 0.05em;
     }
     input, select {
       width: 100%; background: var(--bg-input);
       border: 1px solid var(--border); border-radius: 7px;
       color: var(--text-white); font-family: inherit;
-      padding: 0.5rem 0.8rem; font-size: 0.875rem;
+      padding: 0.45rem 0.75rem; font-size: 0.85rem;
       transition: border-color 0.2s;
     }
     input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+    select option { background: #1e293b; }
+    select:disabled { opacity: 0.5; }
 
     .btn {
-      padding: 0.55rem 1.1rem; border-radius: 7px;
+      padding: 0.48rem 1rem; border-radius: 7px;
       border: none; cursor: pointer; font-family: inherit;
-      font-size: 0.875rem; font-weight: 600;
+      font-size: 0.85rem; font-weight: 600;
       transition: all 0.2s; display: inline-flex;
       align-items: center; gap: 0.4rem; white-space: nowrap;
     }
     .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: #2563eb; box-shadow: 0 0 12px var(--primary-glow); }
-    .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .btn-sm { padding: 0.38rem 0.8rem; font-size: 0.8rem; }
     .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
     .btn-ghost:hover { color: var(--text-white); border-color: rgba(255,255,255,0.2); }
 
     /* Auth status */
     .auth-status {
-      display: flex; align-items: center; gap: 0.5rem;
-      font-size: 0.8rem; white-space: nowrap;
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.78rem; white-space: nowrap;
     }
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
+      width: 7px; height: 7px; border-radius: 50%;
       background: #4b5563; flex-shrink: 0;
     }
-    .status-dot.ok { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+    .status-dot.ok { background: var(--success); box-shadow: 0 0 5px rgba(16,185,129,0.5); }
     .status-dot.fail { background: var(--danger); }
 
-    /* Chat Area */
+    /* Token badge */
+    .token-badge {
+      display: flex; align-items: center; gap: 0.3rem;
+      font-size: 0.75rem; color: var(--text-dim);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.18rem 0.65rem;
+    }
+    .token-badge.low { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+
+    /* Chat Area — 중앙 좁은 폭 */
+    .chat-wrap {
+      flex: 1; overflow: hidden; display: flex; flex-direction: column;
+    }
     .chat-area {
-      flex: 1; overflow-y: auto; padding: 1.5rem 1.25rem;
+      flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem;
       display: flex; flex-direction: column; gap: 1rem;
-      max-width: 900px; width: 100%; margin: 0 auto;
+      max-width: 680px; width: 100%; margin: 0 auto;
     }
     .chat-area::-webkit-scrollbar { width: 4px; }
     .chat-area::-webkit-scrollbar-track { background: transparent; }
     .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
     /* Messages */
-    .msg { display: flex; gap: 0.75rem; max-width: 100%; }
+    .msg { display: flex; gap: 0.65rem; }
     .msg.user { flex-direction: row-reverse; }
 
     .avatar {
-      width: 36px; height: 36px; border-radius: 50%;
+      width: 32px; height: 32px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; flex-shrink: 0;
+      font-size: 0.9rem; flex-shrink: 0;
     }
     .avatar.bot { background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3); }
     .avatar.user { background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); }
 
     .bubble {
-      max-width: calc(100% - 100px);
+      max-width: calc(100% - 90px);
       border-radius: 14px;
-      padding: 0.85rem 1.1rem;
+      padding: 0.8rem 1rem;
       line-height: 1.65;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
     }
     .msg.bot .bubble { background: var(--msg-bot); border: 1px solid var(--border); border-top-left-radius: 4px; }
     .msg.user .bubble { background: var(--msg-user); border: 1px solid rgba(59,130,246,0.2); border-top-right-radius: 4px; }
     .msg.error .bubble { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
 
     /* Sources */
-    .sources { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .sources { margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
     .source-tag {
       display: flex; align-items: center; gap: 0.3rem;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.05);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.25rem 0.6rem;
-      font-size: 0.75rem; color: var(--text-dim);
+      border-radius: 5px;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.72rem; color: var(--text-dim);
     }
-    .source-tag a { color: var(--primary); text-decoration: none; }
-    .source-tag a:hover { text-decoration: underline; }
+    .source-tag span { color: var(--primary); }
 
-    /* Typing indicator */
-    .typing { display: flex; align-items: center; gap: 0.3rem; padding: 0.85rem 1.1rem; }
+    /* Typing */
+    .typing { display: flex; align-items: center; gap: 0.3rem; padding: 0.8rem 1rem; }
     .typing span {
-      width: 7px; height: 7px; border-radius: 50%;
+      width: 6px; height: 6px; border-radius: 50%;
       background: var(--text-dim);
       animation: bounce 1.2s infinite;
     }
@@ -161,52 +180,37 @@
     .typing span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-      30% { transform: translateY(-5px); opacity: 1; }
+      30% { transform: translateY(-4px); opacity: 1; }
     }
-
-    /* Token display */
-    .token-badge {
-      display: flex; align-items: center; gap: 0.3rem;
-      font-size: 0.78rem; color: var(--text-dim);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 0.2rem 0.7rem;
-    }
-    .token-badge.low { color: var(--danger); border-color: rgba(239,68,68,0.3); }
 
     /* Input Area */
     .input-area {
       border-top: 1px solid var(--border);
       background: rgba(15,23,42,0.98);
-      padding: 1rem 1.25rem;
+      padding: 0.85rem 1.5rem;
       flex-shrink: 0;
     }
     .input-row {
-      max-width: 900px; margin: 0 auto;
-      display: flex; gap: 0.75rem; align-items: flex-end;
+      max-width: 680px; margin: 0 auto;
+      display: flex; gap: 0.6rem; align-items: flex-end;
     }
-    .input-box {
-      flex: 1; position: relative;
-    }
+    .input-box { flex: 1; }
     textarea {
       width: 100%; background: var(--bg-card);
       border: 1px solid var(--border); border-radius: 10px;
       color: var(--text-white); font-family: inherit;
-      padding: 0.75rem 1rem; font-size: 0.9rem;
+      padding: 0.7rem 0.9rem; font-size: 0.875rem;
       resize: none; line-height: 1.5;
-      min-height: 48px; max-height: 160px;
-      transition: border-color 0.2s;
-      overflow-y: auto;
+      min-height: 44px; max-height: 140px;
+      transition: border-color 0.2s; overflow-y: auto;
     }
     textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
     textarea::placeholder { color: var(--text-dim); }
     .send-btn {
-      width: 48px; height: 48px; border-radius: 10px;
+      width: 44px; height: 44px; border-radius: 10px;
       background: var(--primary); border: none;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; flex-shrink: 0;
-      transition: all 0.2s;
+      font-size: 1rem; flex-shrink: 0; transition: all 0.2s;
     }
     .send-btn:hover { background: #2563eb; box-shadow: 0 0 12px var(--primary-glow); }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -217,15 +221,15 @@
       align-items: center; justify-content: center;
       text-align: center; padding: 2rem;
     }
-    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .empty-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .empty-sub { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .empty-sub { color: var(--text-dim); font-size: 0.875rem; line-height: 1.6; }
 
     .toast {
       position: fixed; bottom: 5rem; right: 1.5rem;
       background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.7rem 1.1rem;
-      font-size: 0.85rem; font-weight: 600;
+      border-radius: 10px; padding: 0.65rem 1rem;
+      font-size: 0.83rem; font-weight: 600;
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       z-index: 999; transform: translateY(60px); opacity: 0;
       transition: all 0.3s;
@@ -241,47 +245,47 @@
     <div class="header-left">
       <a href="/trustrag/upload.html" class="nav-btn">📤 Upload</a>
       <a href="/trustrag/admin.html" class="nav-btn">⚙️ Admin</a>
-      <span class="header-title">Trust<span>RAG</span> Chat</span>
+      <span class="header-title">Trust<span>RAG</span></span>
     </div>
-    <div style="display:flex;align-items:center;gap:0.75rem">
+    <div style="display:flex;align-items:center;gap:0.6rem">
       <div class="token-badge" id="token-display" style="display:none">
         🪙 <span id="token-count">—</span>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="clearChat()">🗑 대화 초기화</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearChat()">🗑 초기화</button>
     </div>
   </header>
 
-  <!-- Settings -->
-  <div class="settings-panel">
-    <div class="field">
-      <label>API Key</label>
-      <input type="password" id="api-key" placeholder="trust_..." autocomplete="off">
-    </div>
-    <div class="field field-sm">
-      <label>카테고리</label>
-      <input type="text" id="category" placeholder="tr_jknetworks_ks_cert">
-    </div>
-    <div class="field field-sm">
-      <label>세션 ID</label>
-      <input type="text" id="session-id" value="session-1">
-    </div>
-    <div style="display:flex;align-items:center;gap:0.5rem;padding-bottom:2px">
-      <button class="btn btn-primary btn-sm" onclick="validateKey()">🔐 연결</button>
-      <div class="auth-status">
-        <div class="status-dot" id="status-dot"></div>
-        <span id="status-text" style="color:var(--text-dim)">미연결</span>
+  <!-- Auth Row -->
+  <div class="auth-row">
+    <div class="auth-inner">
+      <div class="field">
+        <label>API Key</label>
+        <input type="password" id="api-key" placeholder="trust_..." autocomplete="off">
+      </div>
+      <div class="field-cat">
+        <label>카테고리</label>
+        <select id="category-select" disabled>
+          <option value="">-- 연결 후 선택 --</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.5rem;padding-bottom:1px">
+        <button class="btn btn-primary btn-sm" onclick="validateKey()">🔐 연결</button>
+        <div class="auth-status">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text" style="color:var(--text-dim);font-size:0.75rem">미연결</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Chat Area -->
-  <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative">
+  <!-- Chat -->
+  <div class="chat-wrap">
     <div class="chat-area" id="chat-area">
       <div class="empty-chat" id="empty-chat">
         <div class="empty-icon">🤖</div>
         <div class="empty-title">TrustRAG 채팅</div>
         <div class="empty-sub">
-          API 키와 카테고리를 입력하고 연결하면<br>
+          API 키를 입력하고 연결하면<br>
           내부 문서 기반 AI 답변을 받을 수 있습니다
         </div>
       </div>
@@ -292,11 +296,9 @@
   <div class="input-area">
     <div class="input-row">
       <div class="input-box">
-        <textarea
-          id="msg-input"
-          placeholder="질문을 입력하세요 (Shift+Enter: 줄바꿈, Enter: 전송)"
-          rows="1"
-          disabled></textarea>
+        <textarea id="msg-input"
+          placeholder="질문을 입력하세요 (Enter: 전송, Shift+Enter: 줄바꿈)"
+          rows="1" disabled></textarea>
       </div>
       <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>➤</button>
     </div>
@@ -308,6 +310,9 @@
     const N8N = 'https://jknetworks.app.n8n.cloud/webhook';
     let isAuthenticated = false;
     let isLoading = false;
+    let sessionId = 'session-' + Date.now().toString(36);
+    // 카테고리 매핑: display name → table_name
+    let categoryMap = {};
 
     function showToast(msg, type = '') {
       const t = document.getElementById('toast');
@@ -336,27 +341,53 @@
         });
         const data = await res.json();
         if (!data.success) {
-          setAuthStatus(false, data.message || '인증 실패');
+          setAuthStatus(false, '인증 실패');
           showToast(data.message || '인증 실패', 'error');
-          isAuthenticated = false;
           return;
         }
+
         isAuthenticated = true;
-        setAuthStatus(true, `${data.name} (${data.role})`);
+        setAuthStatus(true, `${data.name}`);
+
+        // 토큰 표시
         const td = document.getElementById('token-display');
         td.style.display = 'flex';
-        document.getElementById('token-count').textContent = data.tokens_remaining;
-        if (data.tokens_remaining < 10) {
-          td.className = 'token-badge low';
+        document.getElementById('token-count').textContent = (data.tokens_remaining || 0).toLocaleString();
+        if ((data.tokens_remaining || 0) < 10) td.className = 'token-badge low';
+
+        // 카테고리 드롭다운 구성 (이름만 표시, table_name 은 내부 저장)
+        const sel = document.getElementById('category-select');
+        sel.innerHTML = '';
+        categoryMap = {};
+        const cats = data.categories || [];
+        if (cats.length === 0) {
+          sel.innerHTML = '<option value="">카테고리 없음</option>';
+        } else {
+          cats.forEach((c, i) => {
+            categoryMap[c.name] = c.table_name;
+            const opt = document.createElement('option');
+            opt.value = c.name;
+            opt.textContent = c.name;
+            if (i === 0) opt.selected = true;
+            sel.appendChild(opt);
+          });
         }
+        sel.disabled = false;
+
         document.getElementById('msg-input').disabled = false;
         document.getElementById('send-btn').disabled = false;
         showToast(`✅ ${data.name} 연결됨`, 'success');
         document.getElementById('msg-input').focus();
       } catch (e) {
         setAuthStatus(false, '연결 실패');
-        showToast('연결 오류: ' + e.message, 'error');
+        showToast('연결 오류', 'error');
       }
+    }
+
+    function getSelectedTableName() {
+      const sel = document.getElementById('category-select');
+      const name = sel.value;
+      return categoryMap[name] || name;
     }
 
     function addMessage(content, type = 'bot', sources = []) {
@@ -385,11 +416,7 @@
         sources.forEach(s => {
           const tag = document.createElement('div');
           tag.className = 'source-tag';
-          tag.innerHTML = `${getFileIcon(s.filename)} ${
-            s.drive_url
-              ? `<a href="${s.drive_url}" target="_blank">${s.filename}</a>`
-              : s.filename
-          } <span style="color:var(--primary)">${Math.round((s.similarity||0)*100)}%</span>`;
+          tag.innerHTML = `${getFileIcon(s.filename)} ${s.filename} <span>${Math.round((s.similarity||0)*100)}%</span>`;
           srcDiv.appendChild(tag);
         });
         bubble.appendChild(srcDiv);
@@ -399,7 +426,6 @@
       msg.appendChild(bubble);
       chatArea.appendChild(msg);
       chatArea.scrollTop = chatArea.scrollHeight;
-      return msg;
     }
 
     function addTyping() {
@@ -407,13 +433,8 @@
       const msg = document.createElement('div');
       msg.className = 'msg bot';
       msg.id = 'typing-indicator';
-      msg.innerHTML = `
-        <div class="avatar bot">🤖</div>
-        <div class="bubble">
-          <div class="typing">
-            <span></span><span></span><span></span>
-          </div>
-        </div>`;
+      msg.innerHTML = `<div class="avatar bot">🤖</div>
+        <div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
       chatArea.appendChild(msg);
       chatArea.scrollTop = chatArea.scrollHeight;
     }
@@ -426,29 +447,25 @@
     function getFileIcon(filename) {
       if (!filename) return '📄';
       const ext = (filename.split('.').pop() || '').toLowerCase();
-      const icons = { 'xlsx': '📊', 'xls': '📊', 'csv': '📊', 'docx': '📝', 'doc': '📝', 'pdf': '📕', 'pptx': '📊', 'ppt': '📊', 'hwp': '📝', 'hwpx': '📝', 'txt': '📄' };
+      const icons = { xlsx: '📊', xls: '📊', csv: '📊', docx: '📝', doc: '📝', pdf: '📕', pptx: '📊', ppt: '📊', hwp: '📝', hwpx: '📝', txt: '📄' };
       return icons[ext] || '📄';
     }
 
     async function sendMessage() {
-      if (!isAuthenticated) { showToast('먼저 연결하세요', 'error'); return; }
-      if (isLoading) return;
+      if (!isAuthenticated || isLoading) return;
 
       const input = document.getElementById('msg-input');
       const msg = input.value.trim();
       if (!msg) return;
 
       const apiKey = document.getElementById('api-key').value.trim();
-      const category = document.getElementById('category').value.trim();
-      const sessionId = document.getElementById('session-id').value.trim() || 'session-1';
-
-      if (!category) { showToast('카테고리를 입력하세요', 'error'); return; }
+      const tableName = getSelectedTableName();
+      if (!tableName) { showToast('카테고리를 선택하세요', 'error'); return; }
 
       input.value = '';
       input.style.height = 'auto';
       addMessage(msg, 'user');
       addTyping();
-
       isLoading = true;
       document.getElementById('send-btn').disabled = true;
 
@@ -456,33 +473,27 @@
         const res = await fetch(`${N8N}/trustrag/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: apiKey, session_id: sessionId, message: msg, category })
+          body: JSON.stringify({ api_key: apiKey, session_id: sessionId, message: msg, category: tableName })
         });
-
         const data = await res.json();
         removeTyping();
-        isLoading = false;
-        document.getElementById('send-btn').disabled = false;
 
         if (!data.success) {
           addMessage(data.message || '오류가 발생했습니다', 'error');
           showToast(data.message || '오류', 'error');
-          return;
-        }
-
-        addMessage(data.response || '(빈 응답)', 'bot', data.sources || []);
-
-        if (data.tokens_remaining !== undefined) {
-          document.getElementById('token-count').textContent = data.tokens_remaining;
+        } else {
+          addMessage(data.response || '(빈 응답)', 'bot', data.sources || []);
+          if (data.tokens_remaining !== undefined) {
+            document.getElementById('token-count').textContent = data.tokens_remaining.toLocaleString();
+          }
         }
       } catch (e) {
         removeTyping();
+        addMessage('네트워크 오류가 발생했습니다.', 'error');
+        showToast('연결 오류', 'error');
+      } finally {
         isLoading = false;
         document.getElementById('send-btn').disabled = false;
-        const isNetErr = e instanceof TypeError && e.message.includes('fetch');
-        addMessage(isNetErr ? '네트워크 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.' : `오류: ${e.message}`, 'error');
-        showToast('연결 오류', 'error');
-        console.error('[TrustRAG Chat Error]', e);
       }
     }
 
@@ -492,28 +503,19 @@
         <div class="empty-chat" id="empty-chat">
           <div class="empty-icon">🤖</div>
           <div class="empty-title">TrustRAG 채팅</div>
-          <div class="empty-sub">
-            API 키와 카테고리를 입력하고 연결하면<br>
-            내부 문서 기반 AI 답변을 받을 수 있습니다
-          </div>
+          <div class="empty-sub">API 키를 입력하고 연결하면<br>내부 문서 기반 AI 답변을 받을 수 있습니다</div>
         </div>`;
-      // New session ID
-      document.getElementById('session-id').value = 'session-' + Date.now().toString(36);
+      sessionId = 'session-' + Date.now().toString(36);
     }
 
-    // Auto-resize textarea
     const textarea = document.getElementById('msg-input');
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto';
-      textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+      textarea.style.height = Math.min(textarea.scrollHeight, 140) + 'px';
     });
     textarea.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
-
     document.getElementById('api-key').addEventListener('keydown', e => {
       if (e.key === 'Enter') validateKey();
     });
