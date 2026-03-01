@@ -1807,7 +1807,10 @@
       if (d.min_players) document.getElementById('f-min').value = d.min_players;
       if (d.max_players) document.getElementById('f-max').value = d.max_players;
       if (d.play_time_min) document.getElementById('f-time').value = d.play_time_min;
-      if (d.age_min) document.getElementById('f-age').value = d.age_min;
+      if (d.age_min)     document.getElementById('f-age').value     = d.age_min;
+      if (d.rules)       document.getElementById('f-rules').value   = d.rules;
+      if (d.tips)        document.getElementById('f-tips').value    = d.tips;
+      if (d.youtube_url) document.getElementById('f-youtube').value = d.youtube_url;
       if (d.categories?.length) {
         document.querySelectorAll('.cat-chip').forEach(btn => {
           if (d.categories.includes(btn.textContent.trim())) btn.classList.add('on');
