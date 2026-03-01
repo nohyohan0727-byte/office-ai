@@ -956,61 +956,22 @@
       document.getElementById('yt-modal').classList.add('open');
       document.getElementById('yt-modal-title').textContent = `"${name}" YouTube 검색`;
       document.getElementById('yt-results').innerHTML = '<div class="yt-loading">🔍 검색 중...</div>';
-      const apiKey = localStorage.getItem('gb_yt_key');
-      if (!apiKey) { renderYTKeyConfig(name); return; }
-      searchYouTube(name, apiKey);
+      searchYouTube(name);
     }
 
     function closeYTModal() {
       document.getElementById('yt-modal').classList.remove('open');
     }
 
-    function renderYTKeyConfig(name) {
-      const safeQ = encodeURIComponent(name + ' 보드게임 설명 리뷰');
-      document.getElementById('yt-results').innerHTML = `
-        <div class="yt-no-key">
-          <div style="font-size:48px;margin-bottom:12px;">🔑</div>
-          <div class="yt-key-note">
-            YouTube Data API 키를 설정하면<br>게임 영상을 앱 안에서 바로 검색할 수 있어요!<br><br>
-            <a href="https://console.developers.google.com/" target="_blank">Google Cloud Console</a>에서<br>
-            YouTube Data API v3 키를 발급받으세요.
-          </div>
-          <input class="yt-key-input" id="yt-key-input" placeholder="AIza..." autocomplete="off">
-          <div style="display:flex;gap:8px;justify-content:center;">
-            <button class="yt-key-save" onclick="saveYTKey(${JSON.stringify(name)})">저장 & 검색</button>
-          </div>
-          <a class="yt-open-link" onclick="window.open('https://www.youtube.com/results?search_query=${safeQ}','_blank')">
-            → 새 탭에서 유튜브로 직접 검색하기
-          </a>
-        </div>`;
-    }
-
-    function saveYTKey(name) {
-      const key = (document.getElementById('yt-key-input')?.value || '').trim();
-      if (!key) { showToast('API 키를 입력해 주세요', true); return; }
-      localStorage.setItem('gb_yt_key', key);
-      document.getElementById('yt-results').innerHTML = '<div class="yt-loading">🔍 검색 중...</div>';
-      searchYouTube(name, key);
-    }
-
-    async function searchYouTube(query, apiKey) {
-      const q = encodeURIComponent(query + ' 보드게임 설명 리뷰');
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${q}&type=video&maxResults=6&key=${apiKey}&relevanceLanguage=ko`;
+    async function searchYouTube(query) {
       try {
-        const res  = await fetch(url);
+        const res  = await fetch(CONFIG.N8N_WEBHOOK.replace('garaon-call','garaon-yt-search'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
         const data = await res.json();
-        if (!res.ok) {
-          if (data.error?.code === 403 || data.error?.code === 400) {
-            localStorage.removeItem('gb_yt_key');
-            document.getElementById('yt-results').innerHTML = `
-              <div class="yt-loading" style="color:var(--r);">
-                ⚠️ API 키 오류<br>
-                <small style="color:#666;">${esc(data.error?.message||'키를 다시 확인해 주세요')}</small>
-              </div>`;
-            return;
-          }
-          throw new Error(data.error?.message || 'YouTube API 오류');
-        }
+        if (!res.ok) throw new Error(data.message || 'n8n 오류');
         renderYTResults(data.items || [], query);
       } catch(e) {
         document.getElementById('yt-results').innerHTML =
