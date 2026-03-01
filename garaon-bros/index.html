@@ -221,8 +221,36 @@
     }
     .call-item:hover { border-color:#ffd700; color:#ffd700; box-shadow:0 0 10px #ffd70033; }
     .call-item:active { transform:scale(.94); }
-    .call-item.selected { border-color:#ffd700; background:#ffd70022; color:#ffd700; }
+    .call-item { position:relative; }
+    .call-item.has-qty { border-color:#ffd700; background:#ffd70022; color:#ffd700; }
     .call-item-emoji { font-size:28px; display:block; margin-bottom:6px; }
+    .ci-qty-badge {
+      position:absolute; top:-7px; right:-7px;
+      background:#ffd700; color:#0b0b1a;
+      width:22px; height:22px; border-radius:50%;
+      font-size:12px; font-weight:900;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:none;
+    }
+    /* ── 장바구니 바 ── */
+    .call-cart-bar { border-top:1px solid #2a2a50; padding-top:14px; margin-top:8px; }
+    .cart-empty-msg { font-size:12px; color:#444; text-align:center; padding:6px 0 10px; }
+    .cart-rows { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+    .cart-row {
+      display:flex; align-items:center; gap:10px;
+      background:#1e1e38; border-radius:10px; padding:8px 12px;
+    }
+    .cart-row-emoji { font-size:20px; flex-shrink:0; }
+    .cart-row-label { flex:1; font-weight:700; font-size:14px; }
+    .cart-qty-ctrl { display:flex; align-items:center; gap:8px; }
+    .cart-qty-btn {
+      width:28px; height:28px; border-radius:7px;
+      background:#2a2a50; border:1px solid #555; color:#ddd;
+      font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+      transition:all .12s; flex-shrink:0; font-family:'Nunito',sans-serif;
+    }
+    .cart-qty-btn:hover { border-color:#ffd700; color:#ffd700; }
+    .cart-qty-num { font-weight:900; font-size:16px; color:#ffd700; min-width:20px; text-align:center; }
     .call-custom {
       width:100%; background:#1e1e38; border:1px solid #444; border-radius:10px;
       padding:12px; color:#ddd; font-family:'Nunito',sans-serif; font-size:14px;
@@ -237,7 +265,7 @@
       cursor:pointer; transition:all .15s;
     }
     .call-submit:hover { filter:brightness(1.1); }
-    .call-submit:disabled { opacity:.4; cursor:not-allowed; }
+    .call-submit:disabled { opacity:.4; cursor:not-allowed; filter:none; }
     .call-close {
       position:absolute; top:16px; right:20px;
       background:none; border:none; color:#666; font-size:22px; cursor:pointer;
@@ -345,7 +373,7 @@
        집주인 호출 (우측상단)
        ══════════════════════════════ -->
   <div class="top-right-area" id="top-right-area">
-    <button id="call-settings-btn" title="호출메뉴 설정" onclick="openSettings()">⚙️</button>
+    <button id="call-settings-btn" title="호출메뉴 설정" onclick="openSettings()" style="display:none">⚙️</button>
     <button id="call-fab" onclick="openCallModal()">🔔 집주인 호출</button>
   </div>
   <div id="call-toast">✅ 집주인에게 전달했어요!</div>
@@ -356,11 +384,15 @@
       <button class="call-close" onclick="closeCallModal()">✕</button>
       <div class="call-title">집주인 호출 🔔<br>무엇이 필요한가요?</div>
       <div class="call-grid" id="call-grid">
-        <!-- 호출 메뉴 아이템 동적 생성 -->
         <div style="grid-column:1/-1;text-align:center;color:#555;padding:20px;">로딩 중...</div>
       </div>
-      <textarea class="call-custom" id="call-custom" rows="2" placeholder="기타 내용을 입력하세요..."></textarea>
-      <button class="call-submit" id="call-submit" onclick="submitCall()" disabled>호출하기 🚀</button>
+      <!-- 장바구니 바 -->
+      <div class="call-cart-bar">
+        <div class="cart-empty-msg" id="cart-empty-msg">항목을 눌러 담으세요 (여러 번 탭하면 수량 증가)</div>
+        <div class="cart-rows" id="cart-rows"></div>
+        <textarea class="call-custom" id="call-custom" rows="2" placeholder="기타 내용을 입력하세요..."></textarea>
+        <button class="call-submit" id="call-submit" onclick="submitCall()" disabled>호출하기 🚀</button>
+      </div>
     </div>
   </div>
 
@@ -407,7 +439,8 @@
   </div>
 
   <script>
-    const PW   = '0910';
+    const PW       = '0910';
+    const PW_ADMIN = '0727';
     const NUMS = ['1','2','3','4','5','6','7','8','9','⌫','0',''];
     let   input = '';
 
@@ -447,11 +480,14 @@
       }
       render();
 
-      if (input === PW) {
+      if (input === PW || input === PW_ADMIN) {
+        const isAdmin = (input === PW_ADMIN);
         sessionStorage.setItem('gb_auth', '1');
-        document.getElementById('pw-hint').textContent = '✅ 확인!';
-        document.getElementById('pw-hint').style.color = '#00ff88';
-        setTimeout(showMain, 400);
+        if (isAdmin) sessionStorage.setItem('gb_role', 'superadmin');
+        else sessionStorage.removeItem('gb_role');
+        document.getElementById('pw-hint').textContent = isAdmin ? '👑 최상위 관리자!' : '✅ 확인!';
+        document.getElementById('pw-hint').style.color  = isAdmin ? '#ffd700' : '#00ff88';
+        setTimeout(() => showMain(isAdmin), 400);
       } else if (input.length >= PW.length) {
         wrong();
       }
@@ -482,21 +518,23 @@
     }
 
     /* ── 메인 전환 ── */
-    function showMain() {
+    function showMain(isAdmin) {
+      if (isAdmin === undefined) isAdmin = sessionStorage.getItem('gb_role') === 'superadmin';
       const pw = document.getElementById('pw-screen');
       pw.style.opacity = '0';
       setTimeout(() => { pw.style.display = 'none'; }, 300);
       document.getElementById('main').style.display = 'block';
-      // 집주인 호출 버튼 (우측상단) 활성화
       document.getElementById('top-right-area').style.display = 'flex';
+      // 설정 버튼은 최상위 관리자만
+      document.getElementById('call-settings-btn').style.display = isAdmin ? 'flex' : 'none';
       loadCallMenu();
     }
 
     /* ══════════════════════════════
        집주인 호출 시스템
        ══════════════════════════════ */
-    let _callItems = [];  // { id, emoji, label, is_active }
-    let _selItem   = null; // 선택된 메뉴 아이템
+    let _callItems = [];
+    let _cart = {};  // { [itemId]: { item, qty } }
 
     async function loadCallMenu() {
       const db = getDB();
@@ -522,13 +560,12 @@
     }
 
     function openCallModal() {
-      const overlay = document.getElementById('call-overlay');
-      overlay.classList.add('open');
-      _selItem = null;
+      _cart = {};
+      document.getElementById('call-overlay').classList.add('open');
       document.getElementById('call-custom').style.display = 'none';
       document.getElementById('call-custom').value = '';
-      document.getElementById('call-submit').disabled = true;
       renderCallGrid();
+      renderCartBar();
     }
 
     function closeCallModal(e) {
@@ -542,49 +579,95 @@
         grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#555;padding:20px;">메뉴 없음</div>';
         return;
       }
-      grid.innerHTML = _callItems.map(item => `
-        <div class="call-item" id="ci-${item.id}" onclick="selectCallItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
-          <span class="call-item-emoji">${item.emoji || '📦'}</span>
-          ${item.label}
-        </div>
-      `).join('');
+      grid.innerHTML = _callItems.map(item => {
+        const qty = _cart[item.id] ? _cart[item.id].qty : 0;
+        return `
+          <div class="call-item${qty > 0 ? ' has-qty' : ''}" onclick="tapCallItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
+            ${qty > 0 ? `<div class="ci-qty-badge">${qty}</div>` : ''}
+            <span class="call-item-emoji">${item.emoji || '📦'}</span>
+            ${item.label}
+          </div>`;
+      }).join('');
     }
 
-    function selectCallItem(item) {
-      _selItem = item;
-      // 선택 표시
-      document.querySelectorAll('.call-item').forEach(el => el.classList.remove('selected'));
-      const el = document.getElementById('ci-' + item.id);
-      if (el) el.classList.add('selected');
-      // 기타 선택 시 직접 입력 표시
-      const isEtc = (item.label === '기타' || item.id === 'etc');
-      const customEl = document.getElementById('call-custom');
-      customEl.style.display = isEtc ? 'block' : 'none';
-      document.getElementById('call-submit').disabled = false;
+    function tapCallItem(item) {
+      if (_cart[item.id]) {
+        _cart[item.id].qty++;
+      } else {
+        _cart[item.id] = { item, qty: 1 };
+      }
+      if (item.label === '기타' || item.id === 'etc') {
+        document.getElementById('call-custom').style.display = 'block';
+      }
+      renderCallGrid();
+      renderCartBar();
+    }
+
+    function updateCartQty(id, delta) {
+      if (!_cart[id]) return;
+      _cart[id].qty += delta;
+      if (_cart[id].qty <= 0) {
+        const wasEtc = _cart[id].item.label === '기타' || _cart[id].item.id === 'etc';
+        delete _cart[id];
+        if (wasEtc) {
+          document.getElementById('call-custom').style.display = 'none';
+          document.getElementById('call-custom').value = '';
+        }
+      }
+      renderCallGrid();
+      renderCartBar();
+    }
+
+    function renderCartBar() {
+      const entries = Object.values(_cart);
+      const emptyMsg  = document.getElementById('cart-empty-msg');
+      const rowsEl    = document.getElementById('cart-rows');
+      const submitBtn = document.getElementById('call-submit');
+      if (!entries.length) {
+        emptyMsg.style.display = 'block';
+        rowsEl.innerHTML = '';
+        submitBtn.disabled = true;
+        submitBtn.textContent = '호출하기 🚀';
+        return;
+      }
+      emptyMsg.style.display = 'none';
+      rowsEl.innerHTML = entries.map(({ item, qty }) => `
+        <div class="cart-row">
+          <span class="cart-row-emoji">${item.emoji || '📦'}</span>
+          <span class="cart-row-label">${escH(item.label)}</span>
+          <div class="cart-qty-ctrl">
+            <button class="cart-qty-btn" onclick="updateCartQty('${escH(String(item.id))}', -1)">−</button>
+            <span class="cart-qty-num">${qty}</span>
+            <button class="cart-qty-btn" onclick="updateCartQty('${escH(String(item.id))}', 1)">+</button>
+          </div>
+        </div>`).join('');
+      const totalCount = entries.reduce((s, e) => s + e.qty, 0);
+      submitBtn.textContent = `호출하기 (총 ${totalCount}개) 🚀`;
+      submitBtn.disabled = false;
     }
 
     async function submitCall() {
-      if (!_selItem) return;
+      const entries = Object.values(_cart);
+      if (!entries.length) return;
+      const hasEtc = entries.some(e => e.item.label === '기타' || e.item.id === 'etc');
       const customText = document.getElementById('call-custom').value.trim();
-      const isEtc = (_selItem.label === '기타' || _selItem.id === 'etc');
-      if (isEtc && !customText) {
+      if (hasEtc && !customText) {
         document.getElementById('call-custom').focus();
         return;
       }
-      // 오늘 동일 메뉴 호출 횟수 확인
-      const todayCount = await getTodayCallCount(_selItem.label);
-      if (todayCount >= 2) {
-        showGorilla(todayCount, _selItem.label);
+      const todayCount = await getTodayCallCount(entries[0].item.label);
+      if (todayCount >= 3) {
+        showGorilla(todayCount, entries.map(e => e.item.label).join(', '));
         return;
       }
-      await doCall(customText);
+      await doCall(entries, customText);
     }
 
     async function getTodayCallCount(label) {
       const db = getDB();
       if (!db) return 0;
       try {
-        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const today = new Date().toISOString().slice(0, 10);
         const { count } = await db.from('call_history')
           .select('*', { count: 'exact', head: true })
           .eq('menu_label', label)
@@ -606,20 +689,22 @@
 
     async function confirmCall() {
       closeGorilla();
+      const entries = Object.values(_cart);
       const customText = document.getElementById('call-custom').value.trim();
-      await doCall(customText);
+      await doCall(entries, customText);
     }
 
-    async function doCall(customText) {
+    async function doCall(entries, customText) {
       const btn = document.getElementById('call-submit');
       btn.disabled = true;
       btn.textContent = '전송 중...';
 
-      const label   = _selItem.label + (customText ? ` (${customText})` : '');
-      const emoji   = _selItem.emoji || '📦';
+      const summaryParts = entries.map(({ item, qty }) =>
+        `${item.emoji || '📦'} ${item.label}${qty > 1 ? ' x' + qty : ''}`);
+      if (customText) summaryParts.push(`✏️ ${customText}`);
+      const summary = summaryParts.join(', ');
       const n8nUrl  = localStorage.getItem('gb_n8n_webhook');
 
-      // n8n 웹훅 POST
       if (n8nUrl) {
         try {
           await fetch(n8nUrl, {
@@ -627,33 +712,34 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               type: 'call',
-              emoji,
-              label,
-              message: `[가라온 브로즈] ${emoji} ${label} 요청이 들어왔어요!`,
+              items: entries.map(({ item, qty }) => ({ emoji: item.emoji, label: item.label, qty })),
+              custom_text: customText || null,
+              summary,
+              message: `[가라온 브로즈] ${summary} 요청!`,
               called_at: new Date().toISOString(),
             }),
           });
         } catch(e) { console.warn('n8n 전송 실패:', e); }
       }
 
-      // Supabase call_history 저장
       const db = getDB();
       if (db) {
         try {
-          await db.from('call_history').insert([{
-            menu_id:     _selItem.id || null,
-            menu_label:  _selItem.label,
-            menu_emoji:  _selItem.emoji || '📦',
-            custom_text: customText || null,
-          }]);
+          await db.from('call_history').insert(
+            entries.map(({ item, qty }) => ({
+              menu_id:     item.id || null,
+              menu_label:  item.label,
+              menu_emoji:  item.emoji || '📦',
+              qty,
+              custom_text: (item.label === '기타' || item.id === 'etc') ? customText || null : null,
+            }))
+          );
         } catch(e) { console.warn('call_history 저장 실패:', e); }
       }
 
-      // 완료 처리
       document.getElementById('call-overlay').classList.remove('open');
       btn.disabled = false;
-      btn.textContent = '호출하기 🚀';
-      showToast();
+      showToast(`✅ ${summary} — 전달 완료!`);
     }
 
     function showToast(msg) {
