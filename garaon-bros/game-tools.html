@@ -99,6 +99,8 @@
     .quiz-word{font-size:2.6rem;font-weight:900;color:#fff;text-align:center;padding:0 24px;word-break:keep-all;line-height:1.4;margin-bottom:1rem}
     .quiz-score{font-size:1.5rem;color:var(--g);font-weight:900;margin-top:1rem}
     .quiz-hint{position:absolute;bottom:60px;font-size:1.1rem;color:var(--dim);text-align:center;width:100%}
+    .quiz-stop-btn{position:absolute;top:20px;right:20px;z-index:610;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:#ff6b6b;font-weight:900;font-size:1rem;padding:.6rem 1.2rem;border-radius:10px;cursor:pointer;transition:all .2s}
+    .quiz-stop-btn:hover{background:rgba(255,100,100,.2);border-color:#ff6b6b}
     .quiz-result-overlay{display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.9);align-items:center;justify-content:center}
     .quiz-result-overlay.open{display:flex}
 
@@ -119,6 +121,21 @@
     .nunchi-elapsed.fired{color:var(--p);font-size:5rem;animation:shake .5s ease}
     .nunchi-msg{font-size:1.35rem;color:var(--dim);margin-bottom:1rem}
     .nunchi-msg.go{font-size:2rem;font-weight:900;color:var(--y);animation:popIn .5s ease both}
+
+    /* ══ 사다리 ══ */
+    .ladder-names-grid{display:grid;gap:.5rem;margin:.75rem 0}
+    .ladder-input{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:.55rem .8rem;color:var(--text);font-size:1rem;font-family:inherit;width:100%}
+    .ladder-input:focus{outline:none;border-color:var(--y)}
+    .ladder-input::placeholder{color:var(--dim)}
+    .ladder-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.95);flex-direction:column;align-items:center}
+    .ladder-overlay.open{display:flex}
+    .ladder-top-bar{width:100%;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+    .ladder-canvas-wrap{flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+    .ladder-pick-row{display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap;justify-content:center;flex-shrink:0}
+    .ladder-pick-btn{padding:.5rem 1rem;border-radius:10px;border:2px solid var(--y);background:transparent;color:var(--y);font-weight:800;font-size:1rem;cursor:pointer;font-family:inherit;transition:all .2s}
+    .ladder-pick-btn:hover{background:rgba(255,215,0,.15)}
+    .ladder-pick-btn.used{opacity:.3;pointer-events:none;border-color:var(--dim);color:var(--dim)}
+    .ladder-result-box{text-align:center;padding:12px 16px;font-size:1.3rem;font-weight:900;color:var(--g);min-height:50px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   </style>
 </head>
 <body>
@@ -168,6 +185,11 @@
         <span class="tool-emoji">📜</span>
         <div class="tool-name">속담 퀴즈</div>
         <div class="tool-desc">속담을<br>맞혀보세요!</div>
+      </div>
+      <div class="tool-card" onclick="openTool('ladder')">
+        <span class="tool-emoji">🪜</span>
+        <div class="tool-name">사다리 게임</div>
+        <div class="tool-desc">순서·벌칙<br>사다리타기!</div>
       </div>
     </div>
   </div>
@@ -374,6 +396,29 @@
     </div>
   </div>
 
+  <!-- ══ 8. 사다리 게임 ══ -->
+  <div id="sec-ladder" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="goToolsHome()">←</button>
+      <span class="sub-title">🪜 사다리 게임</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">참가 인원</span>
+      <div class="pills" id="ladder-count-pills"></div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">참가자 이름</span>
+      <div class="ladder-names-grid" id="ladder-names" style="grid-template-columns:1fr 1fr"></div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">결과 (도착지)</span>
+      <div class="ladder-names-grid" id="ladder-results" style="grid-template-columns:1fr 1fr"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="buildLadder()">🪜 사다리 만들기</button>
+    </div>
+  </div>
+
 </div><!-- .main -->
 
 <!-- ═══ 금지어 팝업 ═══ -->
@@ -410,6 +455,7 @@
 
 <!-- ═══ 스피드 퀴즈 전체화면 ═══ -->
 <div class="quiz-fullscreen" id="speed-screen">
+  <button class="quiz-stop-btn" onclick="endQuiz('speed')">■ 정지</button>
   <div class="quiz-timer" id="speed-timer-display">60</div>
   <div class="quiz-word" id="speed-word-display"></div>
   <div class="quiz-score" id="speed-score-display">✅ 0점</div>
@@ -431,6 +477,7 @@
 
 <!-- ═══ 속담 퀴즈 전체화면 ═══ -->
 <div class="quiz-fullscreen" id="proverb-screen">
+  <button class="quiz-stop-btn" onclick="endQuiz('proverb')">■ 정지</button>
   <div class="quiz-timer" id="proverb-timer-display">60</div>
   <div class="quiz-word" id="proverb-word-display" style="font-size:2.2rem"></div>
   <div class="quiz-score" id="proverb-score-display">✅ 0점</div>
@@ -491,6 +538,19 @@
       <button class="btn btn-dim" onclick="closeFiveSecFinal()">닫기</button>
     </div>
   </div>
+</div>
+
+<!-- ═══ 사다리 게임 오버레이 ═══ -->
+<div class="ladder-overlay" id="ladder-overlay">
+  <div class="ladder-top-bar">
+    <button class="sub-back" onclick="closeLadder()">← 닫기</button>
+    <span style="color:var(--y);font-weight:800;font-size:.95rem" id="ladder-instruction">이름을 터치하세요!</span>
+  </div>
+  <div class="ladder-pick-row" id="ladder-pick-row"></div>
+  <div class="ladder-canvas-wrap">
+    <canvas id="ladder-canvas"></canvas>
+  </div>
+  <div class="ladder-result-box" id="ladder-result-box"></div>
 </div>
 
 <script>
@@ -1266,6 +1326,7 @@ function closeQuizResult(type){document.getElementById(type+'-result').classList
   screen.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
   screen.addEventListener('touchend',e=>{
     if(!screen.classList.contains('open'))return;
+    if(e.target.closest('.quiz-stop-btn'))return;
     const dy=e.changedTouches[0].clientY-_touchStartY;
     if(dy>60)quizPass(); else quizCorrect();
     e.preventDefault();
@@ -1455,12 +1516,193 @@ function nunchiStop(){
 }
 
 /* ═══════════════════════════════════════════
+   8. 사다리 게임
+   ═══════════════════════════════════════════ */
+let _ladderN=4, _ladderData=null, _ladderUsed=new Set(), _ladderAnimating=false;
+
+function initLadderPills(){
+  const w=document.getElementById('ladder-count-pills');
+  for(let n=2;n<=8;n++){
+    const b=document.createElement('button');
+    b.className='pill'+(n===4?' on':'');
+    b.textContent=n+'명';
+    b.onclick=()=>{
+      w.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+      b.classList.add('on');_ladderN=n;renderLadderInputs();
+    };
+    w.appendChild(b);
+  }
+  renderLadderInputs();
+}
+
+function renderLadderInputs(){
+  const nameBox=document.getElementById('ladder-names');
+  const resultBox=document.getElementById('ladder-results');
+  const cols=_ladderN<=4?'1fr 1fr':'1fr 1fr 1fr';
+  nameBox.style.gridTemplateColumns=cols;
+  resultBox.style.gridTemplateColumns=cols;
+  const defResults=['1등','2등','3등','꼴등','벌칙','당첨','면제','행운'];
+  nameBox.innerHTML='';resultBox.innerHTML='';
+  for(let i=0;i<_ladderN;i++){
+    const ni=document.createElement('input');
+    ni.className='ladder-input';ni.placeholder='참가자'+(i+1);ni.value='참가자'+(i+1);
+    ni.id='ladder-name-'+i;nameBox.appendChild(ni);
+    const ri=document.createElement('input');
+    ri.className='ladder-input';ri.placeholder='결과'+(i+1);ri.value=defResults[i]||(i+1)+'등';
+    ri.id='ladder-result-'+i;resultBox.appendChild(ri);
+  }
+}
+
+function buildLadder(){
+  const names=[],results=[];
+  for(let i=0;i<_ladderN;i++){
+    names.push(document.getElementById('ladder-name-'+i).value||'참가자'+(i+1));
+    results.push(document.getElementById('ladder-result-'+i).value||(i+1)+'등');
+  }
+  const shuffled=shuffle([...results]);
+  const ROWS=15+_ladderN*2;
+  const rungs=[];
+  for(let row=0;row<ROWS;row++){
+    const used=new Set();
+    for(let col=0;col<_ladderN-1;col++){
+      if(used.has(col)||used.has(col+1))continue;
+      if(Math.random()<0.35){rungs.push({col,row});used.add(col);used.add(col+1);}
+    }
+  }
+  _ladderData={n:_ladderN,names,results:shuffled,rungs,totalRows:ROWS};
+  _ladderUsed=new Set();_ladderAnimating=false;
+  document.getElementById('ladder-result-box').textContent='';
+  document.getElementById('ladder-instruction').textContent='이름을 터치하세요!';
+  document.getElementById('ladder-overlay').classList.add('open');
+  playChime();
+  requestAnimationFrame(()=>{drawLadderCanvas();renderPickButtons();});
+}
+
+function drawLadderCanvas(){
+  const canvas=document.getElementById('ladder-canvas');
+  const W=Math.min(window.innerWidth-16,480);
+  const H=Math.min(window.innerHeight-200,520);
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const d=_ladderData;
+  const padTop=20,padBot=20,padX=30;
+  const drawW=W-padX*2, drawH=H-padTop-padBot;
+  const colW=d.n>1?drawW/(d.n-1):0;
+  const rowH=drawH/(d.totalRows+1);
+  ctx.clearRect(0,0,W,H);
+
+  // vertical lines
+  ctx.strokeStyle='#555';ctx.lineWidth=2.5;
+  for(let i=0;i<d.n;i++){
+    const x=padX+i*colW;
+    ctx.beginPath();ctx.moveTo(x,padTop);ctx.lineTo(x,H-padBot);ctx.stroke();
+  }
+  // rungs
+  ctx.strokeStyle='#666';ctx.lineWidth=2.5;
+  d.rungs.forEach(r=>{
+    const x1=padX+r.col*colW, x2=padX+(r.col+1)*colW;
+    const y=padTop+(r.row+1)*rowH;
+    ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+  });
+  // column labels (small dots at top/bottom)
+  for(let i=0;i<d.n;i++){
+    const x=padX+i*colW;
+    ctx.beginPath();ctx.arc(x,padTop,4,0,Math.PI*2);ctx.fillStyle='var(--y)';ctx.fillStyle='#ffd700';ctx.fill();
+    ctx.beginPath();ctx.arc(x,H-padBot,4,0,Math.PI*2);ctx.fillStyle='#888';ctx.fill();
+  }
+
+  d._padTop=padTop;d._padBot=padBot;d._padX=padX;d._colW=colW;d._rowH=rowH;d._W=W;d._H=H;
+}
+
+function renderPickButtons(){
+  const row=document.getElementById('ladder-pick-row');
+  row.innerHTML='';
+  _ladderData.names.forEach((name,i)=>{
+    const b=document.createElement('button');
+    b.className='ladder-pick-btn';b.textContent=name;
+    b.onclick=()=>pickLadderStart(i,b);
+    row.appendChild(b);
+  });
+}
+
+function traceLadderPath(startCol){
+  const d=_ladderData;
+  const rungsByRow={};
+  d.rungs.forEach(r=>{if(!rungsByRow[r.row])rungsByRow[r.row]=[];rungsByRow[r.row].push(r);});
+  const path=[];
+  let col=startCol;
+  path.push({x:d._padX+col*d._colW,y:d._padTop});
+  for(let row=0;row<d.totalRows;row++){
+    const y=d._padTop+(row+1)*d._rowH;
+    path.push({x:d._padX+col*d._colW,y});
+    if(rungsByRow[row]){
+      const rung=rungsByRow[row].find(r=>r.col===col||r.col+1===col);
+      if(rung){
+        if(rung.col===col)col++;else col--;
+        path.push({x:d._padX+col*d._colW,y});
+      }
+    }
+  }
+  path.push({x:d._padX+col*d._colW,y:d._H-d._padBot});
+  return{path,endCol:col};
+}
+
+function pickLadderStart(idx,btn){
+  if(_ladderUsed.has(idx)||_ladderAnimating)return;
+  _ladderUsed.add(idx);btn.classList.add('used');_ladderAnimating=true;
+  document.getElementById('ladder-result-box').textContent='...';
+  const{path,endCol}=traceLadderPath(idx);
+  animateLadderPath(path,()=>{
+    _ladderAnimating=false;
+    const result=_ladderData.results[endCol];
+    document.getElementById('ladder-result-box').innerHTML=
+      `<span style="color:var(--y)">${_ladderData.names[idx]}</span> → <span style="color:var(--g)">${result}</span>`;
+    playCorrect();
+    if(_ladderUsed.size>=_ladderData.n){
+      document.getElementById('ladder-instruction').textContent='🎉 모두 완료!';
+      setTimeout(()=>{
+        document.getElementById('ladder-result-box').innerHTML=
+          '🎉 모두 완료!<br><span style="font-size:.9rem;color:var(--dim)">닫기 후 다시 시작할 수 있어요</span>';
+      },2000);
+    }
+  });
+}
+
+function animateLadderPath(path,onDone){
+  const canvas=document.getElementById('ladder-canvas');
+  const ctx=canvas.getContext('2d');
+  const colors=['#ff006e','#00ff88','#00d4ff','#ffd700','#cc44ff','#ff8800','#88ff00','#ff4488'];
+  const color=colors[(_ladderUsed.size-1)%colors.length];
+  ctx.strokeStyle=color;ctx.lineWidth=4;ctx.lineCap='round';
+  const delay=Math.max(40,Math.min(80,Math.round(2000/(path.length-1))));
+  let i=0;
+  // start marker
+  ctx.beginPath();ctx.arc(path[0].x,path[0].y,8,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  function step(){
+    if(i>=path.length-1){
+      ctx.beginPath();ctx.arc(path[path.length-1].x,path[path.length-1].y,8,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+      if(onDone)onDone();return;
+    }
+    ctx.beginPath();ctx.moveTo(path[i].x,path[i].y);ctx.lineTo(path[i+1].x,path[i+1].y);ctx.strokeStyle=color;ctx.stroke();
+    if(Math.abs(path[i].y-path[i+1].y)<1)playTick();
+    i++;setTimeout(step,delay);
+  }
+  setTimeout(step,200);
+}
+
+function closeLadder(){
+  _ladderAnimating=false;
+  document.getElementById('ladder-overlay').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════ */
 initTabooCats();
 initChosungCats();
 initSpeedCats();
 initFiveCats();
+initLadderPills();
 resetTimer();
 </script>
 <script src="./js/music-player.js"></script>
