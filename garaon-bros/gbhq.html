@@ -685,7 +685,7 @@
       <div class="modal-head">
         <div style="display:flex;flex-direction:column;gap:2px;">
           <div style="font-size:11px;color:#555;font-weight:700;">📱 QR 촬영</div>
-          <div class="modal-title" style="color:var(--p);font-size:17px;">폰으로 게임 사진 찍기</div>
+          <div class="modal-title" id="qr-upload-title" style="color:var(--p);font-size:17px;">폰으로 사진 찍기</div>
         </div>
         <button class="modal-close" onclick="closeQrUpload()">✕</button>
       </div>
@@ -1452,10 +1452,9 @@
                 <input type="radio" name="profile-type" value="photo" ${visitor?.photo_url?'checked':''} ${!visitor?.photo_url?'disabled':''} onchange="switchProfileTab('photo')"> 📷 실사진
               </label>
               <span style="flex:1;"></span>
-              <button type="button" onclick="document.getElementById('photo-input').click()" style="background:var(--card2);border:1px solid #555;color:#aaa;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;font-weight:700;">
-                ${visitor?.photo_url ? '사진 변경' : '사진 업로드'}
+              <button type="button" onclick="openVisitorPhotoQr()" style="background:var(--card2);border:1px solid var(--p);color:var(--p);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;font-weight:700;">
+                📱 ${visitor?.photo_url ? '사진 변경' : '사진 촬영'}
               </button>
-              <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(this)">
             </div>
             <div id="profile-avatar-panel" style="${visitor?.photo_url?'display:none':''}">
               <div class="avatar-grid" id="avatar-grid">
@@ -1506,40 +1505,24 @@
       }
     }
 
-    function handlePhotoSelect(input) {
-      const file = input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const size = 200;
-          canvas.width = size; canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          const min = Math.min(img.width, img.height);
-          const sx = (img.width - min) / 2, sy = (img.height - min) / 2;
-          ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-          selPhotoData = canvas.toDataURL('image/jpeg', 0.7);
-          // 미리보기
-          const preview = document.getElementById('photo-preview');
-          if (preview) { preview.src = selPhotoData; preview.style.display = ''; }
-          const wrap = document.getElementById('photo-preview-wrap');
-          if (wrap) wrap.style.display = 'none';
-          // 사진 라디오 활성화 + 자동 선택
-          enablePhotoRadio();
-          const radio = document.querySelector('input[name="profile-type"][value="photo"]');
-          if (radio) { radio.checked = true; }
-          switchProfileTab('photo');
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    function openVisitorPhotoQr() {
+      openQrUpload((imageUrl) => {
+        selPhotoData = imageUrl; // Storage URL 직접 저장
+        // 미리보기 업데이트
+        const preview = document.getElementById('photo-preview');
+        if (preview) { preview.src = imageUrl; preview.style.display = ''; }
+        const wrap = document.getElementById('photo-preview-wrap');
+        if (wrap) wrap.style.display = 'none';
+        // 사진 라디오 활성화 + 자동 선택
+        enablePhotoRadio();
+        const radio = document.querySelector('input[name="profile-type"][value="photo"]');
+        if (radio) radio.checked = true;
+        switchProfileTab('photo');
+      }, '프로필 사진 촬영');
     }
 
     function removePhoto() {
       selPhotoData = '__remove__';
-      // 아바타로 전환 + 사진 라디오 비활성화
       const label = document.getElementById('photo-radio-label');
       if (label) {
         label.classList.add('disabled');
@@ -2084,8 +2067,11 @@
     let _qrPollTimer = null;
     let _qrToken = null;
     let _qrExpireTimer = null;
+    let _qrCallback = null; // 사진 수신 후 콜백
 
-    async function openQrUpload() {
+    async function openQrUpload(callback, title) {
+      _qrCallback = callback || null;
+
       // 랜덤 토큰 생성
       _qrToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
@@ -2102,6 +2088,7 @@
       });
 
       // 모달 표시
+      document.getElementById('qr-upload-title').textContent = title || '폰으로 사진 찍기';
       document.getElementById('qr-upload-modal').classList.add('open');
       document.getElementById('qr-upload-status').textContent = '폰으로 QR 스캔 → 촬영 → 자동 반영';
       document.getElementById('qr-upload-status').style.color = '#888';
@@ -2129,15 +2116,20 @@
           .eq('token', _qrToken)
           .single();
         if (data?.used && data?.image_url) {
-          // 성공! 이미지 반영
-          document.getElementById('f-image').value = data.image_url;
-          updateImgPreview(data.image_url);
           document.getElementById('qr-upload-status').textContent = '✅ 사진 수신 완료!';
           document.getElementById('qr-upload-status').style.color = '#00ff88';
           showToast('📸 사진이 반영되었습니다!');
           clearInterval(_qrPollTimer); _qrPollTimer = null;
           clearInterval(_qrExpireTimer); _qrExpireTimer = null;
           document.getElementById('qr-upload-timer').textContent = '';
+
+          if (_qrCallback) {
+            _qrCallback(data.image_url);
+          } else {
+            // 기본: 게임 이미지 반영
+            document.getElementById('f-image').value = data.image_url;
+            updateImgPreview(data.image_url);
+          }
           setTimeout(() => closeQrUpload(), 1500);
         }
       } catch(e) { /* 무시 */ }
@@ -2148,6 +2140,7 @@
       if (_qrPollTimer) { clearInterval(_qrPollTimer); _qrPollTimer = null; }
       if (_qrExpireTimer) { clearInterval(_qrExpireTimer); _qrExpireTimer = null; }
       _qrToken = null;
+      _qrCallback = null;
     }
 
     async function testAIWebhook() {
