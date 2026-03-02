@@ -475,7 +475,16 @@
       newBonus = 2;
     }
 
-    return base + myBoost + newBonus;
+    // 연령 적합도 보너스: 최연소 멤버 나이와 age_min 차이가 작을수록 높은 점수
+    let ageBonus = 0;
+    const youngest = getYoungestAge();
+    if (youngest && g.age_min) {
+      const gap = youngest - g.age_min;
+      if (gap >= 0 && gap <= 3) ageBonus = 2;       // 딱 맞는 연령대
+      else if (gap > 3 && gap <= 6) ageBonus = 1;   // 약간 쉬운 편
+    }
+
+    return base + myBoost + newBonus + ageBonus;
   }
 
   /* ── 배지 계산 ── */
@@ -499,8 +508,25 @@
     return badges.join('');
   }
 
+  /* ── 선택 멤버 최소 연령 ── */
+  function getYoungestAge() {
+    if (!_todayMembers.length) return null;
+    const ages = _todayMembers.map(id => {
+      const v = _allVisitors.find(x => x.id === id);
+      if (!v) return null;
+      if (v.age) return Number(v.age);
+      // age_group 기반 추정
+      if (v.age_group === '10대 미만') return 7;
+      if (v.age_group === '10대') return 12;
+      if (v.age_group === '20대 이상') return 20;
+      return null;
+    }).filter(a => a !== null);
+    return ages.length ? Math.min(...ages) : null;
+  }
+
   /* ── 추천 실행 ── */
   function filterAndSort(games, filters, type) {
+    const youngestAge = getYoungestAge();
     return games.filter(g => {
       if (type === 'board' && g.is_available === false) return false;
       if (filters.players) {
@@ -515,6 +541,8 @@
       if (filters.maxTime) {
         if ((g.play_time_min||0) > filters.maxTime) return false;
       }
+      // 연령대 필터: 최연소 멤버가 age_min 미만이면 제외
+      if (youngestAge && g.age_min && youngestAge < g.age_min) return false;
       return true;
     }).sort((a, b) => smartScore(b, type) - smartScore(a, type));
   }
@@ -551,9 +579,11 @@
     if (_todayMembers.length) {
       const names = _todayMembers.map(id => {
         const v = _allVisitors.find(x => x.id === id);
-        return v ? `${v.avatar||'🧑'} ${v.name}` : '';
+        return v ? `${v.avatar||'🧑'} ${v.name}${v.age ? '('+v.age+'세)' : ''}` : '';
       }).filter(Boolean).join(' · ');
-      document.getElementById('r-members').textContent = `오늘 멤버: ${names} 기반 추천`;
+      const youngest = getYoungestAge();
+      const ageNote = youngest ? ` · 🎂 ${youngest}세+ 적합 게임` : '';
+      document.getElementById('r-members').textContent = `오늘 멤버: ${names}${ageNote}`;
     } else {
       document.getElementById('r-members').textContent = '';
     }
