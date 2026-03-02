@@ -255,6 +255,13 @@
       transition:all .15s;
     }
     .cmi-row-del:hover { background:#ff446622; }
+    .cmi-row-soldout {
+      background:transparent; border:1px solid #ff8800; border-radius:8px;
+      padding:4px 8px; font-size:11px; color:#ff8800; cursor:pointer;
+      font-family:'Nunito',sans-serif; font-weight:700; transition:all .15s;
+    }
+    .cmi-row-soldout:hover { background:#ff880022; }
+    .cmi-row-soldout.on { background:#ff880033; border-color:#ff4444; color:#ff4444; }
     .cmi-add-row { display:flex; gap:8px; }
     .cmi-add-emoji { width:52px; background:#0b0b1a; border:1px solid #444; border-radius:8px; padding:8px; color:#ddd; font-size:16px; text-align:center; outline:none; }
     .cmi-add-label { flex:1; background:#0b0b1a; border:1px solid #444; border-radius:8px; padding:8px 12px; color:#ddd; font-family:'Nunito',sans-serif; font-size:13px; outline:none; }
@@ -296,6 +303,13 @@
     .call-item:active { transform:scale(.94); }
     .call-item { position:relative; }
     .call-item.has-qty { border-color:#ffd700; background:#ffd70022; color:#ffd700; }
+    .call-item.soldout { opacity:.35; pointer-events:none; position:relative; }
+    .call-item.soldout::after {
+      content:'품절'; position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%) rotate(-18deg);
+      background:#ff4466cc; color:#fff; font-size:13px; font-weight:900;
+      padding:3px 14px; border-radius:6px; pointer-events:none;
+    }
     .call-item-emoji { font-size:36px; display:block; margin-bottom:8px; }
     .ci-qty-badge {
       position:absolute; top:-7px; right:-7px;
@@ -1159,8 +1173,9 @@
       const items = hasEtcInDB ? _callItems : [..._callItems, ETC_ITEM];
       grid.innerHTML = items.map(item => {
         const qty = _cart[item.id] ? _cart[item.id].qty : 0;
+        const sold = item.is_soldout;
         return `
-          <div class="call-item${qty > 0 ? ' has-qty' : ''}" onclick="tapCallItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
+          <div class="call-item${qty > 0 ? ' has-qty' : ''}${sold ? ' soldout' : ''}" onclick="tapCallItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
             ${qty > 0 ? `<div class="ci-qty-badge">${qty}</div>` : ''}
             <span class="call-item-emoji">${item.emoji || '📦'}</span>
             ${item.label}
@@ -1400,7 +1415,10 @@
       list.innerHTML = items.map(item => `
         <div class="cmi-row${item.is_active ? '' : ' cmi-row-inactive'}">
           <span class="cmi-row-emoji">${item.emoji||'📦'}</span>
-          <span class="cmi-row-label">${escH(item.label)}</span>
+          <span class="cmi-row-label">${escH(item.label)}${item.is_soldout ? ' <span style="color:#ff4444;font-size:11px;">(품절)</span>' : ''}</span>
+          <button class="cmi-row-soldout${item.is_soldout ? ' on' : ''}" onclick="toggleSoldout(${item.id},${!item.is_soldout})">
+            ${item.is_soldout ? '품절해제' : '품절'}
+          </button>
           <button class="cmi-row-toggle" onclick="toggleCmiItem(${item.id},${!item.is_active})">
             ${item.is_active ? '숨기기' : '표시'}
           </button>
@@ -1426,6 +1444,13 @@
     async function toggleCmiItem(id, is_active) {
       const db = getDB();
       if (db) await db.from('call_menu').update({ is_active }).eq('id', id);
+      await loadCallMenu();
+      await renderSettingsCMI();
+    }
+
+    async function toggleSoldout(id, is_soldout) {
+      const db = getDB();
+      if (db) await db.from('call_menu').update({ is_soldout }).eq('id', id);
       await loadCallMenu();
       await renderSettingsCMI();
     }
