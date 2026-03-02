@@ -601,20 +601,20 @@
     <div class="subtitle">PIXEL BASE &nbsp;<span class="blink">_</span></div>
 
     <!-- 보드게임 추천 -->
-    <a href="./recommend.html" class="card card-rec">
+    <div class="card card-rec" onclick="openSub('./recommend.html')" style="cursor:pointer;">
       <div class="badge badge-wip">🎲 추천받기</div>
       <div class="card-icon">🎲</div>
       <div class="card-title">보드게임 추천</div>
       <div class="card-desc">인원수·난이도·분위기로<br>딱 맞는 게임을 골라드려요!</div>
-    </a>
+    </div>
 
     <!-- 보유 게임 목록 -->
-    <a href="./gbhq.html" class="card card-info">
+    <div class="card card-info" onclick="openSub('./gbhq.html')" style="cursor:pointer;">
       <div class="badge badge-blue">🎲 보유게임</div>
       <div class="card-icon">📋</div>
       <div class="card-title">보유게임 정보</div>
       <div class="card-desc">보드게임 & 맨손게임 전체 목록<br>규칙 · 인원수 · 난이도 확인</div>
-    </a>
+    </div>
 
     <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
   </div>
@@ -1611,51 +1611,41 @@
   </div>
 
   <script>
-    /* 서브 페이지 iframe 네비게이션 */
+    /* 서브 페이지 iframe 네비게이션 — 전역 함수 */
+    function openSub(href) {
+      var wrap  = document.getElementById('gb-subpage-wrap');
+      var frame = document.getElementById('gb-subpage-frame');
+      frame.src = href;
+      wrap.style.display = 'block';
+      document.getElementById('main').style.display = 'none';
+      var fab = document.getElementById('visitor-fab');
+      var tra = document.getElementById('top-right-area');
+      if (fab) fab.style.display = 'none';
+      if (tra) tra.style.display = 'none';
+    }
+
+    function closeSub() {
+      document.getElementById('gb-subpage-wrap').style.display = 'none';
+      document.getElementById('gb-subpage-frame').src = '';
+      document.getElementById('main').style.display = 'block';
+      var fab = document.getElementById('visitor-fab');
+      var tra = document.getElementById('top-right-area');
+      if (fab) fab.style.display = 'block';
+      if (tra) tra.style.display = 'flex';
+      if (location.search.includes('sub=')) history.replaceState(null, '', location.pathname);
+    }
+
+    // 서브 페이지에서 메시지 수신
+    window.addEventListener('message', function (e) {
+      if (e.data === 'gb-close-iframe') closeSub();
+      if (e.data && e.data.type === 'gb-navigate') openSub(e.data.href);
+    });
+
+    // ?sub= 파라미터로 직접 접속 시 자동 iframe 로드
     (function () {
-      const SUB_PAGES = ['recommend.html', 'gbhq.html', 'review.html', 'pixel-base.html'];
-
-      function openSub(href) {
-        const wrap  = document.getElementById('gb-subpage-wrap');
-        const frame = document.getElementById('gb-subpage-frame');
-        frame.src = href;
-        wrap.style.display = 'block';
-        document.getElementById('main').style.display = 'none';
-        if (document.getElementById('visitor-fab')) document.getElementById('visitor-fab').style.display = 'none';
-        if (document.getElementById('top-right-area')) document.getElementById('top-right-area').style.display = 'none';
-      }
-
-      function closeSub() {
-        document.getElementById('gb-subpage-wrap').style.display = 'none';
-        document.getElementById('gb-subpage-frame').src = '';
-        document.getElementById('main').style.display = 'block';
-        if (document.getElementById('visitor-fab')) document.getElementById('visitor-fab').style.display = 'block';
-        if (document.getElementById('top-right-area')) document.getElementById('top-right-area').style.display = 'flex';
-        // URL에서 ?sub= 제거
-        if (location.search.includes('sub=')) history.replaceState(null, '', location.pathname);
-      }
-
-      // 링크 클릭 인터셉트
-      document.addEventListener('click', function (e) {
-        const a = e.target.closest('a');
-        if (!a) return;
-        const href = a.getAttribute('href') || '';
-        if (SUB_PAGES.some(p => href.includes(p))) {
-          e.preventDefault();
-          openSub(href);
-        }
-      });
-
-      // 서브 페이지에서 메시지 수신
-      window.addEventListener('message', function (e) {
-        if (e.data === 'gb-close-iframe') closeSub();
-        if (e.data && e.data.type === 'gb-navigate') openSub(e.data.href);
-      });
-
-      // ?sub= 파라미터로 직접 접속 시 자동 iframe 로드
       var subParam = new URLSearchParams(location.search).get('sub');
+      var SUB_PAGES = ['recommend.html', 'gbhq.html', 'review.html', 'pixel-base.html'];
       if (subParam && SUB_PAGES.some(function(p) { return subParam.includes(p); })) {
-        // DOM 준비 후 로드
         function onReady() { openSub('./' + subParam); }
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady);
         else setTimeout(onReady, 0);
