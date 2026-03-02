@@ -615,7 +615,7 @@
 
   <!-- 헤더 -->
   <header>
-    <button class="back-btn" onclick="location.href='./index.html'">🏠 홈</button>
+    <button class="back-btn" onclick="typeof goHome==='function'?goHome():location.href='./index.html'">🏠 홈</button>
     <div class="header-title">보드게임 정보</div>
     <button class="add-btn" id="add-btn">+ 게임 추가</button>
   </header>
@@ -783,6 +783,7 @@
        ══════════════════════════════════════ */
     async function init() {
       if (sessionStorage.getItem('gb_auth') !== '1') {
+        if (typeof goHome === 'function') { goHome(); return; }
         location.href = './index.html'; return;
       }
       await load();

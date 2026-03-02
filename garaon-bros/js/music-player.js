@@ -18,6 +18,17 @@
 
   /* ── iframe 내부에서는 음악 플레이어 초기화 스킵 ── */
   if (window.self !== window.top) {
+    // 전역 헬퍼: 서브 페이지 JS에서 goHome() 호출 가능
+    window.goHome = function () {
+      window.parent.postMessage('gb-close-iframe', '*');
+    };
+    window.goPage = function (href) {
+      if (SUB_PAGES.some(function (p) { return href.includes(p); }))
+        window.parent.postMessage({ type: 'gb-navigate', href: href }, '*');
+      else
+        window.parent.postMessage('gb-close-iframe', '*');
+    };
+
     function ready(fn) {
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
       else fn();
@@ -25,7 +36,7 @@
     ready(function () {
       document.body.style.paddingTop = '0px';
 
-      // <a> 클릭 인터셉트: 홈 → 닫기, 서브 페이지 → 부모에서 iframe 전환
+      // <a> 클릭 인터셉트
       document.addEventListener('click', function (e) {
         const a = e.target.closest('a[href]');
         if (!a) return;
@@ -37,7 +48,7 @@
         }
       });
 
-      // onclick="location.href=..." 인터셉트
+      // onclick 속성 인터셉트
       document.querySelectorAll('[onclick]').forEach(function (el) {
         const oc = el.getAttribute('onclick') || '';
         if (oc.includes('index.html')) {
