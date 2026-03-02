@@ -364,13 +364,10 @@
     .vh-header {
       background:var(--card2); border:1px solid #333; border-radius:12px;
       padding:12px 16px; font-weight:700; font-size:14px; color:#aaa;
-      cursor:pointer; display:flex; justify-content:space-between;
-      align-items:center; transition:color .15s;
+      display:flex; justify-content:space-between; align-items:center;
     }
-    .vh-header:hover { color:#fff; }
-    .vh-toggle-icon { font-size:11px; transition:transform .2s; }
     .vh-body { display:block; padding:8px 0; }
-    .vh-filter-bar { display:flex; gap:6px; margin-bottom:12px; }
+    .vh-filter-bar { display:flex; gap:6px; margin-bottom:16px; }
     .vh-filter-btn {
       padding:6px 14px; border-radius:16px; border:1px solid #333;
       background:var(--card2); color:#888; font-family:'Nunito',sans-serif;
@@ -378,22 +375,42 @@
     }
     .vh-filter-btn:hover { border-color:#555; color:#ccc; }
     .vh-filter-btn.on { border-color:var(--g); color:var(--g); background:#00ff8811; }
-    .vh-date-group { margin-bottom:16px; }
-    .vh-date-label {
-      font-size:12px; color:var(--g); font-weight:700;
-      padding:4px 0 8px; border-bottom:1px solid #1e1e38; margin-bottom:8px;
+
+    /* 카드형 방문 기록 */
+    .vh-card {
+      background:var(--card); border:1px solid #2a2a50; border-radius:16px;
+      padding:16px; margin-bottom:14px; transition:border-color .15s;
     }
-    .vh-visitor-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px; }
-    .vh-chip {
-      background:#1e1e38; border:1px solid #333; border-radius:20px;
-      padding:4px 12px; font-size:12px; font-weight:700; color:#ccc;
-      display:flex; align-items:center; gap:6px;
+    .vh-card:hover { border-color:#444; }
+    .vh-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .vh-card-date { font-size:15px; font-weight:900; color:var(--g); }
+    .vh-card-count { font-size:12px; color:#666; font-weight:700; }
+    .vh-card-faces { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+    .vh-face {
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+      min-width:52px;
     }
-    .vh-chip-emoji { font-size:16px; }
-    .vh-time { font-size:11px; color:#555; margin-top:2px; }
-    .vh-snack-row {
-      font-size:11px; color:#888; padding:2px 0 0 2px;
+    .vh-face-avatar {
+      width:44px; height:44px; border-radius:50%; background:var(--card2);
+      border:2px solid #333; display:flex; align-items:center; justify-content:center;
+      font-size:24px; overflow:hidden;
     }
+    .vh-face-avatar img { width:100%; height:100%; object-fit:cover; }
+    .vh-face-name { font-size:10px; color:#aaa; font-weight:700; text-align:center; max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .vh-face-dur { font-size:9px; color:var(--g); font-weight:700; }
+    .vh-card-snacks { font-size:11px; color:#777; line-height:1.6; padding:8px 0 0; border-top:1px solid #1e1e38; }
+    .vh-card-photos { display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding-bottom:4px; }
+    .vh-card-photo {
+      width:80px; height:80px; border-radius:10px; object-fit:cover;
+      border:2px solid #333; flex-shrink:0; cursor:pointer; transition:border-color .15s;
+    }
+    .vh-card-photo:hover { border-color:var(--p); }
+    .vh-card-photo-btn {
+      width:80px; height:80px; border-radius:10px; border:2px dashed #444;
+      background:var(--card2); display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; cursor:pointer; font-size:24px; color:#555; transition:all .15s;
+    }
+    .vh-card-photo-btn:hover { border-color:var(--p); color:var(--p); }
 
     /* ── 아바타 선택 그리드 ── */
     .avatar-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(54px,1fr)); gap:8px; }
@@ -1631,12 +1648,10 @@
     async function loadVisitHistory() {
       const db = getDB();
       if (!db) return;
-      // 필터 버튼 활성화
       document.querySelectorAll('.vh-filter-btn').forEach(b => {
         b.classList.toggle('on', Number(b.dataset.months) === _vhMonths);
       });
       try {
-        // 기간 필터 계산
         let dateFilter = null;
         if (_vhMonths > 0) {
           const d = new Date();
@@ -1644,29 +1659,38 @@
           dateFilter = d.toISOString().slice(0, 10);
         }
 
-        // 방문 기록 + 방문자 정보
-        let logsQuery = db
-          .from('visit_logs')
-          .select('*, visitors(id,name,nickname,avatar)')
+        // 방문 기록 + 방문자 정보 (photo_url 포함)
+        let logsQuery = db.from('visit_logs')
+          .select('*, visitors(id,name,nickname,avatar,photo_url)')
           .order('visit_date', { ascending: false });
         if (dateFilter) logsQuery = logsQuery.gte('visit_date', dateFilter);
         else logsQuery = logsQuery.limit(500);
         const { data: logs } = await logsQuery;
 
         // 호출 기록
-        let callsQuery = db
-          .from('call_history')
-          .select('*')
+        let callsQuery = db.from('call_history').select('*')
           .order('called_at', { ascending: false });
         if (dateFilter) callsQuery = callsQuery.gte('visit_date', dateFilter);
         else callsQuery = callsQuery.limit(500);
         const { data: calls } = await callsQuery;
+
+        // 단체사진
+        let photosQuery = db.from('visit_photos').select('*')
+          .order('created_at', { ascending: true });
+        if (dateFilter) photosQuery = photosQuery.gte('visit_date', dateFilter);
+        const { data: photos } = await photosQuery;
 
         const callsByDate = {};
         (calls || []).forEach(c => {
           const d = (c.visit_date || (c.called_at||'').slice(0,10));
           if (!callsByDate[d]) callsByDate[d] = [];
           callsByDate[d].push(c);
+        });
+
+        const photosByDate = {};
+        (photos || []).forEach(p => {
+          if (!photosByDate[p.visit_date]) photosByDate[p.visit_date] = [];
+          photosByDate[p.visit_date].push(p);
         });
 
         const grouped = {};
@@ -1678,35 +1702,61 @@
 
         const body = document.getElementById('visit-history-body');
         if (!Object.keys(grouped).length) {
-          body.innerHTML = '<div style="color:#555;font-size:13px;padding:12px;text-align:center;">방문 기록이 없어요</div>';
+          body.innerHTML = '<div style="color:#555;font-size:13px;padding:16px;text-align:center;">방문 기록이 없어요</div>';
           return;
         }
 
+        const weekday = ['일','월','화','수','목','금','토'];
         body.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
           const visitors = grouped[date];
-          const dayCallsRaw = callsByDate[date] || [];
-          const snackSummary = dayCallsRaw.length
-            ? dayCallsRaw.map(c=>`${c.item_emoji||'📦'}${c.item_label||''}${c.qty>1?' x'+c.qty:''}${c.note?' ('+c.note+')':''}`).join(' · ')
+          const dayCalls = callsByDate[date] || [];
+          const dayPhotos = photosByDate[date] || [];
+          const dt = new Date(date + 'T00:00:00');
+          const dayLabel = `${dt.getMonth()+1}/${dt.getDate()} (${weekday[dt.getDay()]})`;
+
+          const snacks = dayCalls.length
+            ? dayCalls.map(c=>`${c.item_emoji||'📦'} ${c.item_label||''}${c.qty>1?' x'+c.qty:''}${c.note?' ('+c.note+')':''}`).join(' · ')
             : null;
-          return `
-            <div class="vh-date-group">
-              <div class="vh-date-label">📅 ${date}</div>
-              <div class="vh-visitor-chips">
-                ${visitors.map(l => {
-                  const v = l.visitors || {};
-                  const nick = v.nickname || v.name || '?';
-                  const fullName = v.nickname && v.name ? `${v.nickname}(${v.name})` : nick;
-                  const dur = l.duration_min ? `${Math.floor(l.duration_min/60)}h${l.duration_min%60}m` : null;
-                  return `<div class="vh-chip">
-                    <span class="vh-chip-emoji">${v.avatar||'🧑'}</span>
-                    <span>${esc(fullName)}${dur?` <span style="color:#00ff88;font-size:10px;">${dur}</span>`:''}</span>
-                  </div>`;
-                }).join('')}
-              </div>
-              ${snackSummary ? `<div class="vh-snack-row">🍿 ${snackSummary}</div>` : ''}
-            </div>`;
+
+          const photoCount = dayPhotos.length;
+          const canAddPhoto = photoCount < 5;
+
+          return `<div class="vh-card">
+            <div class="vh-card-top">
+              <div class="vh-card-date">📅 ${dayLabel}</div>
+              <div class="vh-card-count">👥 ${visitors.length}명</div>
+            </div>
+            <div class="vh-card-faces">
+              ${visitors.map(l => {
+                const v = l.visitors || {};
+                const nick = v.nickname || v.name || '?';
+                const dur = l.duration_min ? `${Math.floor(l.duration_min/60)}h${String(l.duration_min%60).padStart(2,'0')}m` : '';
+                const faceHtml = v.photo_url
+                  ? `<img src="${esc(v.photo_url)}">`
+                  : (v.avatar || '🧑');
+                return `<div class="vh-face">
+                  <div class="vh-face-avatar">${faceHtml}</div>
+                  <div class="vh-face-name">${esc(nick)}</div>
+                  ${dur ? `<div class="vh-face-dur">${dur}</div>` : ''}
+                </div>`;
+              }).join('')}
+            </div>
+            ${snacks ? `<div class="vh-card-snacks">🍿 ${snacks}</div>` : ''}
+            <div class="vh-card-photos">
+              ${dayPhotos.map(p => `<img class="vh-card-photo" src="${esc(p.photo_url)}" onclick="window.open('${esc(p.photo_url)}','_blank')">`).join('')}
+              ${canAddPhoto ? `<div class="vh-card-photo-btn" onclick="addVisitPhoto('${date}')" title="단체사진 추가">📷</div>` : ''}
+            </div>
+          </div>`;
         }).join('');
       } catch(e) { console.warn('방문기록 로드 실패:', e); }
+    }
+
+    function addVisitPhoto(date) {
+      openQrUpload(async (imageUrl) => {
+        await getDB().from('visit_photos').insert({ visit_date: date, photo_url: imageUrl });
+        showToast('📸 단체사진 추가 완료!');
+        loadVisitHistory();
+      }, '단체사진 촬영 (' + date + ')');
     }
 
     async function deleteVisitor(id) {
