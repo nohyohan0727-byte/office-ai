@@ -17,7 +17,7 @@
     body { background: var(--bg); font-family: 'Nunito', sans-serif; color: var(--text); min-height: 100vh; }
 
     .header { background: rgba(11,11,26,0.95); border-bottom: 1px solid var(--border); padding: 0 1.25rem; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 44px; z-index: 100; backdrop-filter: blur(10px); }
-    .header-title { font-family: 'Press Start 2P', monospace; font-size: 0.55rem; color: var(--b); }
+    .header-title { font-family: 'Press Start 2P', monospace; font-size: 0.75rem; color: var(--b); }
     .header-back { color: var(--dim); font-size: 0.85rem; text-decoration: none; border: 1px solid var(--border); padding: 0.3rem 0.75rem; border-radius: 6px; transition: all 0.2s; }
     .header-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
 
@@ -29,7 +29,7 @@
     @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
     /* 홈 */
-    .home-title { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: var(--y); text-align: center; line-height: 2.2; margin-bottom: 2rem; padding-top: 1rem; }
+    .home-title { font-family: 'Press Start 2P', monospace; font-size: 0.9rem; color: var(--y); text-align: center; line-height: 2.2; margin-bottom: 2rem; padding-top: 1rem; }
     .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .choice-card { background: var(--card); border: 2px solid var(--border); border-radius: 18px; padding: 2rem 1.25rem; text-align: center; cursor: pointer; transition: all 0.22s; }
     .choice-card.board:hover { border-color: var(--pp); box-shadow: 0 0 20px #cc44ff33; transform: translateY(-3px); }
@@ -38,18 +38,18 @@
     .choice-title { font-weight: 900; font-size: 1.05rem; margin-bottom: 0.35rem; }
     .choice-card.board .choice-title { color: var(--pp); }
     .choice-card.hand  .choice-title { color: var(--b); }
-    .choice-desc { font-size: 0.8rem; color: var(--dim); line-height: 1.5; }
+    .choice-desc { font-size: 0.95rem; color: var(--dim); line-height: 1.5; }
 
     /* 멤버 선택 */
-    .member-title { font-family: 'Press Start 2P', monospace; font-size: 0.65rem; color: var(--g); text-align: center; line-height: 2.2; margin-bottom: 1.5rem; padding-top: 0.5rem; }
+    .member-title { font-family: 'Press Start 2P', monospace; font-size: 0.85rem; color: var(--g); text-align: center; line-height: 2.2; margin-bottom: 1.5rem; padding-top: 0.5rem; }
     .member-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
     .member-card { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 1rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.18s; }
     .member-card:hover { border-color: rgba(255,255,255,0.2); }
     .member-card.on { border-color: var(--g); background: rgba(0,255,136,0.07); box-shadow: 0 0 12px rgba(0,255,136,0.2); }
     .mc-avatar { font-size: 2rem; margin-bottom: 0.4rem; display: block; }
     .mc-name { font-weight: 900; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mc-age { font-size: 0.72rem; color: var(--dim); margin-top: 0.15rem; }
-    .mc-check { font-size: 0.7rem; color: var(--g); min-height: 1rem; margin-top: 0.25rem; }
+    .mc-age { font-size: 0.85rem; color: var(--dim); margin-top: 0.15rem; }
+    .mc-check { font-size: 0.85rem; color: var(--g); min-height: 1rem; margin-top: 0.25rem; }
     .member-loading { text-align: center; color: var(--dim); padding: 2rem; font-size: 0.85rem; }
 
     /* 필터 */
@@ -57,16 +57,16 @@
     .filter-title span { color: var(--pp); }
     .filter-title.blue span { color: var(--b); }
     .filter-group { margin-bottom: 1.5rem; }
-    .filter-label { font-size: 0.83rem; color: var(--dim); font-weight: 700; margin-bottom: 0.6rem; display: block; }
+    .filter-label { font-size: 0.95rem; color: var(--dim); font-weight: 700; margin-bottom: 0.6rem; display: block; }
     .pills { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-    .pill { -webkit-appearance: none; appearance: none; background: var(--card2); border: 1px solid var(--border); border-radius: 50px; padding: 0.4rem 0.95rem; font-size: 0.83rem; cursor: pointer; transition: all 0.18s; user-select: none; font-family: inherit; }
+    .pill { -webkit-appearance: none; appearance: none; background: var(--card2); border: 1px solid var(--border); border-radius: 50px; padding: 0.4rem 0.95rem; font-size: 0.95rem; cursor: pointer; transition: all 0.18s; user-select: none; font-family: inherit; }
     .pill:hover { border-color: rgba(255,255,255,0.22); }
     .pill.on { background: var(--pp); color: #000; border-color: var(--pp); font-weight: 800; }
     .pill.on.blue { background: var(--b); border-color: var(--b); }
 
     /* 오늘 멤버 표시 칩 */
     .today-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
-    .today-chip { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 20px; padding: 0.25rem 0.65rem; font-size: 0.78rem; color: var(--g); }
+    .today-chip { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 20px; padding: 0.25rem 0.65rem; font-size: 0.9rem; color: var(--g); }
 
     /* 버튼 */
     .btn-row { display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap; }
@@ -82,24 +82,24 @@
     /* 결과 */
     .result-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem; }
     .result-title { font-weight: 900; font-size: 1.1rem; }
-    .result-count { font-size: 0.82rem; color: var(--dim); }
-    .result-members { font-size: 0.78rem; color: var(--g); width: 100%; }
+    .result-count { font-size: 0.95rem; color: var(--dim); }
+    .result-members { font-size: 0.9rem; color: var(--g); width: 100%; }
 
     .game-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.15rem 1.35rem; margin-bottom: 0.85rem; cursor: pointer; transition: all 0.2s; }
     .game-card:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
     .game-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; }
     .game-name { font-weight: 900; font-size: 1rem; }
-    .game-name-en { font-size: 0.75rem; color: var(--dim); margin-top: 0.1rem; }
-    .game-score { color: var(--y); font-size: 0.85rem; white-space: nowrap; flex-shrink: 0; text-align: right; }
-    .game-score small { display: block; font-size: 0.7rem; color: var(--dim); }
+    .game-name-en { font-size: 0.88rem; color: var(--dim); margin-top: 0.1rem; }
+    .game-score { color: var(--y); font-size: 0.95rem; white-space: nowrap; flex-shrink: 0; text-align: right; }
+    .game-score small { display: block; font-size: 0.82rem; color: var(--dim); }
     .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.65rem; }
-    .tag { background: var(--card2); border-radius: 50px; padding: 0.18rem 0.55rem; font-size: 0.73rem; color: var(--dim); }
+    .tag { background: var(--card2); border-radius: 50px; padding: 0.22rem 0.6rem; font-size: 0.85rem; color: var(--dim); }
     .tag.purple { background: rgba(204,68,255,0.12); color: var(--pp); }
     .tag.blue   { background: rgba(0,212,255,0.12);  color: var(--b); }
     .tag.green  { background: rgba(0,255,136,0.12);  color: var(--g); }
     .tag.yellow { background: rgba(255,215,0,0.12);  color: var(--y); }
     .tag.red    { background: rgba(255,68,102,0.12); color: #ff4466; }
-    .game-desc { font-size: 0.83rem; color: var(--dim); margin-top: 0.6rem; line-height: 1.5; }
+    .game-desc { font-size: 0.95rem; color: var(--dim); margin-top: 0.6rem; line-height: 1.5; }
 
     /* 모달 */
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 200; backdrop-filter: blur(5px); align-items: center; justify-content: center; padding: 1rem; }
@@ -107,10 +107,10 @@
     .modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 540px; max-height: 88vh; overflow-y: auto; padding: 1.65rem; position: relative; }
     .modal-x { position: absolute; top: 1rem; right: 1rem; background: var(--card2); border: none; border-radius: 50%; width: 30px; height: 30px; color: var(--dim); cursor: pointer; font-size: 1rem; }
     .modal-name { font-size: 1.25rem; font-weight: 900; margin-bottom: 0.2rem; }
-    .modal-en   { color: var(--dim); font-size: 0.82rem; margin-bottom: 1.1rem; }
+    .modal-en   { color: var(--dim); font-size: 0.95rem; margin-bottom: 1.1rem; }
     .modal-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.25rem; }
     .msec { margin-bottom: 1.1rem; }
-    .msec-title { font-size: 0.77rem; font-weight: 800; color: var(--pp); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.45rem; }
+    .msec-title { font-size: 0.9rem; font-weight: 800; color: var(--pp); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.45rem; }
     .msec-title.blue { color: var(--b); }
     .msec-title.green { color: var(--g); }
     .msec-body { font-size: 0.88rem; color: var(--dim); line-height: 1.7; white-space: pre-line; }
@@ -119,7 +119,7 @@
 
     /* 후기 미리보기 (모달 내) */
     .review-preview { border-top: 1px solid var(--border); margin-top: 1rem; padding-top: 1rem; }
-    .rp-item { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; font-size: 0.82rem; }
+    .rp-item { display: flex; gap: 0.5rem; margin-bottom: 0.6rem; font-size: 0.95rem; }
     .rp-star { color: var(--y); flex-shrink:0; }
     .rp-text { color: var(--dim); }
 

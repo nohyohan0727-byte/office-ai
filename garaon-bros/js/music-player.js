@@ -74,16 +74,16 @@
   transition: box-shadow .25s;
 }
 #gb-music-bar.playing { box-shadow: 0 0 18px #00d4ff33; }
-#gb-music-bar .m-icon { font-size: 18px; flex-shrink: 0; }
+#gb-music-bar .m-icon { font-size: 22px; flex-shrink: 0; }
 #gb-music-bar .m-name {
-  flex: 1; font-size: 12px; font-weight: 700; color: #ccc;
+  flex: 1; font-size: 15px; font-weight: 700; color: #ccc;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #gb-music-bar .m-name.active { color: #00ff88; }
 #gb-music-bar .m-btn {
   background: transparent; border: 1px solid #333; color: #aaa;
-  width: 32px; height: 32px; border-radius: 8px;
-  font-size: 15px; cursor: pointer; display: flex;
+  width: 36px; height: 36px; border-radius: 8px;
+  font-size: 18px; cursor: pointer; display: flex;
   align-items: center; justify-content: center; flex-shrink: 0;
   transition: all .15s;
 }
@@ -179,23 +179,33 @@
 .mp-loading { text-align: center; color: #555; padding: 16px; font-size: 13px; }
 .mp-error   { text-align: center; color: #ff4466; padding: 10px; font-size: 12px; }
 
-/* ── Spotify iframe 영역 ── */
+/* ── Spotify iframe 영역 (배너: 항상 보임) ── */
 #gb-music-embed {
   position: fixed; top: 44px; left: 0; right: 0; z-index: 198;
   max-height: 0; overflow: hidden; transition: max-height .3s ease;
   background: #0b0b1a;
 }
-#gb-music-embed.open { max-height: 380px; }
-#gb-music-embed.open.compact { max-height: 160px; }
+#gb-music-embed.open { max-height: 160px; }
+#gb-music-embed.open.expanded { max-height: 380px; }
 #gb-music-embed iframe {
   width: 100%; height: 152px; border: none; border-radius: 0;
 }
-#gb-music-embed.open:not(.compact) iframe {
+#gb-music-embed.open.expanded iframe {
   height: 352px;
 }
 
 /* ── body 여백 ── */
 body { padding-top: 44px !important; }
+body.music-banner { padding-top: 200px !important; }
+body.music-banner-expanded { padding-top: 420px !important; }
+
+/* ── 고정/sticky 요소 동적 조정 ── */
+body.music-banner #visitor-fab,
+body.music-banner .top-right-area { top: 210px !important; }
+body.music-banner-expanded #visitor-fab,
+body.music-banner-expanded .top-right-area { top: 430px !important; }
+body.music-banner .header { top: 200px !important; }
+body.music-banner-expanded .header { top: 420px !important; }
 `;
     document.head.appendChild(s);
   }
@@ -208,8 +218,8 @@ body { padding-top: 44px !important; }
     bar.innerHTML = `
       <span class="m-icon">🎵</span>
       <span class="m-name" id="m-track-name">음악을 선택하세요</span>
-      <button class="m-btn" id="m-btn-embed" title="미니 플레이어">🎵</button>
-      <button class="m-btn" id="m-btn-list" title="재생목록 보기">📋</button>
+      <button class="m-btn" id="m-btn-embed" title="배너 보기/숨기기">🎵</button>
+      <button class="m-btn" id="m-btn-list" title="재생목록 보기/숨기기">📋</button>
       <button class="m-btn" id="m-btn-stop" title="정지">⏹</button>
       <button class="m-btn" id="m-btn-panel" title="검색/선택">🔍</button>
     `;
@@ -258,39 +268,55 @@ body { padding-top: 44px !important; }
       const panel = document.getElementById('gb-music-panel');
       const embedEl = document.getElementById('gb-music-embed');
       panel.classList.toggle('open', panelOpen);
-      if (panelOpen) embedEl.classList.remove('open');
+      if (panelOpen) {
+        embedEl.classList.remove('open', 'expanded');
+        document.getElementById('m-btn-embed').classList.remove('on');
+        document.getElementById('m-btn-list').classList.remove('on');
+        updateBodyBanner();
+      }
       document.getElementById('m-btn-panel').classList.toggle('on', panelOpen);
     };
 
-    // embed 미니 토글 (compact — 작은 플레이어)
+    // 🎵 embed 배너 토글 (작은 플레이어)
     document.getElementById('m-btn-embed').onclick = () => {
       if (!iframePlaying) return;
       const embedEl = document.getElementById('gb-music-embed');
       const panel = document.getElementById('gb-music-panel');
-      // 이미 compact으로 열려 있으면 닫기
-      if (embedEl.classList.contains('open') && embedEl.classList.contains('compact')) {
-        embedEl.classList.remove('open', 'compact');
+      if (embedEl.classList.contains('open') && !embedEl.classList.contains('expanded')) {
+        // 배너 닫기
+        embedEl.classList.remove('open');
+        updateBodyBanner();
+        document.getElementById('m-btn-embed').classList.remove('on');
         return;
       }
-      embedEl.classList.add('open', 'compact');
+      embedEl.classList.add('open');
+      embedEl.classList.remove('expanded');
       panel.classList.remove('open'); panelOpen = false;
       document.getElementById('m-btn-panel').classList.remove('on');
+      document.getElementById('m-btn-embed').classList.add('on');
+      document.getElementById('m-btn-list').classList.remove('on');
+      updateBodyBanner();
     };
 
-    // 재생목록 보기 (풀 사이즈 embed — 트랙리스트 포함)
+    // 📋 재생목록 보기 (확장 — 트랙리스트 포함)
     document.getElementById('m-btn-list').onclick = () => {
       if (!iframePlaying) return;
       const embedEl = document.getElementById('gb-music-embed');
       const panel = document.getElementById('gb-music-panel');
-      // 이미 풀 사이즈로 열려 있으면 닫기
-      if (embedEl.classList.contains('open') && !embedEl.classList.contains('compact')) {
-        embedEl.classList.remove('open');
+      if (embedEl.classList.contains('open') && embedEl.classList.contains('expanded')) {
+        // 확장 해제 → 배너 모드로
+        embedEl.classList.remove('expanded');
+        document.getElementById('m-btn-list').classList.remove('on');
+        document.getElementById('m-btn-embed').classList.add('on');
+        updateBodyBanner();
         return;
       }
-      embedEl.classList.add('open');
-      embedEl.classList.remove('compact');
+      embedEl.classList.add('open', 'expanded');
       panel.classList.remove('open'); panelOpen = false;
       document.getElementById('m-btn-panel').classList.remove('on');
+      document.getElementById('m-btn-list').classList.add('on');
+      document.getElementById('m-btn-embed').classList.add('on');
+      updateBodyBanner();
     };
 
     // 정지
@@ -299,6 +325,15 @@ body { padding-top: 44px !important; }
     // 검색
     document.getElementById('mp-search-go').onclick = doSearch;
     document.getElementById('mp-search-q').onkeydown = e => { if (e.key === 'Enter') doSearch(); };
+  }
+
+  /* ── body 배너 클래스 동기화 ── */
+  function updateBodyBanner () {
+    const embedEl = document.getElementById('gb-music-embed');
+    const isOpen = embedEl.classList.contains('open');
+    const isExpanded = embedEl.classList.contains('expanded');
+    document.body.classList.toggle('music-banner', isOpen && !isExpanded);
+    document.body.classList.toggle('music-banner-expanded', isOpen && isExpanded);
   }
 
   /* ── 재생 ── */
@@ -320,15 +355,19 @@ body { padding-top: 44px !important; }
     embedEl.innerHTML = `<iframe src="${embedUrl(uri || id, type)}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
     if (autoShow) {
       embedEl.classList.add('open');
-      // 곡은 compact, 앨범/플레이리스트는 풀 사이즈(재생목록 보이게)
+      // 곡은 배너만, 앨범/플레이리스트는 확장(재생목록 보이게)
       if (isTrack) {
-        embedEl.classList.add('compact');
+        embedEl.classList.remove('expanded');
+        document.getElementById('m-btn-list').classList.remove('on');
       } else {
-        embedEl.classList.remove('compact');
+        embedEl.classList.add('expanded');
+        document.getElementById('m-btn-list').classList.add('on');
       }
+      document.getElementById('m-btn-embed').classList.add('on');
       document.getElementById('gb-music-panel').classList.remove('open');
       panelOpen = false;
       document.getElementById('m-btn-panel').classList.remove('on');
+      updateBodyBanner();
     }
 
     // 프리셋 active 표시
@@ -347,7 +386,10 @@ body { padding-top: 44px !important; }
     document.getElementById('gb-music-bar').classList.remove('playing');
     const embedEl = document.getElementById('gb-music-embed');
     embedEl.innerHTML = '';
-    embedEl.classList.remove('open');
+    embedEl.classList.remove('open', 'expanded');
+    document.getElementById('m-btn-embed').classList.remove('on');
+    document.getElementById('m-btn-list').classList.remove('on');
+    updateBodyBanner();
 
     document.querySelectorAll('.mp-preset').forEach(el => el.classList.remove('active'));
   }
