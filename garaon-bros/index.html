@@ -56,16 +56,20 @@
     }
     #checkout-btn:hover { filter:brightness(1.15); }
 
+    /* ── 카드 래퍼 (가로 배치) ── */
+    .card-row { display:flex; gap:16px; margin-bottom:16px; }
+    .card-row .card { flex:1; min-width:0; }
+
     /* ── 카드 ── */
     .card {
-      background:#151526; border-radius:20px; padding:28px 24px; margin-bottom:16px;
+      background:#151526; border-radius:20px; padding:28px 24px;
       border:2px solid transparent; text-decoration:none; display:block;
       transition:transform .2s, box-shadow .2s; animation:popIn .4s ease both;
     }
     .card:hover { transform:translateY(-6px); }
-    .card-icon  { font-size:56px; margin-bottom:12px; }
-    .card-title { font-weight:900; font-size:24px; margin-bottom:8px; }
-    .card-desc  { font-size:16px; color:#777; line-height:1.6; }
+    .card-icon  { font-size:42px; margin-bottom:10px; }
+    .card-title { font-weight:900; font-size:18px; margin-bottom:6px; }
+    .card-desc  { font-size:13px; color:#777; line-height:1.5; }
     .badge { display:inline-block; font-size:13px; padding:4px 12px; border-radius:20px; margin-bottom:10px; font-weight:700; }
 
     .card-rec  { border-color:#cc44ff; box-shadow:0 0 10px #cc44ff44; animation-delay:.1s; }
@@ -600,20 +604,22 @@
     <div class="title">가라온 브로즈</div>
     <div class="subtitle">PIXEL BASE &nbsp;<span class="blink">_</span></div>
 
-    <!-- 보드게임 추천 -->
-    <div class="card card-rec" onclick="openSub('./recommend.html')" style="cursor:pointer;">
-      <div class="badge badge-wip">🎲 추천받기</div>
-      <div class="card-icon">🎲</div>
-      <div class="card-title">보드게임 추천</div>
-      <div class="card-desc">인원수·난이도·분위기로<br>딱 맞는 게임을 골라드려요!</div>
-    </div>
+    <div class="card-row">
+      <!-- 보드게임 추천 -->
+      <div class="card card-rec" onclick="openSub('./recommend.html')" style="cursor:pointer;">
+        <div class="badge badge-wip">🎲 추천받기</div>
+        <div class="card-icon">🎲</div>
+        <div class="card-title">보드게임 추천</div>
+        <div class="card-desc">인원수·난이도·분위기로<br>딱 맞는 게임 추천!</div>
+      </div>
 
-    <!-- 보유 게임 목록 -->
-    <div class="card card-info" onclick="openSub('./gbhq.html')" style="cursor:pointer;">
-      <div class="badge badge-blue">🎲 보유게임</div>
-      <div class="card-icon">📋</div>
-      <div class="card-title">보유게임 정보</div>
-      <div class="card-desc">보드게임 & 맨손게임 전체 목록<br>규칙 · 인원수 · 난이도 확인</div>
+      <!-- 보유 게임 목록 -->
+      <div class="card card-info" onclick="openSub('./gbhq.html')" style="cursor:pointer;">
+        <div class="badge badge-blue">🎲 보유게임</div>
+        <div class="card-icon">📋</div>
+        <div class="card-title">보유게임 정보</div>
+        <div class="card-desc">전체 목록 · 규칙<br>인원수 · 난이도 확인</div>
+      </div>
     </div>
 
     <div class="footer">© 가라온 브로즈 PIXEL BASE</div>
