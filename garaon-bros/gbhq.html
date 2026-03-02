@@ -947,15 +947,13 @@
       document.getElementById('submit-btn').textContent  = game ? '수정 저장' : '+ 등록';
 
       document.getElementById('form-fields').innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button type="button" class="yt-trigger-btn" style="font-size:13px;padding:6px 14px;" onclick="testAIWebhook()">🤖 AI 연결확인</button>
+          <button type="button" class="yt-trigger-btn" style="font-size:13px;padding:6px 14px;" onclick="openYTSearch()">🎬 YouTube 검색</button>
+        </div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label" style="display:flex;justify-content:space-between;align-items:center;">
-              게임 이름 *
-              <span style="display:flex;gap:6px;align-items:center;">
-                <button type="button" class="yt-trigger-btn" style="font-size:10px;padding:3px 8px;" onclick="testAIWebhook()">🤖 AI 연결확인</button>
-                <button type="button" class="yt-trigger-btn" onclick="openYTSearch()">🎬 YouTube 검색</button>
-              </span>
-            </label>
+            <label class="form-label">게임 이름 *</label>
             <div class="ac-wrap">
               <input class="form-input" id="f-name" required value="${esc(game?.name||'')}"
                 placeholder="게임 이름 입력 (한국어/영어)..." autocomplete="off"
