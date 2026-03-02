@@ -1107,25 +1107,9 @@
         `${item.emoji || '📦'} ${item.label}${qty > 1 ? ' x' + qty : ''}`);
       if (customText) summaryParts.push(`✏️ ${customText}`);
       const summary = summaryParts.join(', ');
-      const n8nUrl  = localStorage.getItem('gb_n8n_webhook');
 
-      if (n8nUrl) {
-        try {
-          await fetch(n8nUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'call',
-              items: entries.map(({ item, qty }) => ({ emoji: item.emoji, label: item.label, qty })),
-              custom_text: customText || null,
-              summary,
-              message: `[가라온 브로즈] ${summary} 요청!`,
-              called_at: new Date().toISOString(),
-            }),
-          });
-        } catch(e) { console.warn('n8n 전송 실패:', e); }
-      }
-
+      // 1) DB 저장 (call_id를 받아서 텔레그램 메시지에 포함)
+      let callId = null;
       const db = getDB();
       if (db) {
         try {
@@ -1139,15 +1123,111 @@
               note: (item.label === '기타' || item.id === 'etc') ? customText || null : null,
             }));
           console.log('[호출] insert 데이터:', rows);
-          const result = await db.from('call_history').insert(rows);
+          const result = await db.from('call_history').insert(rows).select('id');
           console.log('[호출] DB 저장 결과:', result);
           if (result.error) console.error('[호출] DB 저장 오류:', result.error);
+          if (result.data?.[0]?.id) callId = result.data[0].id;
         } catch(e) { console.warn('call_history 저장 실패:', e); }
       }
+
+      // 2) 텔레그램 알림 전송
+      let tgMsgId = null;
+      try {
+        const now = new Date();
+        const timeStr = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' });
+        const tgText = `🔔 집주인 호출!\n\n${summary}\n\n⏰ ${timeStr}`;
+        const tgRes = await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: CONFIG.TELEGRAM_CHAT_ID,
+            text: tgText,
+            reply_markup: { inline_keyboard: [[
+              { text: '✅ 알겠어', callback_data: `ack_${callId || 0}` },
+              { text: '⏰ 5분만', callback_data: `wait_${callId || 0}` }
+            ]] }
+          }),
+        });
+        const tgData = await tgRes.json();
+        if (tgData.ok) tgMsgId = tgData.result.message_id;
+        console.log('[텔레그램] 전송 완료, message_id:', tgMsgId);
+      } catch(e) { console.warn('[텔레그램] 전송 실패:', e); }
 
       document.getElementById('call-overlay').classList.remove('open');
       btn.disabled = false;
       showToast(`✅ ${summary} — 전달 완료!`);
+
+      // 3) 텔레그램 답장 폴링 시작 (getUpdates로 callback_query 확인)
+      if (tgMsgId) pollTelegramReply(tgMsgId, callId);
+    }
+
+    // 텔레그램 답장 폴링 (getUpdates API 직접 호출)
+    let _replyPollTimer = null;
+    let _tgUpdateOffset = 0;
+    async function pollTelegramReply(msgId, callId) {
+      if (_replyPollTimer) clearInterval(_replyPollTimer);
+      let attempts = 0;
+      const maxAttempts = 60; // 5분간 (5초 간격)
+      const tgApi = `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}`;
+
+      _replyPollTimer = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) { clearInterval(_replyPollTimer); return; }
+        try {
+          const url = `${tgApi}/getUpdates?timeout=0&limit=10` +
+            (_tgUpdateOffset ? `&offset=${_tgUpdateOffset}` : '');
+          const res = await fetch(url);
+          const json = await res.json();
+          if (!json.ok || !json.result?.length) return;
+
+          for (const upd of json.result) {
+            _tgUpdateOffset = upd.update_id + 1;
+
+            // callback_query (인라인 버튼 클릭)
+            if (upd.callback_query) {
+              const cb = upd.callback_query;
+              const data = cb.data || '';
+              if (data.includes(`_${callId}`) || cb.message?.message_id === msgId) {
+                // answerCallbackQuery (버튼 로딩 제거)
+                fetch(`${tgApi}/answerCallbackQuery`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ callback_query_id: cb.id, text: '전달 완료!' })
+                });
+
+                const replyText = data.startsWith('ack') ? '✅ 알겠어! 곧 갈게' : '⏰ 5분만 기다려줘!';
+
+                // 텔레그램에 확인 메시지 보내기
+                fetch(`${tgApi}/sendMessage`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ chat_id: CONFIG.TELEGRAM_CHAT_ID, text: `💬 답장 전달 완료: ${replyText}` })
+                });
+
+                clearInterval(_replyPollTimer);
+                showReplyToast(replyText);
+                return;
+              }
+            }
+
+            // 일반 텍스트 답장 (reply to message)
+            if (upd.message?.reply_to_message?.message_id === msgId) {
+              clearInterval(_replyPollTimer);
+              showReplyToast(upd.message.text || '(답장)');
+              return;
+            }
+          }
+        } catch(e) { console.warn('[폴링] 오류:', e); }
+      }, 3000);
+    }
+
+    function showReplyToast(text) {
+      const toast = document.getElementById('call-toast');
+      toast.innerHTML = `<div style="font-size:13px;color:#aaa;">집주인 답장 💬</div><div style="font-size:18px;font-weight:700;margin-top:4px;">${escH(text)}</div>`;
+      toast.style.display = 'block';
+      toast.style.background = '#1a3a2a';
+      toast.style.border = '2px solid #00ff88';
+      setTimeout(() => { toast.style.display = 'none'; toast.style.background = ''; toast.style.border = ''; toast.innerHTML = ''; }, 10000);
     }
 
     function showToast(msg) {
