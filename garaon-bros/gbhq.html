@@ -365,9 +365,10 @@
       background:var(--card2); border:1px solid #333; border-radius:12px;
       padding:12px 16px; font-weight:700; font-size:14px; color:#aaa;
       display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:12px;
     }
     .vh-body { display:block; padding:8px 0; }
-    .vh-filter-bar { display:flex; gap:6px; margin-bottom:16px; }
+    .vh-filter-bar { display:flex; gap:6px; }
     .vh-filter-btn {
       padding:6px 14px; border-radius:16px; border:1px solid #333;
       background:var(--card2); color:#888; font-family:'Nunito',sans-serif;
@@ -375,6 +376,14 @@
     }
     .vh-filter-btn:hover { border-color:#555; color:#ccc; }
     .vh-filter-btn.on { border-color:var(--g); color:var(--g); background:#00ff8811; }
+    .vh-visitor-bar { display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+    .vh-visitor-btn {
+      padding:5px 12px; border-radius:16px; border:1px solid #333;
+      background:var(--card2); color:#888; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:12px; cursor:pointer; transition:all .15s;
+    }
+    .vh-visitor-btn:hover { border-color:#555; color:#ccc; }
+    .vh-visitor-btn.on { border-color:var(--b); color:var(--b); background:#00d4ff11; }
 
     /* 카드형 방문 기록 */
     .vh-card {
@@ -398,6 +407,8 @@
     .vh-face-avatar img { width:100%; height:100%; object-fit:cover; }
     .vh-face-name { font-size:10px; color:#aaa; font-weight:700; text-align:center; max-width:56px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .vh-face-dur { font-size:9px; color:var(--g); font-weight:700; }
+    .vh-dur-live { color:#ffd700; animation: livePulse 1.5s ease-in-out infinite; }
+    @keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.5} }
     .vh-card-snacks { font-size:11px; color:#777; line-height:1.6; padding:8px 0 0; border-top:1px solid #1e1e38; }
     .vh-card-photos { display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding-bottom:4px; }
     .vh-card-photo-wrap {
@@ -1236,19 +1247,12 @@
             return ytId
               ? `<div class="detail-section">
                    <div class="detail-label">🎬 YouTube</div>
-                   <a href="https://www.youtube.com/watch?v=${ytId}" target="_blank" rel="noopener"
-                      style="display:block;position:relative;border-radius:12px;overflow:hidden;background:#000;cursor:pointer;">
-                     <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg"
-                       style="width:100%;display:block;border-radius:12px;" loading="lazy" alt="">
-                     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-                       background:rgba(0,0,0,.35);">
-                       <div style="width:60px;height:42px;background:#ff0000;border-radius:10px;display:flex;
-                         align-items:center;justify-content:center;">
-                         <div style="width:0;height:0;border-left:18px solid #fff;border-top:11px solid transparent;
-                           border-bottom:11px solid transparent;margin-left:4px;"></div>
-                       </div>
-                     </div>
-                   </a>
+                   <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+                     <iframe src="https://www.youtube.com/embed/${ytId}" frameborder="0"
+                       allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"
+                       allowfullscreen
+                       style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;border-radius:12px;"></iframe>
+                   </div>
                  </div>`
               : `<div class="detail-section">
                    <a class="yt-link-btn" href="${esc(g.youtube_url)}" target="_blank" rel="noopener">▶ YouTube 영상 바로가기</a>
@@ -1291,11 +1295,11 @@
             유튜브에서 <strong style="color:#fff;">"${esc(query)} 보드게임 방법"</strong> 검색 결과를 열어드릴게요.<br>
             마음에 드는 영상의 URL을 복사해서 아래 YouTube URL 칸에 붙여넣으세요.
           </div>
-          <button onclick="window.open('${ytUrl}','_blank')"
-            style="background:#ff0000;color:#fff;border:none;border-radius:12px;padding:12px 28px;
-                   font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;">
+          <a href="${ytUrl}" target="_blank" rel="noopener"
+            style="display:inline-block;background:#ff0000;color:#fff;border:none;border-radius:12px;padding:12px 28px;
+                   font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;cursor:pointer;text-decoration:none;">
             ▶ YouTube에서 검색 열기
-          </button>
+          </a>
         </div>`;
     }
 
@@ -1307,7 +1311,7 @@
       const safeQ = encodeURIComponent(query + ' 보드게임');
       document.getElementById('yt-results').innerHTML =
         `<div style="font-size:11px;color:#555;margin-bottom:12px;text-align:right;">
-           <a style="color:#ff6666;cursor:pointer;" onclick="window.open('https://www.youtube.com/results?search_query=${safeQ}','_blank')">
+           <a href="https://www.youtube.com/results?search_query=${safeQ}" target="_blank" rel="noopener" style="color:#ff6666;cursor:pointer;text-decoration:none;">
              → 유튜브에서 더 보기
            </a>
          </div>` +
@@ -1324,7 +1328,7 @@
                 <div class="yt-desc">${esc(s.description||'')}</div>
                 <div class="yt-card-btns">
                   <button class="yt-select-btn" onclick="selectYTVideo('${vid}')">✓ URL 선택</button>
-                  <button class="yt-view-btn" onclick="window.open('https://www.youtube.com/watch?v=${vid}','_blank')">▶ 보기</button>
+                  <a class="yt-view-btn" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener" style="text-decoration:none;">▶ 보기</a>
                 </div>
               </div>
             </div>`;
@@ -1413,13 +1417,17 @@
           `).join('')}
         </div>
         <div class="visit-history-section">
-          <div class="vh-header" style="cursor:default;">📅 방문 기록</div>
-          <div class="vh-filter-bar" id="vh-filter-bar">
-            <button class="vh-filter-btn" data-months="3" onclick="filterVisitHistory(3)">3개월</button>
-            <button class="vh-filter-btn" data-months="6" onclick="filterVisitHistory(6)">6개월</button>
-            <button class="vh-filter-btn" data-months="12" onclick="filterVisitHistory(12)">1년</button>
-            <button class="vh-filter-btn" data-months="0" onclick="filterVisitHistory(0)">전체</button>
+          <div class="vh-header" style="cursor:default;">
+            <span>📅 방문 기록</span>
+            <div class="vh-filter-bar" id="vh-filter-bar">
+              <button class="vh-filter-btn" data-months="3" onclick="filterVisitHistory(3)">3개월</button>
+              <button class="vh-filter-btn" data-months="6" onclick="filterVisitHistory(6)">6개월</button>
+              <button class="vh-filter-btn" data-months="12" onclick="filterVisitHistory(12)">1년</button>
+              <button class="vh-filter-btn" data-months="0" onclick="filterVisitHistory(0)">전체</button>
+            </div>
           </div>
+          <div class="vh-visitor-bar" id="vh-visitor-bar"></div>
+          <div id="vh-visitor-summary" style="display:none;"></div>
           <div class="vh-body" id="visit-history-body">
             <div style="color:#555;font-size:13px;padding:16px;text-align:center;">로딩 중...</div>
           </div>
@@ -1655,11 +1663,20 @@
     }
 
     let _vhMonths = 3; // 기본 3개월
+    let _vhVisitorId = null; // null = 전체
 
     function filterVisitHistory(months) {
       _vhMonths = months;
       document.querySelectorAll('.vh-filter-btn').forEach(b => {
         b.classList.toggle('on', Number(b.dataset.months) === months);
+      });
+      loadVisitHistory();
+    }
+
+    function filterByVisitor(visitorId) {
+      _vhVisitorId = _vhVisitorId === visitorId ? null : visitorId;
+      document.querySelectorAll('.vh-visitor-btn').forEach(b => {
+        b.classList.toggle('on', b.dataset.vid === String(_vhVisitorId));
       });
       loadVisitHistory();
     }
@@ -1685,6 +1702,51 @@
         if (dateFilter) logsQuery = logsQuery.gte('visit_date', dateFilter);
         else logsQuery = logsQuery.limit(500);
         const { data: logs } = await logsQuery;
+
+        // 방문자 버튼 렌더링
+        const visitorMap = {};
+        (logs || []).forEach(l => {
+          const v = l.visitors || {};
+          const vid = String(l.visitor_id);
+          if (vid && !visitorMap[vid]) visitorMap[vid] = v.nickname || v.name || '?';
+        });
+        const vBar = document.getElementById('vh-visitor-bar');
+        if (vBar) {
+          const sorted = Object.entries(visitorMap).sort((a,b) => a[1].localeCompare(b[1]));
+          vBar.innerHTML = sorted.map(([vid, name]) =>
+            `<button class="vh-visitor-btn${_vhVisitorId===vid?' on':''}" data-vid="${vid}" onclick="filterByVisitor('${vid}')">${esc(name)}</button>`
+          ).join('');
+        }
+
+        // 방문자 필터 적용
+        const filteredLogs = _vhVisitorId
+          ? (logs || []).filter(l => String(l.visitor_id) === String(_vhVisitorId))
+          : (logs || []);
+
+        // 방문자 선택 시 합산 요약
+        const summaryEl = document.getElementById('vh-visitor-summary');
+        if (_vhVisitorId && summaryEl) {
+          const totalMin = filteredLogs.reduce((sum, l) => {
+            if (l.duration_min) return sum + l.duration_min;
+            if (l.check_in_at && !l.check_out_at) {
+              return sum + Math.floor((Date.now() - new Date(l.check_in_at).getTime()) / 60000);
+            }
+            return sum;
+          }, 0);
+          const visitCount = filteredLogs.length;
+          const h = Math.floor(totalMin / 60);
+          const m = totalMin % 60;
+          const timeStr = h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+          const name = visitorMap[_vhVisitorId] || '?';
+          summaryEl.style.display = 'block';
+          summaryEl.innerHTML = `<div style="background:var(--card);border:1px solid var(--b);border-radius:12px;padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:var(--b);font-weight:700;">📊 ${esc(name)}</span>
+            <span style="color:#aaa;font-size:13px;">${visitCount}회 방문 · 총 <strong style="color:var(--g);">${timeStr}</strong></span>
+          </div>`;
+        } else if (summaryEl) {
+          summaryEl.style.display = 'none';
+          summaryEl.innerHTML = '';
+        }
 
         // 호출 기록
         let callsQuery = db.from('call_history').select('*')
@@ -1713,7 +1775,7 @@
         });
 
         const grouped = {};
-        (logs || []).forEach(l => {
+        filteredLogs.forEach(l => {
           const d = l.visit_date;
           if (!grouped[d]) grouped[d] = [];
           grouped[d].push(l);
@@ -1749,14 +1811,22 @@
               ${visitors.map(l => {
                 const v = l.visitors || {};
                 const nick = v.nickname || v.name || '?';
-                const dur = l.duration_min ? `${Math.floor(l.duration_min/60)}h${String(l.duration_min%60).padStart(2,'0')}m` : '';
+                let dur = '';
+                let durClass = '';
+                if (l.check_out_at && l.duration_min) {
+                  dur = `${Math.floor(l.duration_min/60)}h${String(l.duration_min%60).padStart(2,'0')}m`;
+                } else if (l.check_in_at && !l.check_out_at) {
+                  const elapsed = Math.floor((Date.now() - new Date(l.check_in_at).getTime()) / 60000);
+                  dur = `${Math.floor(elapsed/60)}h${String(elapsed%60).padStart(2,'0')}m`;
+                  durClass = ' vh-dur-live';
+                }
                 const faceHtml = v.photo_url
                   ? `<img src="${esc(v.photo_url)}">`
                   : (v.avatar || '🧑');
                 return `<div class="vh-face">
                   <div class="vh-face-avatar">${faceHtml}</div>
                   <div class="vh-face-name">${esc(nick)}</div>
-                  ${dur ? `<div class="vh-face-dur">${dur}</div>` : ''}
+                  ${dur ? `<div class="vh-face-dur${durClass}">${dur}</div>` : ''}
                 </div>`;
               }).join('')}
             </div>

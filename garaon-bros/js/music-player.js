@@ -314,6 +314,12 @@ body.music-banner-expanded #gb-subpage-wrap { top: 420px !important; }
       </div>
       <div id="mp-search-results" class="mp-results"></div>
 
+      <div id="mp-spotify-login" style="display:none; background:#1DB95422; border:1.5px solid #1DB954; border-radius:12px; padding:12px 16px; margin-bottom:14px; text-align:center;">
+        <div style="font-size:13px; color:#1DB954; font-weight:700; margin-bottom:6px;">Spotify 로그인이 필요합니다</div>
+        <div style="font-size:11px; color:#999; margin-bottom:10px;">음악을 재생하려면 이 기기에서 Spotify에 로그인하세요</div>
+        <button id="mp-spotify-login-btn" style="background:#1DB954; color:#fff; border:none; border-radius:8px; padding:10px 24px; font-weight:900; font-size:13px; cursor:pointer;">Spotify 로그인</button>
+      </div>
+
       <div class="mp-section-title">🎲 추천 플레이리스트</div>
       <div class="mp-preset-grid" id="mp-preset-grid"></div>
     `;
@@ -400,6 +406,27 @@ body.music-banner-expanded #gb-subpage-wrap { top: 420px !important; }
     // 검색
     document.getElementById('mp-search-go').onclick = doSearch;
     document.getElementById('mp-search-q').onkeydown = e => { if (e.key === 'Enter') doSearch(); };
+
+    // Spotify 로그인 버튼
+    document.getElementById('mp-spotify-login-btn').onclick = () => {
+      window.open('https://accounts.spotify.com/login', '_blank');
+    };
+
+    // 패널 열 때 로그인 상태 체크 — embed가 재생 중이 아니면 로그인 안내 표시
+    checkSpotifyLogin();
+  }
+
+  /* ── Spotify 로그인 상태 확인 (embed 시도로 판단) ── */
+  function checkSpotifyLogin () {
+    const loginBox = document.getElementById('mp-spotify-login');
+    // embed 재생 시도가 없거나 실패 시 안내 표시
+    if (!iframePlaying) {
+      loginBox.style.display = 'block';
+    }
+  }
+  function hideSpotifyLogin () {
+    const loginBox = document.getElementById('mp-spotify-login');
+    if (loginBox) loginBox.style.display = 'none';
   }
 
   /* ── body 배너 클래스 동기화 ── */
@@ -420,6 +447,7 @@ body.music-banner-expanded #gb-subpage-wrap { top: 420px !important; }
     saveState();
 
     iframePlaying = true;
+    hideSpotifyLogin();
     document.getElementById('m-track-name').textContent = name || id;
     document.getElementById('m-track-name').classList.add('active');
     document.getElementById('gb-music-bar').classList.add('playing');
@@ -453,6 +481,7 @@ body.music-banner-expanded #gb-subpage-wrap { top: 420px !important; }
 
   function stopPlaying () {
     iframePlaying = false;
+    checkSpotifyLogin();
     state.currentId = null; state.currentName = null; state.currentUri = null;
     saveState();
 

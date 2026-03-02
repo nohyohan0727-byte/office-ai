@@ -234,6 +234,17 @@
       </div>
     </div>
 
+    <div class="filter-group">
+      <label class="filter-label">🎂 연령대</label>
+      <div class="pills" id="fp-bg-age">
+        <button class="pill" data-v="5" onclick="pick(this,'fp-bg-age')">5세+</button>
+        <button class="pill" data-v="7" onclick="pick(this,'fp-bg-age')">7세+</button>
+        <button class="pill" data-v="10" onclick="pick(this,'fp-bg-age')">10세+</button>
+        <button class="pill" data-v="13" onclick="pick(this,'fp-bg-age')">13세+</button>
+        <button class="pill" data-v="0" onclick="pick(this,'fp-bg-age')">상관없음</button>
+      </div>
+    </div>
+
     <div class="btn-row">
       <button class="btn btn-back" onclick="go('s1')">← 뒤로</button>
       <button class="btn btn-go" onclick="runBoard()">🎲 추천받기</button>
@@ -273,6 +284,17 @@
         <button class="pill" data-v="10" onclick="pick(this,'fp-hg-time')">10분 이내</button>
         <button class="pill" data-v="20" onclick="pick(this,'fp-hg-time')">20분 이내</button>
         <button class="pill" data-v="999" onclick="pick(this,'fp-hg-time')">상관없음</button>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">🎂 연령대</label>
+      <div class="pills" id="fp-hg-age">
+        <button class="pill" data-v="5" onclick="pick(this,'fp-hg-age')">5세+</button>
+        <button class="pill" data-v="7" onclick="pick(this,'fp-hg-age')">7세+</button>
+        <button class="pill" data-v="10" onclick="pick(this,'fp-hg-age')">10세+</button>
+        <button class="pill" data-v="13" onclick="pick(this,'fp-hg-age')">13세+</button>
+        <button class="pill" data-v="0" onclick="pick(this,'fp-hg-age')">상관없음</button>
       </div>
     </div>
 
@@ -526,7 +548,7 @@
 
   /* ── 추천 실행 ── */
   function filterAndSort(games, filters, type) {
-    const youngestAge = getYoungestAge();
+    const youngestAge = filters.ageMin || getYoungestAge();
     return games.filter(g => {
       if (type === 'board' && g.is_available === false) return false;
       if (filters.players) {
@@ -541,7 +563,7 @@
       if (filters.maxTime) {
         if ((g.play_time_min||0) > filters.maxTime) return false;
       }
-      // 연령대 필터: 최연소 멤버가 age_min 미만이면 제외
+      // 연령대 필터: 선택한 연령 또는 최연소 멤버가 age_min 미만이면 제외
       if (youngestAge && g.age_min && youngestAge < g.age_min) return false;
       return true;
     }).sort((a, b) => smartScore(b, type) - smartScore(a, type));
@@ -549,11 +571,13 @@
 
   function runBoard() {
     _mode = 'board';
+    const ageVal = getV('fp-bg-age');
     const filters = {
       players:    getV('fp-bg-players'),
       difficulty: getV('fp-bg-diff') || 5,
       maxTime:    getV('fp-bg-time') || 999,
       categories: getCats('fp-bg-cat'),
+      ageMin:     ageVal > 0 ? ageVal : null,
     };
     renderResults(filterAndSort(_allBoard, filters, 'board'), 'board');
     go('s-results');
@@ -561,10 +585,12 @@
 
   function runHand() {
     _mode = 'hand';
+    const ageVal = getV('fp-hg-age');
     const filters = {
       players:    getV('fp-hg-players'),
       maxTime:    getV('fp-hg-time') || 999,
       categories: getCats('fp-hg-cat'),
+      ageMin:     ageVal > 0 ? ageVal : null,
     };
     renderResults(filterAndSort(_allHand, filters, 'hand'), 'hand');
     go('s-results');
