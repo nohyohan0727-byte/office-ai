@@ -1064,16 +1064,18 @@
 
     async function getTodayCallCount(label) {
       const db = getDB();
-      if (!db) return 0;
+      if (!db) { console.warn('[고릴라] DB 없음'); return 0; }
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const { count } = await db.from('call_history')
+        const { count, error } = await db.from('call_history')
           .select('*', { count: 'exact', head: true })
           .eq('menu_label', label)
           .gte('called_at', today + 'T00:00:00')
           .lte('called_at', today + 'T23:59:59');
+        console.log('[고릴라] label:', label, 'today:', today, 'count:', count, 'error:', error);
+        if (error) { console.error('[고릴라] 조회 오류:', error); return 0; }
         return count || 0;
-      } catch(e) { return 0; }
+      } catch(e) { console.error('[고릴라] 예외:', e); return 0; }
     }
 
     function showGorilla(count, label) {
@@ -1125,16 +1127,18 @@
       if (db) {
         try {
           const vdate = new Date().toISOString().slice(0, 10);
-          await db.from('call_history').insert(
+          const result = await db.from('call_history').insert(
             entries.map(({ item, qty }) => ({
               menu_id:     item.id || null,
               menu_label:  item.label,
               menu_emoji:  item.emoji || '📦',
               qty,
               visit_date:  vdate,
+              called_at:   new Date().toISOString(),
               custom_text: (item.label === '기타' || item.id === 'etc') ? customText || null : null,
             }))
           );
+          console.log('[호출] DB 저장 결과:', result);
         } catch(e) { console.warn('call_history 저장 실패:', e); }
       }
 
