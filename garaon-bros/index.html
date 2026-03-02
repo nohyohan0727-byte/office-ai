@@ -1355,6 +1355,50 @@
       closeAddVisitorModal();
     }
   </script>
+  <!-- ══════════════════════════════
+       서브 페이지 iframe (음악 유지)
+       ══════════════════════════════ -->
+  <div id="gb-subpage-wrap" style="display:none;position:fixed;inset:0;z-index:90;background:#0b0b1a;">
+    <iframe id="gb-subpage-frame" style="width:100%;height:100%;border:none;padding-top:44px;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+  </div>
+
+  <script>
+    /* 서브 페이지 iframe 네비게이션 */
+    (function () {
+      const SUB_PAGES = ['recommend.html', 'gbhq.html', 'review.html', 'pixel-base.html'];
+
+      document.addEventListener('click', function (e) {
+        const a = e.target.closest('a');
+        if (!a) return;
+        const href = a.getAttribute('href') || '';
+        const isSubPage = SUB_PAGES.some(p => href.includes(p));
+        if (!isSubPage) return;
+
+        e.preventDefault();
+        const wrap  = document.getElementById('gb-subpage-wrap');
+        const frame = document.getElementById('gb-subpage-frame');
+        frame.src = href;
+        wrap.style.display = 'block';
+        // 메인 컨텐츠 숨기기
+        document.getElementById('main').style.display = 'none';
+        document.getElementById('visitor-fab').style.display = 'none';
+        document.getElementById('top-right-area').style.display = 'none';
+      });
+
+      // 서브 페이지에서 "홈으로" 메시지 수신
+      window.addEventListener('message', function (e) {
+        if (e.data === 'gb-close-iframe') {
+          const wrap = document.getElementById('gb-subpage-wrap');
+          wrap.style.display = 'none';
+          document.getElementById('gb-subpage-frame').src = '';
+          document.getElementById('main').style.display = 'block';
+          document.getElementById('visitor-fab').style.display = 'block';
+          document.getElementById('top-right-area').style.display = 'flex';
+        }
+      });
+    })();
+  </script>
+
   <script src="./js/music-player.js"></script>
 </body>
 </html>
