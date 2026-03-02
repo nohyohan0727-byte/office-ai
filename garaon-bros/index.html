@@ -978,14 +978,25 @@
       } catch(e) { console.warn('알림음 실패:', e); }
     }
 
+    let _ownerSoundTimer = null;
+
     function showOwnerMsg(text) {
       playNotificationSound();
+      // 확인할 때까지 3초마다 알림음 반복
+      if (_ownerSoundTimer) clearInterval(_ownerSoundTimer);
+      _ownerSoundTimer = setInterval(playNotificationSound, 3000);
       document.getElementById('owner-msg-text').textContent = text;
       document.getElementById('owner-msg-overlay').classList.add('open');
     }
 
     function closeOwnerMsg() {
+      if (_ownerSoundTimer) { clearInterval(_ownerSoundTimer); _ownerSoundTimer = null; }
       document.getElementById('owner-msg-overlay').classList.remove('open');
+      fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CONFIG.TELEGRAM_CHAT_ID, text: '✅ 아이들이 확인했어요!' })
+      }).catch(() => {});
     }
 
     /* ══════════════════════════════
