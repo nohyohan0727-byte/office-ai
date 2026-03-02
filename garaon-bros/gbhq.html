@@ -1896,16 +1896,17 @@
           'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(nameEn),
           { headers: { 'Accept': 'application/json' } }
         );
-        if (!res.ok) return;
+        if (!res.ok) { console.log('[Wiki] HTTP', res.status, nameEn); return; }
         const d = await res.json();
         const url = d.thumbnail?.source || d.originalimage?.source;
-        if (!url) return;
+        if (!url) { console.log('[Wiki] 이미지 없음:', nameEn); return; }
+        console.log('[Wiki] 이미지 발견:', url);
         const imgEl = document.getElementById('f-image');
-        if (imgEl && !imgEl.value) {   // 이미 값이 있으면 덮어쓰지 않음
+        if (imgEl) {
           imgEl.value = url;
           updateImgPreview(url);
         }
-      } catch(e) { /* 무시 */ }
+      } catch(e) { console.warn('[Wiki] 오류:', e); }
     }
 
     async function uploadGameImage(input) {
