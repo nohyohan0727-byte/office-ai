@@ -400,11 +400,22 @@
     .vh-face-dur { font-size:9px; color:var(--g); font-weight:700; }
     .vh-card-snacks { font-size:11px; color:#777; line-height:1.6; padding:8px 0 0; border-top:1px solid #1e1e38; }
     .vh-card-photos { display:flex; gap:8px; margin-top:10px; overflow-x:auto; padding-bottom:4px; }
+    .vh-card-photo-wrap {
+      position:relative; flex-shrink:0; width:80px; height:80px;
+    }
     .vh-card-photo {
       width:80px; height:80px; border-radius:10px; object-fit:cover;
-      border:2px solid #333; flex-shrink:0; cursor:pointer; transition:border-color .15s;
+      border:2px solid #333; cursor:pointer; transition:border-color .15s;
     }
     .vh-card-photo:hover { border-color:var(--p); }
+    .vh-card-photo-del {
+      position:absolute; top:-6px; right:-6px; width:22px; height:22px;
+      border-radius:50%; background:#ff4466; border:2px solid #151526;
+      color:#fff; font-size:12px; font-weight:900; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; transition:opacity .15s; line-height:1;
+    }
+    .vh-card-photo-wrap:hover .vh-card-photo-del { opacity:1; }
     .vh-card-photo-btn {
       width:80px; height:80px; border-radius:10px; border:2px dashed #444;
       background:var(--card2); display:flex; align-items:center; justify-content:center;
@@ -1743,7 +1754,10 @@
             </div>
             ${snacks ? `<div class="vh-card-snacks">🍿 ${snacks}</div>` : ''}
             <div class="vh-card-photos">
-              ${dayPhotos.map(p => `<img class="vh-card-photo" src="${esc(p.photo_url)}" onclick="window.open('${esc(p.photo_url)}','_blank')">`).join('')}
+              ${dayPhotos.map(p => `<div class="vh-card-photo-wrap">
+                <img class="vh-card-photo" src="${esc(p.photo_url)}" onclick="window.open('${esc(p.photo_url)}','_blank')">
+                <div class="vh-card-photo-del" onclick="deleteVisitPhoto('${p.id}')" title="삭제">✕</div>
+              </div>`).join('')}
               ${canAddPhoto ? `<div class="vh-card-photo-btn" onclick="addVisitPhoto('${date}')" title="단체사진 추가">📷</div>` : ''}
             </div>
           </div>`;
@@ -1757,6 +1771,14 @@
         showToast('📸 단체사진 추가 완료!');
         loadVisitHistory();
       }, '단체사진 촬영 (' + date + ')');
+    }
+
+    async function deleteVisitPhoto(id) {
+      if (!confirm('이 사진을 삭제할까요?')) return;
+      const { error } = await getDB().from('visit_photos').delete().eq('id', id);
+      if (error) { showToast('❌ 삭제 실패'); return; }
+      showToast('🗑️ 사진 삭제 완료');
+      loadVisitHistory();
     }
 
     async function deleteVisitor(id) {
