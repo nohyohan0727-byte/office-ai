@@ -36,6 +36,14 @@
     ready(function () {
       document.body.style.paddingTop = '0px';
 
+      // 음악 바 없으므로 sticky header top:44px → 0 보정
+      document.querySelectorAll('.header,[class*="header"]').forEach(function(el) {
+        var cs = getComputedStyle(el);
+        if ((cs.position === 'sticky' || cs.position === 'fixed') && el.style.top === '44px' || cs.top === '44px') {
+          el.style.top = '0px';
+        }
+      });
+
       // <a> 클릭 인터셉트
       document.addEventListener('click', function (e) {
         const a = e.target.closest('a[href]');

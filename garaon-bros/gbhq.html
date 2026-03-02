@@ -1236,12 +1236,19 @@
             return ytId
               ? `<div class="detail-section">
                    <div class="detail-label">🎬 YouTube</div>
-                   <div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;">
-                     <iframe src="https://www.youtube.com/embed/${ytId}"
-                       style="position:absolute;inset:0;width:100%;height:100%;border:none;"
-                       allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture"
-                       allowfullscreen loading="lazy"></iframe>
-                   </div>
+                   <a href="https://www.youtube.com/watch?v=${ytId}" target="_blank" rel="noopener"
+                      style="display:block;position:relative;border-radius:12px;overflow:hidden;background:#000;cursor:pointer;">
+                     <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg"
+                       style="width:100%;display:block;border-radius:12px;" loading="lazy" alt="">
+                     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                       background:rgba(0,0,0,.35);">
+                       <div style="width:60px;height:42px;background:#ff0000;border-radius:10px;display:flex;
+                         align-items:center;justify-content:center;">
+                         <div style="width:0;height:0;border-left:18px solid #fff;border-top:11px solid transparent;
+                           border-bottom:11px solid transparent;margin-left:4px;"></div>
+                       </div>
+                     </div>
+                   </a>
                  </div>`
               : `<div class="detail-section">
                    <a class="yt-link-btn" href="${esc(g.youtube_url)}" target="_blank" rel="noopener">▶ YouTube 영상 바로가기</a>
