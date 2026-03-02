@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const SUB_PAGES = ['recommend.html', 'gbhq.html', 'review.html', 'pixel-base.html'];
+  const SUB_PAGES = ['recommend.html', 'gbhq.html', 'review.html', 'pixel-base.html', 'game-tools.html'];
   const isSubPage = SUB_PAGES.some(p => location.pathname.includes(p));
 
   /* ── 서브 페이지 직접 접속 → index.html로 리다이렉트 (iframe 로드) ── */
@@ -38,7 +38,7 @@
 
       // iframe 내부에는 음악 바 없으므로 sticky/fixed top:44px → 0 보정
       var style = document.createElement('style');
-      style.textContent = '.header, [class*="header"] { top: 0px !important; }';
+      style.textContent = 'header, .header, [class*="header"] { top: 0px !important; }';
       document.head.appendChild(style);
 
       // <a> 클릭 인터셉트
@@ -50,6 +50,10 @@
           e.preventDefault(); window.parent.postMessage('gb-close-iframe', '*');
         } else if (SUB_PAGES.some(p => href.includes(p))) {
           e.preventDefault(); window.parent.postMessage({ type: 'gb-navigate', href: href }, '*');
+        } else if (a.target === '_blank' && href.startsWith('http') && !href.includes('spotify.com')) {
+          // 외부 링크(YouTube 등)는 부모 페이지 컨텍스트에서 열기 (sandbox 우회)
+          e.preventDefault();
+          try { window.top.open(href, '_blank'); } catch(ex) { window.open(href, '_blank'); }
         }
       });
 
@@ -275,6 +279,8 @@ body.music-banner-expanded #visitor-fab,
 body.music-banner-expanded .top-right-area { top: 430px !important; }
 body.music-banner .header { top: 200px !important; }
 body.music-banner-expanded .header { top: 420px !important; }
+body.music-banner #gb-subpage-wrap { top: 200px !important; }
+body.music-banner-expanded #gb-subpage-wrap { top: 420px !important; }
 `;
     document.head.appendChild(s);
   }

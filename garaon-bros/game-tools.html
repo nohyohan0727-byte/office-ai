@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🎯 게임 지원 — 가라온브로스</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0b0b1a; --card:#151526; --card2:#1e1e38;
+      --g:#00ff88; --p:#ff006e; --b:#00d4ff; --y:#ffd700; --pp:#cc44ff;
+      --text:#e8e8f0; --dim:#8888aa; --border:rgba(255,255,255,0.08);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh}
+
+    header{background:rgba(11,11,26,.95);border-bottom:1px solid var(--border);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:44px;z-index:100;backdrop-filter:blur(10px)}
+    .header-title{font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--y)}
+    .header-back{color:var(--dim);font-size:1.1rem;text-decoration:none;border:1px solid var(--border);padding:.4rem 1rem;border-radius:8px;transition:all .2s;cursor:pointer;font-weight:700}
+    .header-back:hover{color:var(--text);border-color:rgba(255,255,255,.2)}
+
+    .main{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{0%{transform:scale(.6);opacity:0}80%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+    @keyframes glow{0%,100%{text-shadow:0 0 10px var(--p),0 0 20px var(--p)}50%{text-shadow:0 0 20px var(--p),0 0 40px var(--p)}}
+
+    .section{display:none;animation:fadeIn .28s ease}
+    .section.active{display:block}
+
+    .grid-title{font-family:'Press Start 2P',monospace;font-size:1.3rem;color:var(--y);text-align:center;line-height:2.2;margin-bottom:1.5rem;padding-top:1rem}
+    .tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .tool-card{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:2rem 1.5rem;text-align:center;cursor:pointer;transition:all .22s}
+    .tool-card:hover{border-color:var(--y);box-shadow:0 0 20px #ffd70033;transform:translateY(-3px)}
+    .tool-card:active{transform:scale(.97)}
+    .tool-emoji{font-size:3.2rem;display:block;margin-bottom:.8rem}
+    .tool-name{font-weight:900;font-size:1.35rem;color:var(--y);margin-bottom:.4rem}
+    .tool-desc{font-size:1.1rem;color:var(--dim);line-height:1.4}
+
+    .sub-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;padding-top:.5rem}
+    .sub-back{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:.5rem 1rem;color:var(--dim);cursor:pointer;font-size:1.15rem;transition:all .2s}
+    .sub-back:hover{color:var(--text);border-color:rgba(255,255,255,.2)}
+    .sub-title{font-weight:900;font-size:1.5rem}
+
+    .cat-group{margin-bottom:1.25rem}
+    .cat-label{font-size:1.15rem;color:var(--dim);font-weight:700;margin-bottom:.6rem;display:block}
+    .pills{display:flex;flex-wrap:wrap;gap:.5rem}
+    .pill{-webkit-appearance:none;appearance:none;background:var(--card2);border:1px solid var(--border);border-radius:50px;padding:.55rem 1.15rem;font-size:1.1rem;cursor:pointer;transition:all .18s;user-select:none;font-family:inherit;color:var(--text)}
+    .pill:hover{border-color:rgba(255,255,255,.22)}
+    .pill.on{background:var(--y);color:#000;border-color:var(--y);font-weight:800}
+
+    .btn{display:inline-flex;align-items:center;gap:.35rem;padding:.85rem 2.2rem;border-radius:12px;border:none;cursor:pointer;font-size:1.15rem;font-weight:800;font-family:inherit;transition:all .2s}
+    .btn-gold{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#000}
+    .btn-gold:hover{filter:brightness(1.1);transform:translateY(-1px)}
+    .btn-gold:active{transform:scale(.97)}
+    .btn-green{background:var(--g);color:#000}
+    .btn-red{background:var(--p);color:#fff}
+    .btn-dim{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+    .btn-row{display:flex;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center}
+
+    .progress-text{text-align:center;color:var(--dim);font-size:1.1rem;margin-top:.5rem}
+
+    /* ══ 금지어 타이머 ══ */
+    .taboo-timer-display{font-family:'Press Start 2P',monospace;font-size:2rem;color:var(--y);margin:10px 0}
+    .taboo-timer-display.danger{color:var(--p);animation:glow .5s ease-in-out infinite}
+
+    /* ══ 골드 팝업 ══ */
+    .gt-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.85);align-items:center;justify-content:center;animation:fadeIn .3s ease}
+    .gt-overlay.open{display:flex}
+    .gt-box{background:linear-gradient(160deg,#1a0a30,#0d1e2e);border:3px solid var(--y);border-radius:24px;padding:32px 24px 28px;width:min(480px,92vw);text-align:center;animation:popIn .5s cubic-bezier(.34,1.56,.64,1) both;box-shadow:0 0 60px #ffd70044,0 0 120px #ffd70022;max-height:90vh;overflow-y:auto}
+    .gt-emoji{font-size:52px;margin-bottom:10px;animation:float 2s ease-in-out infinite}
+    .gt-label{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--y);margin-bottom:14px}
+    .gt-word{font-size:2.4rem;font-weight:900;color:#fff;padding:14px;background:#ffffff0a;border-radius:14px;border:1px solid #ffd70033;margin-bottom:16px;word-break:keep-all;line-height:1.4}
+    .gt-taboo-list{list-style:none;padding:0;margin-bottom:18px}
+    .gt-taboo-list li{font-size:1.3rem;color:var(--p);padding:5px 0;font-weight:700}
+    .gt-taboo-list li::before{content:'❌ '}
+    .gt-answer{display:none;font-size:1.9rem;font-weight:900;color:var(--g);padding:12px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);border-radius:12px;margin-bottom:14px}
+    .gt-chosung{font-size:3.4rem;font-weight:900;color:var(--y);letter-spacing:8px;padding:16px;margin-bottom:14px}
+
+    /* ══ 타이머 ══ */
+    .timer-wrap{display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding:2rem 0}
+    .timer-circle{position:relative;width:240px;height:240px;transition:width .3s,height .3s}
+    .timer-circle.big{width:300px;height:300px}
+    .timer-svg{width:100%;height:100%;transform:rotate(-90deg)}
+    .timer-bg{fill:none;stroke:var(--card2);stroke-width:10}
+    .timer-fg{fill:none;stroke:var(--y);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .3s}
+    .timer-fg.danger{stroke:var(--p)}
+    .timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.5rem;font-weight:900;color:var(--y);transition:font-size .3s}
+    .timer-num.danger{color:var(--p);font-size:5rem;animation:glow .8s ease-in-out infinite}
+
+    /* ══ 스피드/속담 퀴즈 전체화면 ══ */
+    .quiz-fullscreen{display:none;position:fixed;inset:0;z-index:600;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;touch-action:none}
+    .quiz-fullscreen.open{display:flex}
+    .quiz-timer{font-family:'Press Start 2P',monospace;font-size:2.5rem;color:var(--y);margin-bottom:1.5rem}
+    .quiz-timer.danger{color:var(--p);animation:glow .5s ease-in-out infinite}
+    .quiz-word{font-size:2.6rem;font-weight:900;color:#fff;text-align:center;padding:0 24px;word-break:keep-all;line-height:1.4;margin-bottom:1rem}
+    .quiz-score{font-size:1.5rem;color:var(--g);font-weight:900;margin-top:1rem}
+    .quiz-hint{position:absolute;bottom:60px;font-size:1.1rem;color:var(--dim);text-align:center;width:100%}
+    .quiz-result-overlay{display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.9);align-items:center;justify-content:center}
+    .quiz-result-overlay.open{display:flex}
+
+    /* ══ 5초준다 ══ */
+    .five-bar-wrap{width:100%;height:14px;background:var(--card2);border-radius:7px;overflow:hidden;margin:16px 0}
+    .five-bar{height:100%;background:linear-gradient(90deg,var(--y),var(--p));border-radius:7px;transition:width .1s linear}
+    .five-mission{font-size:1.9rem;font-weight:900;color:#fff;line-height:1.5;padding:16px;background:#ffffff0a;border-radius:14px;border:1px solid #ffd70033;margin-bottom:4px;word-break:keep-all}
+    .five-timer-num{font-family:'Press Start 2P',monospace;font-size:2.5rem;color:var(--y);margin:8px 0}
+    .five-success-btn{padding:1rem 3rem;border-radius:16px;border:3px solid var(--g);background:rgba(0,255,136,.15);color:var(--g);font-size:1.3rem;font-weight:900;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:8px}
+    .five-success-btn:hover{background:rgba(0,255,136,.3)}
+    .five-success-btn:active{transform:scale(.95)}
+    .five-score{font-size:1.2rem;color:var(--dim);margin-top:8px}
+
+    /* ══ 눈치 ══ */
+    .nunchi-status{text-align:center;padding:2rem 0}
+    .nunchi-elapsed{font-family:'Press Start 2P',monospace;font-size:4rem;color:var(--dim);margin:1.5rem 0}
+    .nunchi-elapsed.waiting{animation:pulse 1.5s ease-in-out infinite}
+    .nunchi-elapsed.fired{color:var(--p);font-size:5rem;animation:shake .5s ease}
+    .nunchi-msg{font-size:1.35rem;color:var(--dim);margin-bottom:1rem}
+    .nunchi-msg.go{font-size:2rem;font-weight:900;color:var(--y);animation:popIn .5s ease both}
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="header-title">🎯 게임 지원</span>
+  <a href="javascript:void(0)" class="header-back" onclick="headerBack()">← 뒤로</a>
+</header>
+
+<div class="main">
+
+  <!-- ══ 도구 선택 ══ -->
+  <div id="sec-home" class="section active">
+    <div class="grid-title">🎯 게임 지원 도구<br><span style="font-size:1rem;color:var(--dim)">맨손 게임 진행에 필요한 도구!</span></div>
+    <div class="tool-grid">
+      <div class="tool-card" onclick="openTool('taboo')">
+        <span class="tool-emoji">🚫</span>
+        <div class="tool-name">금지어</div>
+        <div class="tool-desc">금지어 카드를<br>자동 생성!</div>
+      </div>
+      <div class="tool-card" onclick="openTool('timer')">
+        <span class="tool-emoji">⏱️</span>
+        <div class="tool-name">타이머</div>
+        <div class="tool-desc">카운트다운<br>BGM 포함</div>
+      </div>
+      <div class="tool-card" onclick="openTool('chosung')">
+        <span class="tool-emoji">🔤</span>
+        <div class="tool-name">초성 퀴즈</div>
+        <div class="tool-desc">초성으로<br>단어 맞히기</div>
+      </div>
+      <div class="tool-card" onclick="openTool('speed')">
+        <span class="tool-emoji">⚡</span>
+        <div class="tool-name">스피드 퀴즈</div>
+        <div class="tool-desc">이마 대고<br>맞히기!</div>
+      </div>
+      <div class="tool-card" onclick="openTool('fivesec')">
+        <span class="tool-emoji">🖐️</span>
+        <div class="tool-name">5초 준다</div>
+        <div class="tool-desc">5초 안에<br>3가지 대답!</div>
+      </div>
+      <div class="tool-card" onclick="openTool('nunchi')">
+        <span class="tool-emoji">👀</span>
+        <div class="tool-name">눈치 게임</div>
+        <div class="tool-desc">언제 시작될지<br>몰라요!</div>
+      </div>
+      <div class="tool-card" onclick="openTool('proverb')">
+        <span class="tool-emoji">📜</span>
+        <div class="tool-name">속담 퀴즈</div>
+        <div class="tool-desc">속담을<br>맞혀보세요!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 1. 금지어 생성기 ══ -->
+  <div id="sec-taboo" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="goToolsHome()">←</button>
+      <span class="sub-title">🚫 금지어 생성기</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">카테고리</span>
+      <div class="pills" id="taboo-cats"></div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">문제 수</span>
+      <div class="pills" id="taboo-qty">
+        <button class="pill" data-n="5" onclick="pickTabooQty(this)">5문제</button>
+        <button class="pill on" data-n="10" onclick="pickTabooQty(this)">10문제</button>
+        <button class="pill" data-n="15" onclick="pickTabooQty(this)">15문제</button>
+        <button class="pill" data-n="0" onclick="pickTabooQty(this)">무제한</button>
+      </div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">제한 시간 (문제당)</span>
+      <div class="pills" id="taboo-time-opts">
+        <button class="pill on" data-sec="0" onclick="pickTabooTime(this)">없음</button>
+        <button class="pill" data-sec="30" onclick="pickTabooTime(this)">30초</button>
+        <button class="pill" data-sec="60" onclick="pickTabooTime(this)">60초</button>
+        <button class="pill" data-sec="90" onclick="pickTabooTime(this)">90초</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="drawTaboo()">🎴 금지어 뽑기</button>
+    </div>
+  </div>
+
+  <!-- ══ 2. 카운트다운 타이머 ══ -->
+  <div id="sec-timer" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="stopBGM();goToolsHome()">←</button>
+      <span class="sub-title">⏱️ 카운트다운 타이머</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">시간 선택</span>
+      <div class="pills" id="timer-opts">
+        <button class="pill on" data-sec="30" onclick="pickTime(this)">30초</button>
+        <button class="pill" data-sec="60" onclick="pickTime(this)">60초</button>
+        <button class="pill" data-sec="90" onclick="pickTime(this)">90초</button>
+        <button class="pill" data-sec="120" onclick="pickTime(this)">120초</button>
+      </div>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-circle" id="timer-circle">
+        <svg class="timer-svg" viewBox="0 0 240 240">
+          <circle class="timer-bg" cx="120" cy="120" r="105"/>
+          <circle class="timer-fg" id="timer-fg" cx="120" cy="120" r="105" stroke-dasharray="660" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-num" id="timer-num">30</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="timer-start-btn" onclick="toggleTimer()">▶ 시작</button>
+      <button class="btn btn-dim" onclick="resetTimer()">↻ 리셋</button>
+    </div>
+  </div>
+
+  <!-- ══ 3. 초성 퀴즈 ══ -->
+  <div id="sec-chosung" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="goToolsHome()">←</button>
+      <span class="sub-title">🔤 초성 퀴즈</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">주제</span>
+      <div class="pills" id="chosung-cats"></div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">문제 수</span>
+      <div class="pills" id="chosung-qty">
+        <button class="pill" data-n="5" onclick="pickChosungQty(this)">5문제</button>
+        <button class="pill on" data-n="10" onclick="pickChosungQty(this)">10문제</button>
+        <button class="pill" data-n="20" onclick="pickChosungQty(this)">20문제</button>
+        <button class="pill" data-n="0" onclick="pickChosungQty(this)">무제한</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="drawChosung()">📝 출제!</button>
+    </div>
+  </div>
+
+  <!-- ══ 4. 스피드 퀴즈 설정 ══ -->
+  <div id="sec-speed" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="goToolsHome()">←</button>
+      <span class="sub-title">⚡ 스피드 퀴즈</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">주제</span>
+      <div class="pills" id="speed-cats"></div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">제한 시간</span>
+      <div class="pills" id="speed-time-opts">
+        <button class="pill" data-sec="30" onclick="pickSpeedTime(this)">30초</button>
+        <button class="pill on" data-sec="60" onclick="pickSpeedTime(this)">60초</button>
+        <button class="pill" data-sec="90" onclick="pickSpeedTime(this)">90초</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="startQuiz('speed')">⚡ 시작!</button>
+    </div>
+  </div>
+
+  <!-- ══ 5. 5초 준다 ══ -->
+  <div id="sec-fivesec" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="goToolsHome()">←</button>
+      <span class="sub-title">🖐️ 5초 준다</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">카테고리</span>
+      <div class="pills" id="five-cats"></div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">시간</span>
+      <div class="pills" id="five-time-opts">
+        <button class="pill" data-sec="3" onclick="pickFiveTime(this)">3초</button>
+        <button class="pill on" data-sec="5" onclick="pickFiveTime(this)">5초</button>
+        <button class="pill" data-sec="10" onclick="pickFiveTime(this)">10초</button>
+      </div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">문제 수</span>
+      <div class="pills" id="five-qty-opts">
+        <button class="pill" data-n="5" onclick="pickFiveQty(this)">5문제</button>
+        <button class="pill on" data-n="10" onclick="pickFiveQty(this)">10문제</button>
+        <button class="pill" data-n="15" onclick="pickFiveQty(this)">15문제</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="startFiveSec()">🎲 시작!</button>
+    </div>
+  </div>
+
+  <!-- ══ 6. 눈치 게임 ══ -->
+  <div id="sec-nunchi" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="nunchiStop();goToolsHome()">←</button>
+      <span class="sub-title">👀 눈치 게임</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">대기 시간 (이 안에 랜덤 시작!)</span>
+      <div class="pills" id="nunchi-opts">
+        <button class="pill" data-min="1" onclick="pickNunchi(this)">1분</button>
+        <button class="pill" data-min="3" onclick="pickNunchi(this)">3분</button>
+        <button class="pill on" data-min="5" onclick="pickNunchi(this)">5분</button>
+        <button class="pill" data-min="10" onclick="pickNunchi(this)">10분</button>
+        <button class="pill" data-min="15" onclick="pickNunchi(this)">15분</button>
+      </div>
+    </div>
+    <div class="nunchi-status">
+      <div class="nunchi-msg" id="nunchi-msg">시작 버튼을 누르면 대기 시작!</div>
+      <div class="nunchi-elapsed" id="nunchi-elapsed">00:00</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="nunchi-start-btn" onclick="nunchiStart()">👀 시작</button>
+      <button class="btn btn-dim" onclick="nunchiStop()">⏹ 중지</button>
+    </div>
+  </div>
+
+  <!-- ══ 7. 속담 퀴즈 설정 ══ -->
+  <div id="sec-proverb" class="section">
+    <div class="sub-header">
+      <button class="sub-back" onclick="goToolsHome()">←</button>
+      <span class="sub-title">📜 속담 퀴즈</span>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">모드</span>
+      <div class="pills" id="proverb-mode">
+        <button class="pill on" data-m="blank" onclick="pickProverbMode(this)">📝 빈칸 맞추기</button>
+        <button class="pill" data-m="body" onclick="pickProverbMode(this)">🤸 몸으로 설명</button>
+      </div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">난이도</span>
+      <div class="pills" id="proverb-diff">
+        <button class="pill on" data-d="쉬운" onclick="pickProverbDiff(this)">쉬운</button>
+        <button class="pill" data-d="보통" onclick="pickProverbDiff(this)">보통</button>
+        <button class="pill" data-d="어려운" onclick="pickProverbDiff(this)">어려운</button>
+        <button class="pill" data-d="전체" onclick="pickProverbDiff(this)">전체</button>
+      </div>
+    </div>
+    <div class="cat-group">
+      <span class="cat-label">제한 시간</span>
+      <div class="pills" id="proverb-time-opts">
+        <button class="pill" data-sec="30" onclick="pickProverbTime(this)">30초</button>
+        <button class="pill on" data-sec="60" onclick="pickProverbTime(this)">60초</button>
+        <button class="pill" data-sec="90" onclick="pickProverbTime(this)">90초</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="startQuiz('proverb')">📜 시작!</button>
+    </div>
+  </div>
+
+</div><!-- .main -->
+
+<!-- ═══ 금지어 팝업 ═══ -->
+<div class="gt-overlay" id="taboo-overlay" onclick="if(event.target===this)closeTabooPopup()">
+  <div class="gt-box">
+    <div class="gt-emoji">🚫</div>
+    <div class="gt-label">금지어 게임</div>
+    <div class="gt-word" id="taboo-word"></div>
+    <ul class="gt-taboo-list" id="taboo-list"></ul>
+    <div class="taboo-timer-display" id="taboo-timer-display" style="display:none"></div>
+    <div class="progress-text" id="taboo-progress"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="drawTaboo()">다음 문제 →</button>
+      <button class="btn btn-dim" onclick="closeTabooPopup()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 초성 팝업 ═══ -->
+<div class="gt-overlay" id="chosung-overlay" onclick="if(event.target===this)closeChosungPopup()">
+  <div class="gt-box">
+    <div class="gt-emoji">🔤</div>
+    <div class="gt-label">초성 퀴즈</div>
+    <div class="gt-chosung" id="chosung-display"></div>
+    <div class="gt-answer" id="chosung-answer"></div>
+    <div class="progress-text" id="chosung-progress"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="chosung-reveal-btn" onclick="revealChosung()">👀 정답 보기</button>
+      <button class="btn btn-gold" onclick="drawChosung()">다음 문제 →</button>
+      <button class="btn btn-dim" onclick="closeChosungPopup()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 스피드 퀴즈 전체화면 ═══ -->
+<div class="quiz-fullscreen" id="speed-screen">
+  <div class="quiz-timer" id="speed-timer-display">60</div>
+  <div class="quiz-word" id="speed-word-display"></div>
+  <div class="quiz-score" id="speed-score-display">✅ 0점</div>
+  <div class="quiz-hint">탭 = 정답 &nbsp;|&nbsp; 아래로 스와이프 = 패스</div>
+</div>
+
+<!-- ═══ 스피드 퀴즈 결과 ═══ -->
+<div class="quiz-result-overlay" id="speed-result" onclick="if(event.target===this)closeQuizResult('speed')">
+  <div class="gt-box">
+    <div class="gt-emoji">⚡</div>
+    <div class="gt-label">스피드 퀴즈 결과</div>
+    <div class="gt-word" id="speed-result-text"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="closeQuizResult('speed');startQuiz('speed')">다시 하기</button>
+      <button class="btn btn-dim" onclick="closeQuizResult('speed')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 속담 퀴즈 전체화면 ═══ -->
+<div class="quiz-fullscreen" id="proverb-screen">
+  <div class="quiz-timer" id="proverb-timer-display">60</div>
+  <div class="quiz-word" id="proverb-word-display" style="font-size:2.2rem"></div>
+  <div class="quiz-score" id="proverb-score-display">✅ 0점</div>
+  <div class="quiz-hint" id="proverb-hint">탭 = 정답 &nbsp;|&nbsp; 아래로 스와이프 = 패스</div>
+</div>
+
+<!-- ═══ 속담 퀴즈 결과 ═══ -->
+<div class="quiz-result-overlay" id="proverb-result" onclick="if(event.target===this)closeQuizResult('proverb')">
+  <div class="gt-box">
+    <div class="gt-emoji">📜</div>
+    <div class="gt-label">속담 퀴즈 결과</div>
+    <div class="gt-word" id="proverb-result-text"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="closeQuizResult('proverb');startQuiz('proverb')">다시 하기</button>
+      <button class="btn btn-dim" onclick="closeQuizResult('proverb')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 눈치 게임 알림 ═══ -->
+<div class="gt-overlay" id="nunchi-overlay">
+  <div class="gt-box">
+    <div class="gt-emoji" style="font-size:72px">🚨</div>
+    <div class="gt-label">눈치 게임</div>
+    <div class="gt-word" id="nunchi-popup-text" style="color:var(--y);font-size:2.8rem">시작!</div>
+    <div style="font-size:1.1rem;color:var(--dim);margin-bottom:16px" id="nunchi-popup-sub"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="closeNunchiPopup()">확인! 👍</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5초 준다 팝업 ═══ -->
+<div class="gt-overlay" id="fivesec-overlay">
+  <div class="gt-box">
+    <div class="gt-emoji">🖐️</div>
+    <div class="gt-label" id="five-label">5초 준다!</div>
+    <div class="five-mission" id="five-mission"></div>
+    <div class="five-timer-num" id="five-timer-num">5</div>
+    <div class="five-bar-wrap"><div class="five-bar" id="five-bar" style="width:100%"></div></div>
+    <button class="five-success-btn" id="five-success-btn" onclick="fiveSuccess()" style="display:none">🎉 성공!</button>
+    <div class="five-score" id="five-score-text"></div>
+    <div class="btn-row" id="five-result-row" style="display:none">
+      <button class="btn btn-gold" onclick="nextFiveRound()">다음 문제 →</button>
+      <button class="btn btn-dim" onclick="closeFiveSecPopup()">종료</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5초 준다 최종 결과 ═══ -->
+<div class="gt-overlay" id="fivesec-final" onclick="if(event.target===this)closeFiveSecFinal()">
+  <div class="gt-box">
+    <div class="gt-emoji">🏆</div>
+    <div class="gt-label">최종 결과</div>
+    <div class="gt-word" id="five-final-text"></div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="closeFiveSecFinal();startFiveSec()">다시 하기</button>
+      <button class="btn btn-dim" onclick="closeFiveSecFinal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   WORD DATA
+   ═══════════════════════════════════════════ */
+const TABOO_WORDS = {
+  음식: [
+    {word:'떡볶이',taboo:['떡','매운','분식','고추장']},
+    {word:'김치찌개',taboo:['김치','찌개','돼지고기','빨간']},
+    {word:'비빔밥',taboo:['비비다','밥','고추장','나물']},
+    {word:'치킨',taboo:['닭','튀김','배달','양념']},
+    {word:'피자',taboo:['이탈리아','치즈','도우','토핑']},
+    {word:'라면',taboo:['면','끓이다','봉지','스프']},
+    {word:'김밥',taboo:['김','밥','말다','단무지']},
+    {word:'삼겹살',taboo:['돼지','고기','구이','쌈']},
+    {word:'초밥',taboo:['일본','생선','밥','와사비']},
+    {word:'햄버거',taboo:['빵','패티','감자튀김','세트']},
+    {word:'짜장면',taboo:['중국','면','검은','소스']},
+    {word:'냉면',taboo:['차가운','면','여름','육수']},
+    {word:'불고기',taboo:['불','고기','소','달다']},
+    {word:'만두',taboo:['빚다','속','찌다','튀기다']},
+    {word:'파전',taboo:['파','전','부치다','막걸리']},
+    {word:'떡국',taboo:['떡','국','설날','가래']},
+    {word:'갈비',taboo:['뼈','고기','양념','구이']},
+    {word:'아이스크림',taboo:['차가운','달다','콘','녹다']},
+    {word:'붕어빵',taboo:['붕어','빵','팥','겨울']},
+    {word:'호떡',taboo:['겨울','달다','설탕','씨앗']},
+    {word:'잡채',taboo:['당면','채소','볶다','명절']},
+    {word:'돈까스',taboo:['일본','튀김','돼지','소스']},
+    {word:'족발',taboo:['돼지','발','삶다','야식']},
+    {word:'곱창',taboo:['내장','구이','볶다','소']},
+    {word:'순대',taboo:['돼지','내장','당면','떡볶이']},
+  ],
+  동물: [
+    {word:'고양이',taboo:['야옹','쥐','발','반려']},
+    {word:'강아지',taboo:['멍멍','꼬리','산책','반려']},
+    {word:'코끼리',taboo:['코','크다','아프리카','상아']},
+    {word:'기린',taboo:['목','길다','아프리카','점']},
+    {word:'펭귄',taboo:['남극','새','날다','얼음']},
+    {word:'사자',taboo:['백수의왕','갈기','아프리카','포효']},
+    {word:'토끼',taboo:['귀','당근','깡충','달']},
+    {word:'곰',taboo:['겨울잠','꿀','크다','숲']},
+    {word:'돌고래',taboo:['바다','똑똑','점프','수족관']},
+    {word:'원숭이',taboo:['바나나','나무','꼬리','사람']},
+    {word:'호랑이',taboo:['줄무늬','산','무섭다','고양이']},
+    {word:'하마',taboo:['입','크다','물','아프리카']},
+    {word:'다람쥐',taboo:['도토리','나무','꼬리','가을']},
+    {word:'앵무새',taboo:['말하다','새','색','열대']},
+    {word:'거북이',taboo:['등껍질','느리다','바다','오래']},
+    {word:'상어',taboo:['바다','이빨','무섭다','지느러미']},
+    {word:'판다',taboo:['중국','대나무','흑백','곰']},
+    {word:'카멜레온',taboo:['색','변하다','도마뱀','혀']},
+    {word:'해파리',taboo:['바다','투명','쏘다','촉수']},
+    {word:'수달',taboo:['물','귀엽다','조개','손']},
+  ],
+  연예인: [
+    {word:'BTS',taboo:['방탄','아미','한국','아이돌']},
+    {word:'블랙핑크',taboo:['YG','제니','4명','걸그룹']},
+    {word:'아이유',taboo:['이지은','가수','좋은날','연기']},
+    {word:'뉴진스',taboo:['하입보이','민지','걸그룹','하니']},
+    {word:'임영웅',taboo:['트로트','미스터트롯','영웅시대','가수']},
+    {word:'손흥민',taboo:['축구','토트넘','영국','골']},
+    {word:'유재석',taboo:['MC','무한도전','메뚜기','국민']},
+    {word:'송강',taboo:['배우','나빌레라','키','드라마']},
+    {word:'수지',taboo:['미스에이','배우','국민첫사랑','드라마']},
+    {word:'싸이',taboo:['강남스타일','말춤','YG','월드스타']},
+    {word:'공유',taboo:['도깨비','커피','배우','쓸쓸하고']},
+    {word:'김연아',taboo:['피겨','스케이트','올림픽','금메달']},
+    {word:'박보영',taboo:['배우','오나의귀신님','작다','웃다']},
+    {word:'차은우',taboo:['아스트로','얼굴','배우','잘생긴']},
+    {word:'전지현',taboo:['별에서온그대','여배우','엽기','사랑']},
+  ],
+  영화: [
+    {word:'기생충',taboo:['봉준호','아카데미','반지하','부자']},
+    {word:'어벤져스',taboo:['마블','히어로','아이언맨','타노스']},
+    {word:'겨울왕국',taboo:['엘사','렛잇고','올라프','디즈니']},
+    {word:'해리포터',taboo:['마법','호그와트','지팡이','볼드모트']},
+    {word:'타이타닉',taboo:['배','침몰','잭','로즈']},
+    {word:'인셉션',taboo:['꿈','레오나르도','층','회전']},
+    {word:'알라딘',taboo:['램프','요정','공주','디즈니']},
+    {word:'스파이더맨',taboo:['거미','마블','히어로','줄']},
+    {word:'극한직업',taboo:['치킨','형사','마약','코미디']},
+    {word:'부산행',taboo:['좀비','기차','공유','한국']},
+    {word:'인터스텔라',taboo:['우주','놀란','블랙홀','시간']},
+    {word:'토이스토리',taboo:['장난감','우디','버즈','픽사']},
+    {word:'범죄도시',taboo:['마동석','형사','주먹','범인']},
+    {word:'라라랜드',taboo:['뮤지컬','별','재즈','LA']},
+    {word:'아바타',taboo:['파란','외계인','나비족','판도라']},
+  ],
+  일상: [
+    {word:'스마트폰',taboo:['전화','앱','화면','터치']},
+    {word:'학교',taboo:['공부','선생님','학생','교실']},
+    {word:'지하철',taboo:['역','전철','땅속','출퇴근']},
+    {word:'편의점',taboo:['24시간','과자','음료','삼각김밥']},
+    {word:'도서관',taboo:['책','조용','공부','빌리다']},
+    {word:'놀이공원',taboo:['롤러코스터','재미','놀이기구','에버랜드']},
+    {word:'우산',taboo:['비','펴다','접다','손잡이']},
+    {word:'냉장고',taboo:['차가운','음식','보관','주방']},
+    {word:'세탁기',taboo:['빨래','돌리다','세제','옷']},
+    {word:'에어컨',taboo:['시원','여름','바람','리모컨']},
+    {word:'엘리베이터',taboo:['올라가다','버튼','층','문']},
+    {word:'크리스마스',taboo:['산타','12월','선물','트리']},
+    {word:'생일',taboo:['케이크','축하','나이','촛불']},
+    {word:'카페',taboo:['커피','앉다','공부','아메리카노']},
+    {word:'노래방',taboo:['노래','마이크','점수','부르다']},
+    {word:'자전거',taboo:['바퀴','페달','타다','두발']},
+    {word:'치과',taboo:['이빨','아프다','의사','충치']},
+    {word:'미용실',taboo:['머리','자르다','파마','염색']},
+    {word:'버스',taboo:['정류장','운전','타다','카드']},
+    {word:'마트',taboo:['장보다','카트','식품','계산']},
+  ],
+  직업: [
+    {word:'의사',taboo:['병원','환자','치료','청진기']},
+    {word:'선생님',taboo:['학교','수업','학생','칠판']},
+    {word:'소방관',taboo:['불','119','빨간','구조']},
+    {word:'경찰',taboo:['112','범인','체포','순찰']},
+    {word:'요리사',taboo:['음식','주방','칼','요리']},
+    {word:'변호사',taboo:['법','재판','변호','법정']},
+    {word:'간호사',taboo:['병원','주사','환자','하얀']},
+    {word:'파일럿',taboo:['비행기','하늘','조종','기장']},
+    {word:'가수',taboo:['노래','무대','마이크','콘서트']},
+    {word:'운동선수',taboo:['경기','메달','운동','팀']},
+    {word:'과학자',taboo:['실험','연구','발견','노벨']},
+    {word:'기자',taboo:['뉴스','취재','기사','카메라']},
+    {word:'택배기사',taboo:['배달','택배','상자','아파트']},
+    {word:'유튜버',taboo:['영상','구독','유튜브','촬영']},
+    {word:'프로그래머',taboo:['코딩','컴퓨터','개발','프로그램']},
+  ],
+  스포츠: [
+    {word:'축구',taboo:['공','골','11명','월드컵']},
+    {word:'야구',taboo:['배트','투수','홈런','글러브']},
+    {word:'농구',taboo:['링','덩크','드리블','NBA']},
+    {word:'수영',taboo:['물','수영장','자유형','레인']},
+    {word:'태권도',taboo:['발차기','한국','띠','격파']},
+    {word:'스키',taboo:['눈','겨울','슬로프','리프트']},
+    {word:'테니스',taboo:['라켓','공','코트','서브']},
+    {word:'배드민턴',taboo:['셔틀콕','라켓','네트','코트']},
+    {word:'골프',taboo:['클럽','홀','잔디','타수']},
+    {word:'볼링',taboo:['핀','공','레인','스트라이크']},
+    {word:'복싱',taboo:['글러브','링','펀치','KO']},
+    {word:'유도',taboo:['일본','매트','던지기','도복']},
+    {word:'양궁',taboo:['활','과녁','화살','올림픽']},
+    {word:'피겨스케이팅',taboo:['얼음','회전','점프','김연아']},
+    {word:'배구',taboo:['네트','공','스파이크','6명']},
+  ],
+  장소: [
+    {word:'서울타워',taboo:['남산','타워','전망','서울']},
+    {word:'경복궁',taboo:['궁궐','조선','왕','서울']},
+    {word:'에버랜드',taboo:['놀이공원','용인','삼성','롤러코스터']},
+    {word:'한강',taboo:['강','서울','치킨','자전거']},
+    {word:'제주도',taboo:['섬','감귤','돌하르방','비행기']},
+    {word:'명동',taboo:['쇼핑','서울','화장품','관광']},
+    {word:'인천공항',taboo:['비행기','출국','여권','인천']},
+    {word:'롯데월드',taboo:['놀이공원','잠실','실내','롯데']},
+    {word:'해운대',taboo:['부산','바다','해수욕장','모래']},
+    {word:'광화문',taboo:['세종대왕','광장','서울','동상']},
+    {word:'동대문',taboo:['시장','쇼핑','서울','옷']},
+    {word:'부산',taboo:['해운대','바다','광안리','김해']},
+    {word:'강남',taboo:['서울','강남스타일','역','비싼']},
+    {word:'이태원',taboo:['서울','외국인','맛집','용산']},
+    {word:'홍대',taboo:['서울','젊은','클럽','대학교']},
+  ],
+  '국가/수도': [
+    {word:'대한민국',taboo:['서울','김치','한글','K-POP']},
+    {word:'일본',taboo:['도쿄','스시','사무라이','애니']},
+    {word:'중국',taboo:['베이징','만리장성','판다','중국어']},
+    {word:'미국',taboo:['워싱턴','자유의여신상','영어','달러']},
+    {word:'영국',taboo:['런던','여왕','빅벤','영어']},
+    {word:'프랑스',taboo:['파리','에펠탑','와인','바게트']},
+    {word:'독일',taboo:['베를린','맥주','소시지','자동차']},
+    {word:'이탈리아',taboo:['로마','피자','파스타','콜로세움']},
+    {word:'스페인',taboo:['마드리드','투우','축구','플라멩코']},
+    {word:'호주',taboo:['캔버라','캥거루','시드니','코알라']},
+    {word:'인도',taboo:['뉴델리','카레','타지마할','힌두교']},
+    {word:'브라질',taboo:['브라질리아','축구','삼바','아마존']},
+    {word:'캐나다',taboo:['오타와','메이플','하키','북미']},
+    {word:'러시아',taboo:['모스크바','크렘린','보드카','추운']},
+    {word:'태국',taboo:['방콕','코끼리','불교','톰얌꿍']},
+    {word:'베트남',taboo:['하노이','쌀국수','오토바이','동남아']},
+    {word:'이집트',taboo:['카이로','피라미드','파라오','나일강']},
+    {word:'멕시코',taboo:['멕시코시티','타코','선인장','솜브레로']},
+    {word:'터키',taboo:['앙카라','이스탄불','케밥','모스크']},
+    {word:'그리스',taboo:['아테네','파르테논','올림픽','신화']},
+  ],
+};
+
+const EXTRA_WORDS = {
+  음식:['칼국수','짬뽕','오므라이스','볶음밥','카레','스파게티','탕수육','순두부찌개','된장찌개','떡꼬치','어묵','핫도그','감자튀김','팝콘','도넛','와플','마카롱','타코야키'],
+  동물:['독수리','알파카','미어캣','코알라','캥거루','악어','햄스터','고슴도치','두더지','플라밍고','고래','두꺼비','올빼미','사슴','여우'],
+  연예인:['세븐틴','에스파','스트레이키즈','투바투','있지','엔시티','레드벨벳','마마무','악동뮤지션','현빈','이민호','전지현','이병헌'],
+  영화:['어바웃타임','주토피아','모아나','코코','업','매트릭스','쥬라기공원','킹스맨','보헤미안랩소디','위대한쇼맨','닥터스트레인지','블랙팬서','신과함께'],
+  일상:['운동화','선풍기','방학','시험','수영장','볼링','캠핑','여행','사진','일기','숙제','청소','요리','다이어트','알람시계'],
+  직업:['소방관','배우','군인','농부','화가','작가','디자이너','건축가','약사','치과의사'],
+  스포츠:['마라톤','탁구','펜싱','스노보드','조정','하키','럭비','권투','사이클','씨름'],
+  장소:['독도','설악산','전주','경주','속초','여수','춘천','대구','울릉도','DMZ'],
+  '국가/수도':['스위스','네덜란드','포르투갈','노르웨이','스웨덴','핀란드','덴마크','폴란드','아르헨티나','칠레','페루','싱가포르','말레이시아','인도네시아','필리핀','뉴질랜드','아이슬란드','체코','헝가리','오스트리아'],
+};
+
+function getWordPool(cat) {
+  const tw = (TABOO_WORDS[cat]||[]).map(i => i.word);
+  const ex = EXTRA_WORDS[cat]||[];
+  return [...tw,...ex];
+}
+
+const PROVERBS = {
+  쉬운:[
+    {q:'가는 말이 고와야',a:'오는 말이 곱다'},
+    {q:'소 잃고',a:'외양간 고친다'},
+    {q:'원숭이도 나무에서',a:'떨어진다'},
+    {q:'호랑이도 제 말 하면',a:'온다'},
+    {q:'세 살 버릇',a:'여든까지 간다'},
+    {q:'콩 심은 데 콩 나고',a:'팥 심은 데 팥 난다'},
+    {q:'하늘이 무너져도',a:'솟아날 구멍이 있다'},
+    {q:'가재는',a:'게 편'},
+    {q:'백지장도',a:'맞들면 낫다'},
+    {q:'낫 놓고',a:'기역자도 모른다'},
+    {q:'티끌 모아',a:'태산'},
+    {q:'천리 길도',a:'한 걸음부터'},
+    {q:'될성부른 나무는',a:'떡잎부터 알아본다'},
+    {q:'누워서',a:'떡 먹기'},
+    {q:'꿩 대신',a:'닭'},
+    {q:'로마는 하루아침에',a:'이루어지지 않았다'},
+    {q:'아는 길도',a:'물어가라'},
+  ],
+  보통:[
+    {q:'되로 주고',a:'말로 받는다'},
+    {q:'빈 수레가',a:'요란하다'},
+    {q:'등잔 밑이',a:'어둡다'},
+    {q:'우물 안',a:'개구리'},
+    {q:'작은 고추가',a:'맵다'},
+    {q:'뛰는 놈 위에',a:'나는 놈 있다'},
+    {q:'미꾸라지 한 마리가',a:'온 웅덩이를 흐린다'},
+    {q:'고생 끝에',a:'낙이 온다'},
+    {q:'가는 날이',a:'장날'},
+    {q:'금강산도',a:'식후경'},
+    {q:'마른 하늘에',a:'날벼락'},
+    {q:'남의 떡이',a:'커 보인다'},
+    {q:'지렁이도 밟으면',a:'꿈틀한다'},
+    {q:'공든 탑이',a:'무너지랴'},
+    {q:'종로에서 뺨 맞고',a:'한강에서 눈 흘긴다'},
+    {q:'서당개 삼 년이면',a:'풍월을 읊는다'},
+  ],
+  어려운:[
+    {q:'까마귀 날자',a:'배 떨어진다'},
+    {q:'구슬이 서 말이라도',a:'꿰어야 보배'},
+    {q:'목마른 놈이',a:'우물 판다'},
+    {q:'개구리 올챙이 적',a:'생각 못 한다'},
+    {q:'꿩 먹고',a:'알 먹고'},
+    {q:'발 없는 말이',a:'천리 간다'},
+    {q:'열 번 찍어 안 넘어가는',a:'나무 없다'},
+    {q:'바늘 도둑이',a:'소 도둑 된다'},
+    {q:'배보다',a:'배꼽이 더 크다'},
+    {q:'울며',a:'겨자 먹기'},
+    {q:'사공이 많으면',a:'배가 산으로 간다'},
+    {q:'피는 물보다',a:'진하다'},
+    {q:'아니 땐 굴뚝에',a:'연기 나랴'},
+    {q:'수박 겉',a:'핥기'},
+    {q:'말 한마디로',a:'천냥 빚을 갚는다'},
+    {q:'우물을 파도',a:'한 우물을 파라'},
+  ],
+};
+
+const FIVE_SEC = {
+  일반:[
+    '빨간색 과일 3가지','다리가 4개인 동물 3가지','서울 지하철 노선 3개',
+    '디즈니 영화 3개','3글자 나라 이름 3개','탈것 3가지','악기 3가지',
+    '둥근 모양인 것 3가지','주방에 있는 것 3가지','학교에서 쓰는 것 3가지',
+    '초록색인 것 3가지','하늘에서 볼 수 있는 것 3가지','뜨거운 음료 3가지',
+  ],
+  음식:[
+    '노란색 음식 3가지','매운 음식 3가지','분식집 메뉴 3가지','일본 음식 3가지',
+    '여름에 먹는 음식 3가지','밀가루 음식 3가지','간식 3가지','2글자 음식 3가지',
+    '과일 3가지','디저트 종류 3가지','짠 음식 3가지','카페 메뉴 3가지',
+  ],
+  동물:[
+    '바다에 사는 동물 3가지','날 수 있는 동물 3가지','3글자 동물 3마리',
+    '반려동물 종류 3가지','아프리카 동물 3마리','곤충 3가지','알을 낳는 동물 3마리',
+    '한국에 사는 새 3마리','줄무늬가 있는 동물 3마리','야행성 동물 3마리',
+  ],
+  스포츠:[
+    '공을 사용하는 스포츠 3가지','겨울 스포츠 3가지','올림픽 종목 3가지',
+    '라켓을 쓰는 스포츠 3가지','물에서 하는 운동 3가지','한국 프로야구팀 3개',
+    '격투기 종류 3가지','팀 스포츠 3가지','실내 운동 3가지',
+  ],
+  연예인:[
+    'BTS 멤버 3명','한국 걸그룹 3개','한국 남자 배우 3명',
+    '한국 여자 배우 3명','트로트 가수 3명','한국 예능인 3명',
+    '한국 래퍼 3명','한국 밴드 3개','올림픽 금메달리스트 3명',
+  ],
+  지리:[
+    '아시아 나라 3개','유럽 나라 3개','섬나라 3개',
+    '한국의 산 3개','바다 이름 3개','한국의 강 3개',
+    '아프리카 나라 3개','한국의 도(道) 3개','수도 이름 3개',
+    '남미 나라 3개','동남아 나라 3개',
+  ],
+  문화:[
+    '한국 전통 명절 3개','악기 종류 3가지','한국 전통 놀이 3가지',
+    '뮤지컬 작품 3개','한국 전통 음식 3가지','세계 유명 축제 3개',
+    '전통 악기 3가지','한국 유네스코 유산 3개','영화 장르 3가지',
+    '한국 민요 3곡','한복 종류 3가지',
+  ],
+  학교:[
+    '학교 과목 3개','문구류 3가지','학교 행사 3가지',
+    '한국 대학교 3개','교실에 있는 것 3가지','체육 시간에 하는 운동 3가지',
+    '급식 메뉴 3가지','방과 후 활동 3가지','시험 종류 3가지',
+    '학교에서 금지된 것 3가지',
+  ],
+  브랜드:[
+    '자동차 브랜드 3개','스마트폰 브랜드 3개','패스트푸드 브랜드 3개',
+    '한국 편의점 브랜드 3개','운동화 브랜드 3개','커피 브랜드 3개',
+    '한국 은행 3개','게임 회사 3개','항공사 3개',
+    '한국 치킨 브랜드 3개','SNS 이름 3개',
+  ],
+};
+
+/* ═══════════════════════════════════════════
+   WEB AUDIO
+   ═══════════════════════════════════════════ */
+let _audioCtx = null;
+function getAudio() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function playChime() {
+  try {
+    const ctx = getAudio();
+    [{f:880,s:0,d:.12},{f:1100,s:.15,d:.18}].forEach(n => {
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.frequency.value=n.f;
+      g.gain.setValueAtTime(.3,ctx.currentTime+n.s);
+      g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+n.s+n.d);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(ctx.currentTime+n.s);o.stop(ctx.currentTime+n.s+n.d+.05);
+    });
+  } catch(e){}
+}
+
+function playTick() {
+  try {
+    const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sine';o.frequency.value=1200;
+    g.gain.setValueAtTime(.25,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+.06);
+    o.connect(g);g.connect(ctx.destination);
+    o.start();o.stop(ctx.currentTime+.07);
+  } catch(e){}
+}
+
+function playBuzzer() {
+  try {
+    const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='square';o.frequency.value=200;
+    g.gain.setValueAtTime(.4,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+1);
+    o.connect(g);g.connect(ctx.destination);
+    o.start();o.stop(ctx.currentTime+1.05);
+  } catch(e){}
+}
+
+function playCorrect() {
+  try {
+    const ctx=getAudio();
+    [{f:523,s:0,d:.1},{f:659,s:.1,d:.1},{f:784,s:.2,d:.15}].forEach(n => {
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.frequency.value=n.f;
+      g.gain.setValueAtTime(.3,ctx.currentTime+n.s);
+      g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+n.s+n.d);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(ctx.currentTime+n.s);o.stop(ctx.currentTime+n.s+n.d+.05);
+    });
+  } catch(e){}
+}
+
+function playThud() {
+  try {
+    const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sine';o.frequency.value=150;
+    g.gain.setValueAtTime(.25,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+.15);
+    o.connect(g);g.connect(ctx.destination);
+    o.start();o.stop(ctx.currentTime+.2);
+  } catch(e){}
+}
+
+/* MI-style tension BGM */
+let _bgmTimer=null, _bgmBeat=0;
+function startBGM() {
+  stopBGM(); _bgmBeat=0;
+  playBGMNote();
+  _bgmTimer = setInterval(playBGMNote, 300);
+}
+function playBGMNote() {
+  try {
+    const ctx=getAudio();
+    const pattern=[123,123,147,147,123,123,147,147,123,185];
+    const vols=   [.18,.12,.18,.12,.18,.12,.18,.12,.18,.25];
+    const idx=_bgmBeat%pattern.length;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='square';o.frequency.value=pattern[idx];
+    g.gain.setValueAtTime(vols[idx],ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+.07);
+    o.connect(g);g.connect(ctx.destination);
+    o.start();o.stop(ctx.currentTime+.09);
+    _bgmBeat++;
+  } catch(e){}
+}
+function setBGMTempo(ms) {
+  if (!_bgmTimer) return;
+  clearInterval(_bgmTimer);
+  _bgmTimer = setInterval(playBGMNote, ms);
+}
+function stopBGM() {
+  if (_bgmTimer){clearInterval(_bgmTimer);_bgmTimer=null;}
+}
+
+/* loud chime for nunchi */
+function playLoudChime() {
+  try {
+    const ctx=getAudio();
+    [{f:880,s:0,d:.2},{f:1100,s:.2,d:.25},{f:1320,s:.45,d:.3}].forEach(n => {
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine';o.frequency.value=n.f;
+      g.gain.setValueAtTime(.5,ctx.currentTime+n.s);
+      g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+n.s+n.d);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(ctx.currentTime+n.s);o.stop(ctx.currentTime+n.s+n.d+.05);
+    });
+  } catch(e){}
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════ */
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+}
+function goToolsHome() { showSection('home'); }
+function openTool(id) { showSection(id); }
+function headerBack() {
+  const home = document.getElementById('sec-home');
+  if (home.classList.contains('active')) {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage('gb-close-iframe', '*');
+    } else {
+      window.location.href = './index.html';
+    }
+  } else {
+    stopBGM(); goToolsHome();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   1. 금지어 생성기
+   ═══════════════════════════════════════════ */
+let _tabooCat='음식', _tabooUsed=new Set(), _tabooQty=10, _tabooCount=0;
+let _tabooTimeSec=0, _tabooTimer=null, _tabooTimeLeft=0;
+
+function initTabooCats() {
+  const w=document.getElementById('taboo-cats');
+  Object.keys(TABOO_WORDS).forEach((cat,i)=>{
+    const b=document.createElement('button');
+    b.className='pill'+(i===0?' on':'');
+    b.textContent=cat;
+    b.onclick=()=>{
+      w.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+      b.classList.add('on'); _tabooCat=cat; _tabooUsed.clear(); _tabooCount=0;
+    };
+    w.appendChild(b);
+  });
+}
+function pickTabooQty(el) {
+  document.querySelectorAll('#taboo-qty .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on'); _tabooQty=parseInt(el.dataset.n);
+}
+function pickTabooTime(el) {
+  document.querySelectorAll('#taboo-time-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on'); _tabooTimeSec=parseInt(el.dataset.sec);
+}
+function startTabooTimer() {
+  clearInterval(_tabooTimer);
+  _tabooTimeLeft=_tabooTimeSec;
+  var d=document.getElementById('taboo-timer-display');
+  d.style.display=''; d.textContent=_tabooTimeLeft; d.className='taboo-timer-display';
+  startBGM();
+  _tabooTimer=setInterval(function(){
+    _tabooTimeLeft--;
+    d.textContent=_tabooTimeLeft;
+    if(_tabooTimeLeft<=10&&_tabooTimeLeft>0){d.className='taboo-timer-display danger';playTick();setBGMTempo(180);}
+    else if(_tabooTimeLeft<=30&&_tabooTimeLeft>10){setBGMTempo(220);}
+    if(_tabooTimeLeft<=0){
+      stopTabooTimer(); playBuzzer();
+      d.textContent='⏰'; d.className='taboo-timer-display danger';
+      setTimeout(function(){drawTaboo();},1200);
+    }
+  },1000);
+}
+function stopTabooTimer(){
+  if(_tabooTimer){clearInterval(_tabooTimer);_tabooTimer=null;}
+  stopBGM();
+  document.getElementById('taboo-timer-display').style.display='none';
+}
+function drawTaboo() {
+  if (_tabooQty > 0 && _tabooCount >= _tabooQty) {
+    _tabooUsed.clear(); _tabooCount=0;
+    document.getElementById('taboo-word').textContent='🎉 완료!';
+    document.getElementById('taboo-list').innerHTML='<li style="color:var(--g)">모든 문제를 풀었습니다!</li>';
+    document.getElementById('taboo-progress').textContent='';
+    document.getElementById('taboo-overlay').classList.add('open');
+    playCorrect(); return;
+  }
+  const pool=TABOO_WORDS[_tabooCat];
+  if(!pool||!pool.length)return;
+  const avail=pool.filter((_,i)=>!_tabooUsed.has(i));
+  if(!avail.length){_tabooUsed.clear();return drawTaboo();}
+  const idx=pool.indexOf(avail[Math.floor(Math.random()*avail.length)]);
+  _tabooUsed.add(idx); _tabooCount++;
+  const item=pool[idx];
+  document.getElementById('taboo-word').textContent=item.word;
+  document.getElementById('taboo-list').innerHTML=item.taboo.map(t=>`<li>${t}</li>`).join('');
+  document.getElementById('taboo-progress').textContent=_tabooQty>0?`${_tabooCount} / ${_tabooQty}`:'';
+  document.getElementById('taboo-overlay').classList.add('open');
+  playChime();
+  if(_tabooTimeSec>0) startTabooTimer();
+}
+function closeTabooPopup(){stopTabooTimer();document.getElementById('taboo-overlay').classList.remove('open');}
+
+/* ═══════════════════════════════════════════
+   2. 카운트다운 타이머 (+ MI BGM)
+   ═══════════════════════════════════════════ */
+let _timerTotal=30,_timerLeft=30,_timerRunning=false,_timerInterval=null;
+const CIRC=2*Math.PI*105;
+
+function pickTime(el) {
+  if(_timerRunning)return;
+  document.querySelectorAll('#timer-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on'); _timerTotal=parseInt(el.dataset.sec); resetTimer();
+}
+function updateTimerUI() {
+  const pct=_timerLeft/_timerTotal;
+  const off=CIRC*(1-pct);
+  const fg=document.getElementById('timer-fg');
+  const num=document.getElementById('timer-num');
+  const circle=document.getElementById('timer-circle');
+  fg.style.strokeDashoffset=off;
+  num.textContent=_timerLeft;
+  if(_timerLeft<=10&&_timerLeft>0){
+    fg.classList.add('danger');num.classList.add('danger');circle.classList.add('big');
+  } else {
+    fg.classList.remove('danger');num.classList.remove('danger');circle.classList.remove('big');
+  }
+}
+function toggleTimer() {
+  if(_timerRunning){
+    clearInterval(_timerInterval);_timerRunning=false;
+    document.getElementById('timer-start-btn').textContent='▶ 계속';
+    stopBGM();
+  } else {
+    if(_timerLeft<=0)resetTimer();
+    _timerRunning=true;
+    document.getElementById('timer-start-btn').textContent='⏸ 일시정지';
+    startBGM();
+    _timerInterval=setInterval(()=>{
+      _timerLeft--;
+      updateTimerUI();
+      if(_timerLeft<=10&&_timerLeft>0){playTick();setBGMTempo(180);}
+      else if(_timerLeft<=30&&_timerLeft>10){setBGMTempo(220);}
+      if(_timerLeft<=0){
+        clearInterval(_timerInterval);_timerRunning=false;stopBGM();
+        document.getElementById('timer-start-btn').textContent='▶ 시작';
+        playBuzzer();
+        document.getElementById('timer-num').style.animation='shake .5s ease';
+        setTimeout(()=>document.getElementById('timer-num').style.animation='',600);
+      }
+    },1000);
+  }
+}
+function resetTimer(){
+  clearInterval(_timerInterval);_timerRunning=false;stopBGM();
+  _timerLeft=_timerTotal;
+  document.getElementById('timer-start-btn').textContent='▶ 시작';
+  document.getElementById('timer-fg').style.strokeDasharray=CIRC;
+  updateTimerUI();
+}
+
+/* ═══════════════════════════════════════════
+   3. 초성 퀴즈
+   ═══════════════════════════════════════════ */
+let _chosungCat='음식',_chosungUsed=new Set(),_currentAnswer='',_chosungQty=10,_chosungCount=0;
+const CHOSUNG_MAP='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split('');
+function getChosung(str){
+  return [...str].map(ch=>{
+    const c=ch.charCodeAt(0)-0xAC00;
+    if(c<0||c>11171)return ch;
+    return CHOSUNG_MAP[Math.floor(c/588)];
+  }).join('');
+}
+function initChosungCats(){
+  const cats = Object.keys(TABOO_WORDS);
+  const w=document.getElementById('chosung-cats');
+  cats.forEach((cat,i)=>{
+    const b=document.createElement('button');
+    b.className='pill'+(i===0?' on':'');
+    b.textContent=cat;
+    b.onclick=()=>{
+      w.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+      b.classList.add('on');_chosungCat=cat;_chosungUsed.clear();_chosungCount=0;
+    };
+    w.appendChild(b);
+  });
+}
+function pickChosungQty(el){
+  document.querySelectorAll('#chosung-qty .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_chosungQty=parseInt(el.dataset.n);
+}
+function drawChosung(){
+  if(_chosungQty>0&&_chosungCount>=_chosungQty){
+    _chosungUsed.clear();_chosungCount=0;
+    document.getElementById('chosung-display').textContent='🎉';
+    document.getElementById('chosung-answer').style.display='block';
+    document.getElementById('chosung-answer').textContent='모든 문제를 풀었습니다!';
+    document.getElementById('chosung-reveal-btn').style.display='none';
+    document.getElementById('chosung-progress').textContent='';
+    document.getElementById('chosung-overlay').classList.add('open');
+    playCorrect();return;
+  }
+  const pool=getWordPool(_chosungCat);
+  if(!pool.length)return;
+  const avail=pool.filter((_,i)=>!_chosungUsed.has(i));
+  if(!avail.length){_chosungUsed.clear();return drawChosung();}
+  const idx=pool.indexOf(avail[Math.floor(Math.random()*avail.length)]);
+  _chosungUsed.add(idx);_chosungCount++;
+  const word=pool[idx];_currentAnswer=word;
+  document.getElementById('chosung-display').textContent=getChosung(word);
+  const ans=document.getElementById('chosung-answer');
+  ans.style.display='none';ans.textContent=word;
+  document.getElementById('chosung-reveal-btn').style.display='';
+  document.getElementById('chosung-progress').textContent=_chosungQty>0?`${_chosungCount} / ${_chosungQty}`:'';
+  document.getElementById('chosung-overlay').classList.add('open');
+  playChime();
+}
+function revealChosung(){
+  document.getElementById('chosung-answer').style.display='block';
+  document.getElementById('chosung-reveal-btn').style.display='none';
+  playCorrect();
+}
+function closeChosungPopup(){document.getElementById('chosung-overlay').classList.remove('open');}
+
+/* ═══════════════════════════════════════════
+   4. 스피드 퀴즈 + 7. 속담 퀴즈 (공용 엔진)
+   ═══════════════════════════════════════════ */
+let _speedCat='음식',_speedTimeSec=60;
+let _proverbDiff='쉬운',_proverbTimeSec=60,_proverbMode='blank';
+let _qPool=[],_qIdx=0,_qScore=0,_qPass=0,_qTimer=null,_qLeft=0,_qType='';
+let _touchStartY=0;
+
+function initSpeedCats(){
+  const w=document.getElementById('speed-cats');
+  Object.keys(TABOO_WORDS).forEach((cat,i)=>{
+    const b=document.createElement('button');
+    b.className='pill'+(i===0?' on':'');
+    b.textContent=cat;
+    b.onclick=()=>{
+      w.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+      b.classList.add('on');_speedCat=cat;
+    };
+    w.appendChild(b);
+  });
+}
+function pickSpeedTime(el){
+  document.querySelectorAll('#speed-time-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_speedTimeSec=parseInt(el.dataset.sec);
+}
+function pickProverbMode(el){
+  document.querySelectorAll('#proverb-mode .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_proverbMode=el.dataset.m;
+}
+function pickProverbDiff(el){
+  document.querySelectorAll('#proverb-diff .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_proverbDiff=el.dataset.d;
+}
+function pickProverbTime(el){
+  document.querySelectorAll('#proverb-time-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_proverbTimeSec=parseInt(el.dataset.sec);
+}
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function startQuiz(type){
+  _qType=type;
+  if(type==='speed'){
+    _qPool=shuffle(getWordPool(_speedCat));
+    _qLeft=_speedTimeSec;
+  } else {
+    let pool=[];
+    if(_proverbDiff==='전체'){
+      Object.values(PROVERBS).forEach(arr=>pool.push(...arr));
+    } else { pool=PROVERBS[_proverbDiff]||[]; }
+    _qPool=shuffle(pool);
+    _qLeft=_proverbTimeSec;
+  }
+  _qIdx=0;_qScore=0;_qPass=0;
+
+  const screen=document.getElementById(type+'-screen');
+  screen.classList.add('open');
+  if(type==='proverb'){
+    var hint=document.getElementById('proverb-hint');
+    if(_proverbMode==='body') hint.innerHTML='🤸 몸으로 설명! &nbsp; 탭 = 정답 &nbsp;|&nbsp; 스와이프↓ = 패스';
+    else hint.innerHTML='탭 = 정답 &nbsp;|&nbsp; 아래로 스와이프 = 패스';
+  }
+  showQuizWord(type);
+  updateQuizUI(type);
+  startBGM();
+
+  _qTimer=setInterval(()=>{
+    _qLeft--;
+    updateQuizUI(type);
+    if(_qLeft<=10&&_qLeft>0){playTick();setBGMTempo(180);}
+    else if(_qLeft<=30&&_qLeft>10){setBGMTempo(220);}
+    if(_qLeft<=0)endQuiz(type);
+  },1000);
+}
+
+function showQuizWord(type){
+  if(type==='speed'){
+    if(_qIdx>=_qPool.length)_qIdx=0;
+    document.getElementById('speed-word-display').textContent=_qPool[_qIdx];
+  } else {
+    if(_qIdx>=_qPool.length)_qIdx=0;
+    const p=_qPool[_qIdx];
+    if(_proverbMode==='body'){
+      document.getElementById('proverb-word-display').textContent=p.q+' '+p.a;
+    } else {
+      document.getElementById('proverb-word-display').textContent=p.q+' ___';
+    }
+  }
+}
+function updateQuizUI(type){
+  const td=document.getElementById(type+'-timer-display');
+  const sd=document.getElementById(type+'-score-display');
+  td.textContent=_qLeft;
+  td.className=_qLeft<=10?'quiz-timer danger':'quiz-timer';
+  sd.textContent='✅ '+_qScore+'점';
+}
+function quizCorrect(){
+  _qScore++;updateQuizUI(_qType);playCorrect();_qIdx++;showQuizWord(_qType);
+}
+function quizPass(){
+  _qPass++;playThud();_qIdx++;showQuizWord(_qType);
+}
+function endQuiz(type){
+  clearInterval(_qTimer);stopBGM();
+  document.getElementById(type+'-screen').classList.remove('open');
+  playBuzzer();
+  const txt=type==='proverb'
+    ?`정답 <span style="color:var(--g);font-size:2.2rem">${_qScore}</span>개<br><span style="font-size:1rem;color:var(--dim)">패스 ${_qPass}개</span>`
+    :`정답 <span style="color:var(--g);font-size:2.2rem">${_qScore}</span>개<br><span style="font-size:1rem;color:var(--dim)">패스 ${_qPass}개</span>`;
+  document.getElementById(type+'-result-text').innerHTML=txt;
+  document.getElementById(type+'-result').classList.add('open');
+}
+function closeQuizResult(type){document.getElementById(type+'-result').classList.remove('open');}
+
+/* touch + keyboard for speed & proverb screens */
+['speed','proverb'].forEach(type=>{
+  const screen=document.getElementById(type+'-screen');
+  screen.addEventListener('touchstart',e=>{_touchStartY=e.touches[0].clientY;},{passive:true});
+  screen.addEventListener('touchend',e=>{
+    if(!screen.classList.contains('open'))return;
+    const dy=e.changedTouches[0].clientY-_touchStartY;
+    if(dy>60)quizPass(); else quizCorrect();
+    e.preventDefault();
+  });
+  screen.addEventListener('click',e=>{
+    if(!screen.classList.contains('open'))return;
+    if(e.target.tagName==='BUTTON')return;
+    quizCorrect();
+  });
+});
+document.addEventListener('keydown',e=>{
+  const speedOpen=document.getElementById('speed-screen').classList.contains('open');
+  const proverbOpen=document.getElementById('proverb-screen').classList.contains('open');
+  if(speedOpen||proverbOpen){
+    if(e.code==='Space'||e.code==='Enter'){e.preventDefault();quizCorrect();}
+    if(e.code==='ArrowDown'){e.preventDefault();quizPass();}
+  }
+});
+
+/* ═══════════════════════════════════════════
+   5. 5초 준다 (카테고리+시간+수량+스페이스바)
+   ═══════════════════════════════════════════ */
+let _fiveCat='일반',_fiveTimeSec=5,_fiveQtyMax=10;
+let _fiveTimer=null,_fiveUsed=new Set(),_fiveScore=0,_fiveFail=0,_fiveRound=0;
+let _fiveActive=false;
+
+function initFiveCats(){
+  const w=document.getElementById('five-cats');
+  Object.keys(FIVE_SEC).forEach((cat,i)=>{
+    const b=document.createElement('button');
+    b.className='pill'+(i===0?' on':'');
+    b.textContent=cat;
+    b.onclick=()=>{
+      w.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+      b.classList.add('on');_fiveCat=cat;_fiveUsed.clear();
+    };
+    w.appendChild(b);
+  });
+}
+function pickFiveTime(el){
+  document.querySelectorAll('#five-time-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_fiveTimeSec=parseInt(el.dataset.sec);
+}
+function pickFiveQty(el){
+  document.querySelectorAll('#five-qty-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_fiveQtyMax=parseInt(el.dataset.n);
+}
+
+function startFiveSec(){
+  _fiveScore=0;_fiveFail=0;_fiveRound=0;_fiveUsed.clear();
+  nextFiveRound();
+}
+
+function nextFiveRound(){
+  if(_fiveRound>=_fiveQtyMax){
+    closeFiveSecPopup();
+    document.getElementById('five-final-text').innerHTML=
+      `성공 <span style="color:var(--g);font-size:2.2rem">${_fiveScore}</span> / 실패 <span style="color:var(--p);font-size:2.2rem">${_fiveFail}</span><br><span style="font-size:1rem;color:var(--dim)">총 ${_fiveQtyMax}문제</span>`;
+    document.getElementById('fivesec-final').classList.add('open');
+    playCorrect();return;
+  }
+  clearInterval(_fiveTimer);
+  const pool=FIVE_SEC[_fiveCat]||FIVE_SEC['일반'];
+  const avail=pool.filter((_,i)=>!_fiveUsed.has(i));
+  if(!avail.length)_fiveUsed.clear();
+  const arr=avail.length?avail:pool;
+  const topic=arr[Math.floor(Math.random()*arr.length)];
+  _fiveUsed.add(pool.indexOf(topic));
+  _fiveRound++;_fiveActive=true;
+
+  document.getElementById('five-label').textContent=`${_fiveTimeSec}초 준다!`;
+  document.getElementById('five-mission').textContent=topic;
+  document.getElementById('five-timer-num').textContent=_fiveTimeSec;
+  document.getElementById('five-timer-num').style.color='';
+  document.getElementById('five-bar').style.width='100%';
+  document.getElementById('five-success-btn').style.display='';
+  document.getElementById('five-result-row').style.display='none';
+  document.getElementById('five-score-text').textContent=`${_fiveRound} / ${_fiveQtyMax}  |  ✅${_fiveScore}  ❌${_fiveFail}`;
+  document.getElementById('fivesec-overlay').classList.add('open');
+  playChime();
+  startBGM();
+  if(_fiveTimeSec<=5) setBGMTempo(180);
+  else if(_fiveTimeSec<=10) setBGMTempo(220);
+
+  const totalMs=_fiveTimeSec*1000;
+  const start=Date.now();
+  _fiveTimer=setInterval(()=>{
+    const left=Math.max(0,totalMs-(Date.now()-start));
+    const sec=Math.ceil(left/1000);
+    document.getElementById('five-timer-num').textContent=sec;
+    document.getElementById('five-bar').style.width=(left/totalMs*100)+'%';
+    if(left<=0){
+      clearInterval(_fiveTimer);_fiveActive=false;stopBGM();
+      document.getElementById('five-timer-num').textContent='❌';
+      document.getElementById('five-timer-num').style.color='var(--p)';
+      document.getElementById('five-success-btn').style.display='none';
+      _fiveFail++;
+      document.getElementById('five-score-text').textContent=`${_fiveRound} / ${_fiveQtyMax}  |  ✅${_fiveScore}  ❌${_fiveFail}`;
+      playBuzzer();
+      document.getElementById('five-result-row').style.display='';
+    }
+  },50);
+}
+
+function fiveSuccess(){
+  if(!_fiveActive)return;
+  clearInterval(_fiveTimer);_fiveActive=false;stopBGM();
+  _fiveScore++;
+  document.getElementById('five-timer-num').textContent='👍';
+  document.getElementById('five-timer-num').style.color='var(--g)';
+  document.getElementById('five-success-btn').style.display='none';
+  document.getElementById('five-score-text').textContent=`${_fiveRound} / ${_fiveQtyMax}  |  ✅${_fiveScore}  ❌${_fiveFail}`;
+  playCorrect();
+  document.getElementById('five-result-row').style.display='';
+}
+function closeFiveSecPopup(){
+  clearInterval(_fiveTimer);_fiveActive=false;stopBGM();
+  document.getElementById('fivesec-overlay').classList.remove('open');
+}
+function closeFiveSecFinal(){document.getElementById('fivesec-final').classList.remove('open');}
+
+/* 5초준다 스페이스바 */
+document.addEventListener('keydown',e=>{
+  if(_fiveActive&&(e.code==='Space'||e.code==='Enter')){
+    e.preventDefault();fiveSuccess();
+  }
+});
+
+/* ═══════════════════════════════════════════
+   6. 눈치 게임
+   ═══════════════════════════════════════════ */
+let _nunchiMinutes=5,_nunchiElapsedTimer=null,_nunchiFireTimeout=null,_nunchiSoundTimer=null,_nunchiStartTime=0,_nunchiActive=false;
+
+function pickNunchi(el){
+  if(_nunchiActive)return;
+  document.querySelectorAll('#nunchi-opts .pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');_nunchiMinutes=parseInt(el.dataset.min);
+}
+function nunchiStart(){
+  if(_nunchiActive)return;
+  _nunchiActive=true;_nunchiStartTime=Date.now();
+  document.getElementById('nunchi-start-btn').textContent='⏳ 대기중...';
+  document.getElementById('nunchi-start-btn').disabled=true;
+  document.getElementById('nunchi-msg').textContent='조용히 기다리세요... 언제 시작될지 몰라요!';
+  document.getElementById('nunchi-msg').className='nunchi-msg';
+  document.getElementById('nunchi-elapsed').className='nunchi-elapsed waiting';
+
+  _nunchiElapsedTimer=setInterval(()=>{
+    const sec=Math.floor((Date.now()-_nunchiStartTime)/1000);
+    document.getElementById('nunchi-elapsed').textContent=
+      String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+  },1000);
+
+  const minMs=(_nunchiMinutes<=1)?10000:30000;
+  const maxMs=_nunchiMinutes*60*1000;
+  const fireAfter=minMs+Math.random()*(maxMs-minMs);
+  _nunchiFireTimeout=setTimeout(nunchiFire,fireAfter);
+}
+function nunchiFire(){
+  const elapsed=Math.floor((Date.now()-_nunchiStartTime)/1000);
+  const m=Math.floor(elapsed/60),s=elapsed%60;
+  document.getElementById('nunchi-elapsed').className='nunchi-elapsed fired';
+  document.getElementById('nunchi-msg').textContent='🚨 게임 시작!!!';
+  document.getElementById('nunchi-msg').className='nunchi-msg go';
+  document.getElementById('nunchi-popup-text').textContent='🚨 시작!';
+  document.getElementById('nunchi-popup-sub').textContent=`대기 시간: ${m}분 ${s}초`;
+  document.getElementById('nunchi-overlay').classList.add('open');
+  playLoudChime();
+  _nunchiSoundTimer=setInterval(playLoudChime,2000);
+}
+function closeNunchiPopup(){
+  if(_nunchiSoundTimer){clearInterval(_nunchiSoundTimer);_nunchiSoundTimer=null;}
+  document.getElementById('nunchi-overlay').classList.remove('open');
+  nunchiStop();
+}
+function nunchiStop(){
+  _nunchiActive=false;
+  if(_nunchiElapsedTimer){clearInterval(_nunchiElapsedTimer);_nunchiElapsedTimer=null;}
+  if(_nunchiFireTimeout){clearTimeout(_nunchiFireTimeout);_nunchiFireTimeout=null;}
+  if(_nunchiSoundTimer){clearInterval(_nunchiSoundTimer);_nunchiSoundTimer=null;}
+  document.getElementById('nunchi-start-btn').textContent='👀 시작';
+  document.getElementById('nunchi-start-btn').disabled=false;
+  document.getElementById('nunchi-msg').textContent='시작 버튼을 누르면 대기 시작!';
+  document.getElementById('nunchi-msg').className='nunchi-msg';
+  document.getElementById('nunchi-elapsed').textContent='00:00';
+  document.getElementById('nunchi-elapsed').className='nunchi-elapsed';
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════ */
+initTabooCats();
+initChosungCats();
+initSpeedCats();
+initFiveCats();
+resetTimer();
+</script>
+<script src="./js/music-player.js"></script>
+</body>
+</html>
