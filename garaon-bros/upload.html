@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>가라온 브로즈 — 사진 업로드</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0b0b1a; color: #eee; min-height: 100dvh;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 24px;
+    }
+    .card {
+      background: #151526; border: 2px solid #333; border-radius: 20px;
+      padding: 32px 24px; max-width: 380px; width: 100%; text-align: center;
+    }
+    .title { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+    .sub { font-size: 14px; color: #888; margin-bottom: 24px; }
+    .error { color: #ff4466; font-size: 16px; font-weight: 700; }
+    .success { color: #00ff88; }
+
+    .btn-capture {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      border: none; color: #fff; font-size: 18px; font-weight: 800;
+      padding: 16px 32px; border-radius: 16px; cursor: pointer;
+      font-family: inherit; transition: transform .1s;
+    }
+    .btn-capture:active { transform: scale(0.96); }
+    .btn-capture:disabled { opacity: .4; cursor: not-allowed; }
+
+    .preview-wrap {
+      margin-top: 20px; display: none;
+      border-radius: 12px; overflow: hidden; border: 2px solid #333;
+    }
+    .preview-wrap img { width: 100%; max-height: 300px; object-fit: cover; }
+
+    .status {
+      margin-top: 16px; font-size: 14px; color: #888;
+      min-height: 20px;
+    }
+
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #333;
+      border-top-color: #a78bfa; border-radius: 50%;
+      animation: spin .6s linear infinite; margin: 16px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="spinner" id="loading"></div>
+  </div>
+
+  <script>
+    const SB_URL  = 'https://mkmxhmoocqnkltjxdfbm.supabase.co';
+    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8';
+    const db = supabase.createClient(SB_URL, SB_ANON);
+    const TOKEN_EXPIRE_MIN = 5;
+
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const card = document.getElementById('card');
+
+    async function init() {
+      if (!token) { showError('잘못된 접근입니다'); return; }
+
+      // 토큰 검증
+      const { data, error } = await db.from('upload_tokens')
+        .select('*')
+        .eq('token', token)
+        .single();
+
+      if (error || !data) { showError('유효하지 않은 토큰입니다'); return; }
+      if (data.used) { showError('이미 사용된 토큰입니다'); return; }
+
+      // 만료 체크 (5분)
+      const created = new Date(data.created_at);
+      const now = new Date();
+      if ((now - created) / 60000 > TOKEN_EXPIRE_MIN) {
+        showError('토큰이 만료되었습니다 (5분)');
+        return;
+      }
+
+      // 촬영 UI 표시
+      card.innerHTML = `
+        <div class="title">게임 사진 촬영</div>
+        <div class="sub">카메라로 보드게임 박스를 찍어주세요</div>
+        <label class="btn-capture" id="btn-capture">
+          📸 사진 촬영
+          <input type="file" accept="image/*" capture="environment"
+            style="display:none;" onchange="handleCapture(this)">
+        </label>
+        <div class="preview-wrap" id="preview-wrap">
+          <img id="preview-img">
+        </div>
+        <div class="status" id="status"></div>
+      `;
+    }
+
+    async function handleCapture(input) {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      // 미리보기
+      const wrap = document.getElementById('preview-wrap');
+      const img = document.getElementById('preview-img');
+      const status = document.getElementById('status');
+      const btn = document.getElementById('btn-capture');
+
+      img.src = URL.createObjectURL(file);
+      wrap.style.display = 'block';
+      btn.querySelector('input').disabled = true;
+      status.innerHTML = '<div class="spinner"></div>업로드 중...';
+
+      try {
+        // Supabase Storage에 업로드
+        const ext = file.name.split('.').pop() || 'jpg';
+        const path = `games/${token}_${Date.now()}.${ext}`;
+        const { error: upErr } = await db.storage
+          .from('game-images')
+          .upload(path, file, { upsert: true });
+
+        if (upErr) throw upErr;
+
+        // Public URL 생성
+        const { data: pub } = db.storage.from('game-images').getPublicUrl(path);
+        const imageUrl = pub.publicUrl;
+
+        // 토큰에 image_url 저장 + used 처리
+        await db.from('upload_tokens')
+          .update({ image_url: imageUrl, used: true })
+          .eq('token', token);
+
+        status.innerHTML = '<div class="success" style="font-size:48px;margin-bottom:12px;">✅</div>' +
+          '<div class="success" style="font-size:18px;font-weight:700;">업로드 완료!</div>' +
+          '<div style="color:#888;font-size:13px;margin-top:8px;">PC 화면에 자동 반영됩니다.<br>이 페이지를 닫아도 됩니다.</div>';
+      } catch (e) {
+        status.textContent = '❌ 업로드 실패: ' + e.message;
+        btn.querySelector('input').disabled = false;
+      }
+    }
+
+    function showError(msg) {
+      card.innerHTML = `<div class="error">${msg}</div>
+        <div style="font-size:13px;color:#555;margin-top:12px;">PC에서 QR 코드를 다시 생성해주세요</div>`;
+    }
+
+    init();
+  </script>
+</body>
+</html>

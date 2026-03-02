@@ -6,6 +6,7 @@
   <title>📊 보드게임 정보 — 가라온 브로즈</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -659,6 +660,26 @@
     </div>
   </div>
 
+  <!-- 이미지 업로드 QR 모달 -->
+  <div class="modal2-bd" id="qr-upload-modal" onclick="mayClose2(event,'qr-upload-modal')">
+    <div class="modal2" style="max-width:340px;">
+      <div class="modal-head">
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="font-size:11px;color:#555;font-weight:700;">📱 QR 촬영</div>
+          <div class="modal-title" style="color:var(--p);font-size:17px;">폰으로 게임 사진 찍기</div>
+        </div>
+        <button class="modal-close" onclick="closeQrUpload()">✕</button>
+      </div>
+      <div style="text-align:center;padding:16px 0;">
+        <canvas id="qr-upload-canvas" style="border-radius:12px;border:2px solid #333;"></canvas>
+        <div id="qr-upload-status" style="font-size:13px;color:#888;margin-top:12px;">
+          폰으로 QR 스캔 → 촬영 → 자동 반영
+        </div>
+        <div id="qr-upload-timer" style="font-size:11px;color:#555;margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 토스트 -->
   <div class="toast" id="toast"></div>
 
@@ -1036,10 +1057,9 @@
             <label class="form-label">🖼 이미지 (선택)</label>
             <div style="display:flex;gap:8px;align-items:center;">
               <input class="form-input" id="f-image" value="${esc(game?.image_url||'')}" placeholder="URL 직접 입력..." oninput="updateImgPreview(this.value)" style="flex:1;">
-              <label style="cursor:pointer;background:#1e1e38;border:1px solid #444;border-radius:8px;padding:8px 12px;font-size:12px;color:#aaa;white-space:nowrap;flex-shrink:0;">
-                📁 파일
-                <input type="file" accept="image/*" style="display:none;" onchange="uploadGameImage(this)">
-              </label>
+              <button type="button" onclick="openQrUpload()" style="background:#1e1e38;border:1px solid #444;border-radius:8px;padding:8px 12px;font-size:12px;color:#aaa;white-space:nowrap;flex-shrink:0;cursor:pointer;font-family:inherit;">
+                📱 QR 촬영
+              </button>
             </div>
             <div id="img-upload-status" style="font-size:11px;color:#888;margin-top:4px;display:none;"></div>
             <div id="img-preview" style="margin-top:8px;${game?.image_url ? '' : 'display:none;'}">
@@ -1941,6 +1961,76 @@
       updateImgPreview(url);
       status.textContent = '✅ 업로드 완료!';
       setTimeout(() => { status.style.display = 'none'; }, 2000);
+    }
+
+    /* ── QR 촬영 업로드 ── */
+    let _qrPollTimer = null;
+    let _qrToken = null;
+    let _qrExpireTimer = null;
+
+    async function openQrUpload() {
+      // 랜덤 토큰 생성
+      _qrToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+      // Supabase에 토큰 저장
+      const { error } = await getDB().from('upload_tokens').insert({ token: _qrToken });
+      if (error) { showToast('토큰 생성 실패: ' + error.message, true); return; }
+
+      // QR 코드 생성
+      const uploadUrl = location.origin + '/garaon-bros/upload.html?token=' + _qrToken;
+      const canvas = document.getElementById('qr-upload-canvas');
+      await QRCode.toCanvas(canvas, uploadUrl, {
+        width: 220, margin: 2,
+        color: { dark: '#ffffffee', light: '#0b0b1a' }
+      });
+
+      // 모달 표시
+      document.getElementById('qr-upload-modal').classList.add('open');
+      document.getElementById('qr-upload-status').textContent = '폰으로 QR 스캔 → 촬영 → 자동 반영';
+      document.getElementById('qr-upload-status').style.color = '#888';
+
+      // 5분 타이머
+      let remaining = 300;
+      const timerEl = document.getElementById('qr-upload-timer');
+      _qrExpireTimer = setInterval(() => {
+        remaining--;
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        timerEl.textContent = `만료까지 ${m}:${String(s).padStart(2,'0')}`;
+        if (remaining <= 0) { closeQrUpload(); showToast('QR 만료됨 — 다시 생성하세요'); }
+      }, 1000);
+
+      // 폴링 시작 (2초 간격)
+      _qrPollTimer = setInterval(pollQrUpload, 2000);
+    }
+
+    async function pollQrUpload() {
+      if (!_qrToken) return;
+      try {
+        const { data } = await getDB().from('upload_tokens')
+          .select('image_url, used')
+          .eq('token', _qrToken)
+          .single();
+        if (data?.used && data?.image_url) {
+          // 성공! 이미지 반영
+          document.getElementById('f-image').value = data.image_url;
+          updateImgPreview(data.image_url);
+          document.getElementById('qr-upload-status').textContent = '✅ 사진 수신 완료!';
+          document.getElementById('qr-upload-status').style.color = '#00ff88';
+          showToast('📸 사진이 반영되었습니다!');
+          clearInterval(_qrPollTimer); _qrPollTimer = null;
+          clearInterval(_qrExpireTimer); _qrExpireTimer = null;
+          document.getElementById('qr-upload-timer').textContent = '';
+          setTimeout(() => closeQrUpload(), 1500);
+        }
+      } catch(e) { /* 무시 */ }
+    }
+
+    function closeQrUpload() {
+      document.getElementById('qr-upload-modal').classList.remove('open');
+      if (_qrPollTimer) { clearInterval(_qrPollTimer); _qrPollTimer = null; }
+      if (_qrExpireTimer) { clearInterval(_qrExpireTimer); _qrExpireTimer = null; }
+      _qrToken = null;
     }
 
     async function testAIWebhook() {
