@@ -368,8 +368,15 @@
     }
     .vh-header:hover { color:#fff; }
     .vh-toggle-icon { font-size:11px; transition:transform .2s; }
-    .vh-body { display:none; padding:8px 0; }
-    .vh-body.open { display:block; }
+    .vh-body { display:block; padding:8px 0; }
+    .vh-filter-bar { display:flex; gap:6px; margin-bottom:12px; }
+    .vh-filter-btn {
+      padding:6px 14px; border-radius:16px; border:1px solid #333;
+      background:var(--card2); color:#888; font-family:'Nunito',sans-serif;
+      font-weight:700; font-size:13px; cursor:pointer; transition:all .15s;
+    }
+    .vh-filter-btn:hover { border-color:#555; color:#ccc; }
+    .vh-filter-btn.on { border-color:var(--g); color:var(--g); background:#00ff8811; }
     .vh-date-group { margin-bottom:16px; }
     .vh-date-label {
       font-size:12px; color:var(--g); font-weight:700;
@@ -1331,8 +1338,12 @@
           `).join('')}
         </div>
         <div class="visit-history-section">
-          <div class="vh-header" onclick="toggleVisitHistory(this)">
-            📅 방문 기록 <span class="vh-toggle-icon">▼</span>
+          <div class="vh-header" style="cursor:default;">📅 방문 기록</div>
+          <div class="vh-filter-bar" id="vh-filter-bar">
+            <button class="vh-filter-btn" data-months="3" onclick="filterVisitHistory(3)">3개월</button>
+            <button class="vh-filter-btn" data-months="6" onclick="filterVisitHistory(6)">6개월</button>
+            <button class="vh-filter-btn" data-months="12" onclick="filterVisitHistory(12)">1년</button>
+            <button class="vh-filter-btn" data-months="0" onclick="filterVisitHistory(0)">전체</button>
           </div>
           <div class="vh-body" id="visit-history-body">
             <div style="color:#555;font-size:13px;padding:16px;text-align:center;">로딩 중...</div>
@@ -1487,29 +1498,49 @@
       closeModal(); await loadVisitors();
     }
 
-    function toggleVisitHistory(headerEl) {
-      const body = document.getElementById('visit-history-body');
-      const icon = headerEl.querySelector('.vh-toggle-icon');
-      body.classList.toggle('open');
-      icon.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+    let _vhMonths = 3; // 기본 3개월
+
+    function filterVisitHistory(months) {
+      _vhMonths = months;
+      document.querySelectorAll('.vh-filter-btn').forEach(b => {
+        b.classList.toggle('on', Number(b.dataset.months) === months);
+      });
+      loadVisitHistory();
     }
 
     async function loadVisitHistory() {
       const db = getDB();
       if (!db) return;
+      // 필터 버튼 활성화
+      document.querySelectorAll('.vh-filter-btn').forEach(b => {
+        b.classList.toggle('on', Number(b.dataset.months) === _vhMonths);
+      });
       try {
+        // 기간 필터 계산
+        let dateFilter = null;
+        if (_vhMonths > 0) {
+          const d = new Date();
+          d.setMonth(d.getMonth() - _vhMonths);
+          dateFilter = d.toISOString().slice(0, 10);
+        }
+
         // 방문 기록 + 방문자 정보
-        const { data: logs } = await db
+        let logsQuery = db
           .from('visit_logs')
           .select('*, visitors(id,name,nickname,avatar)')
-          .order('visit_date', { ascending: false })
-          .limit(90);
+          .order('visit_date', { ascending: false });
+        if (dateFilter) logsQuery = logsQuery.gte('visit_date', dateFilter);
+        else logsQuery = logsQuery.limit(500);
+        const { data: logs } = await logsQuery;
+
         // 호출 기록
-        const { data: calls } = await db
+        let callsQuery = db
           .from('call_history')
           .select('*')
-          .order('called_at', { ascending: false })
-          .limit(200);
+          .order('called_at', { ascending: false });
+        if (dateFilter) callsQuery = callsQuery.gte('visit_date', dateFilter);
+        else callsQuery = callsQuery.limit(500);
+        const { data: calls } = await callsQuery;
 
         const callsByDate = {};
         (calls || []).forEach(c => {
