@@ -1046,16 +1046,20 @@
     }
 
     async function submitCall() {
+      console.log('[호출] submitCall 진입, _cart:', JSON.stringify(_cart));
       const entries = Object.values(_cart);
-      if (!entries.length) return;
+      if (!entries.length) { console.log('[호출] 장바구니 비어있음 → 리턴'); return; }
       const hasEtc = entries.some(e => e.item.label === '기타' || e.item.id === 'etc');
       const customText = document.getElementById('call-custom').value.trim();
       if (hasEtc && !customText) {
         document.getElementById('call-custom').focus();
         return;
       }
+      console.log('[호출] getTodayCallCount 호출 시작, label:', entries[0].item.label);
       const todayCount = await getTodayCallCount(entries[0].item.label);
+      console.log('[호출] todayCount 결과:', todayCount);
       if (todayCount >= 3) {
+        console.log('[고릴라] 🦍 고릴라 모달 표시! count:', todayCount);
         showGorilla(todayCount, entries.map(e => e.item.label).join(', '));
         return;
       }
@@ -1069,10 +1073,8 @@
         const today = new Date().toISOString().slice(0, 10);
         const { count, error } = await db.from('call_history')
           .select('*', { count: 'exact', head: true })
-          .eq('menu_label', label)
-          .gte('called_at', today + 'T00:00:00')
-          .lte('called_at', today + 'T23:59:59');
-        console.log('[고릴라] label:', label, 'today:', today, 'count:', count, 'error:', error);
+          .eq('visit_date', today);
+        console.log('[고릴라] today:', today, 'count:', count, 'error:', error);
         if (error) { console.error('[고릴라] 조회 오류:', error); return 0; }
         return count || 0;
       } catch(e) { console.error('[고릴라] 예외:', e); return 0; }
@@ -1127,18 +1129,15 @@
       if (db) {
         try {
           const vdate = new Date().toISOString().slice(0, 10);
-          const result = await db.from('call_history').insert(
-            entries.map(({ item, qty }) => ({
-              menu_id:     item.id || null,
-              menu_label:  item.label,
-              menu_emoji:  item.emoji || '📦',
+          const rows = entries.map(({ item, qty }) => ({
               qty,
               visit_date:  vdate,
               called_at:   new Date().toISOString(),
-              custom_text: (item.label === '기타' || item.id === 'etc') ? customText || null : null,
-            }))
-          );
+            }));
+          console.log('[호출] insert 데이터:', rows);
+          const result = await db.from('call_history').insert(rows);
           console.log('[호출] DB 저장 결과:', result);
+          if (result.error) console.error('[호출] DB 저장 오류:', result.error);
         } catch(e) { console.warn('call_history 저장 실패:', e); }
       }
 
