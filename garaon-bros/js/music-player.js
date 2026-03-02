@@ -6,21 +6,55 @@
 (function () {
   'use strict';
 
+  const SUB_PAGES = ['recommend.html', 'gbhq.html', 'review.html', 'pixel-base.html'];
+  const isSubPage = SUB_PAGES.some(p => location.pathname.includes(p));
+
+  /* ── 서브 페이지 직접 접속 → index.html로 리다이렉트 (iframe 로드) ── */
+  if (window.self === window.top && isSubPage) {
+    const page = location.pathname.split('/').pop() + location.search + location.hash;
+    location.replace('./index.html?sub=' + encodeURIComponent(page));
+    return;
+  }
+
   /* ── iframe 내부에서는 음악 플레이어 초기화 스킵 ── */
   if (window.self !== window.top) {
-    // 서브 페이지가 iframe 안에 로드된 경우 — 부모의 플레이어 사용
-    // <a> 홈 링크 클릭 인터셉트
-    document.addEventListener('click', function (e) {
-      const a = e.target.closest('a[href*="index.html"], a[href="./"]');
-      if (a) { e.preventDefault(); window.parent.postMessage('gb-close-iframe', '*'); }
-    });
-    // location.href 할당 인터셉트 (onclick="location.href='./index.html'" 등)
-    document.addEventListener('click', function (e) {
-      const btn = e.target.closest('button[onclick*="index.html"], [onclick*="index.html"]');
-      if (btn) { e.preventDefault(); e.stopPropagation(); btn.onclick = null; window.parent.postMessage('gb-close-iframe', '*'); }
-    }, true);
-    document.addEventListener('DOMContentLoaded', function () {
+    function ready(fn) {
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+      else fn();
+    }
+    ready(function () {
       document.body.style.paddingTop = '0px';
+
+      // <a> 클릭 인터셉트: 홈 → 닫기, 서브 페이지 → 부모에서 iframe 전환
+      document.addEventListener('click', function (e) {
+        const a = e.target.closest('a[href]');
+        if (!a) return;
+        const href = a.getAttribute('href') || '';
+        if (href.includes('index.html') || href === './') {
+          e.preventDefault(); window.parent.postMessage('gb-close-iframe', '*');
+        } else if (SUB_PAGES.some(p => href.includes(p))) {
+          e.preventDefault(); window.parent.postMessage({ type: 'gb-navigate', href: href }, '*');
+        }
+      });
+
+      // onclick="location.href=..." 인터셉트
+      document.querySelectorAll('[onclick]').forEach(function (el) {
+        const oc = el.getAttribute('onclick') || '';
+        if (oc.includes('index.html')) {
+          el.removeAttribute('onclick');
+          el.addEventListener('click', function (ev) {
+            ev.preventDefault(); window.parent.postMessage('gb-close-iframe', '*');
+          });
+        } else {
+          var match = SUB_PAGES.find(function (p) { return oc.includes(p); });
+          if (match) {
+            el.removeAttribute('onclick');
+            el.addEventListener('click', function (ev) {
+              ev.preventDefault(); window.parent.postMessage({ type: 'gb-navigate', href: './' + match }, '*');
+            });
+          }
+        }
+      });
     });
     return;
   }
