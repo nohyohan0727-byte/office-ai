@@ -752,14 +752,6 @@
       <button class="call-close" onclick="closeSettings()">✕</button>
       <div class="settings-title">⚙️ 호출메뉴 설정</div>
 
-      <!-- n8n 웹훅 -->
-      <div class="settings-section">
-        <div class="settings-label">⚡ n8n 웹훅 URL (카톡 알림)</div>
-        <input class="settings-input" id="s-n8n-url" placeholder="https://...n8n.cloud/webhook/XXXX">
-        <div style="font-size:11px;color:#555;margin-top:6px;">집주인 카톡으로 호출 알림을 보내는 n8n 웹훅 URL</div>
-        <button class="settings-save-btn" onclick="saveN8nUrl()">저장</button>
-      </div>
-
       <!-- 호출 메뉴 항목 관리 -->
       <div class="settings-section">
         <div class="settings-label">📋 호출 메뉴 항목</div>
@@ -767,7 +759,12 @@
           <div style="color:#555;font-size:13px;padding:12px 0;">로딩 중...</div>
         </div>
         <div class="cmi-add-row">
-          <input class="cmi-add-emoji" id="s-add-emoji" maxlength="4" placeholder="📦" value="">
+          <div style="position:relative;">
+            <button class="cmi-add-emoji" id="s-add-emoji-btn" onclick="toggleEmojiPicker()" style="cursor:pointer;">📦</button>
+            <input type="hidden" id="s-add-emoji" value="">
+            <div id="emoji-picker" style="display:none;position:absolute;bottom:48px;left:0;background:#1e1e38;border:2px solid #ffd700;border-radius:12px;padding:8px;z-index:10;width:220px;flex-wrap:wrap;gap:4px;">
+            </div>
+          </div>
           <input class="cmi-add-label" id="s-add-label" placeholder="메뉴 이름 (예: 물)">
           <button class="cmi-add-btn" onclick="addCallMenuItem()">+ 추가</button>
         </div>
@@ -1386,19 +1383,12 @@
        호출메뉴 설정 패널
        ══════════════════════════════ */
     function openSettings() {
-      document.getElementById('s-n8n-url').value = localStorage.getItem('gb_n8n_webhook') || '';
       document.getElementById('settings-overlay').classList.add('open');
       renderSettingsCMI();
     }
 
     function closeSettings() {
       document.getElementById('settings-overlay').classList.remove('open');
-    }
-
-    function saveN8nUrl() {
-      const url = document.getElementById('s-n8n-url').value.trim();
-      localStorage.setItem('gb_n8n_webhook', url);
-      showToast('✅ n8n URL 저장 완료!');
     }
 
     async function renderSettingsCMI() {
@@ -1426,6 +1416,24 @@
         </div>`).join('');
     }
 
+    const EMOJI_LIST = ['💧','🥤','🍿','🍭','🍪','🍦','🧃','☕','🍜','🍔','🍕','🌭','🥪','🍱','🧁','🎂','🍎','🍌','🥛','🍵','🧊','🍩','🥜','🫖','📦','✏️','🎮','🎲','🃏','🧸'];
+
+    function toggleEmojiPicker() {
+      const picker = document.getElementById('emoji-picker');
+      if (picker.style.display === 'flex') { picker.style.display = 'none'; return; }
+      picker.innerHTML = EMOJI_LIST.map(e =>
+        `<span onclick="pickEmoji('${e}')" style="font-size:24px;cursor:pointer;padding:4px;border-radius:6px;transition:background .1s;"
+         onmouseenter="this.style.background='#ffd70033'" onmouseleave="this.style.background=''">${e}</span>`
+      ).join('');
+      picker.style.display = 'flex';
+    }
+
+    function pickEmoji(emoji) {
+      document.getElementById('s-add-emoji').value = emoji;
+      document.getElementById('s-add-emoji-btn').textContent = emoji;
+      document.getElementById('emoji-picker').style.display = 'none';
+    }
+
     async function addCallMenuItem() {
       const emoji = document.getElementById('s-add-emoji').value.trim() || '📦';
       const label = document.getElementById('s-add-label').value.trim();
@@ -1436,6 +1444,7 @@
         await db.from('call_menu').insert({ emoji, label, is_active: true, sort_order: maxOrder });
       }
       document.getElementById('s-add-emoji').value = '';
+      document.getElementById('s-add-emoji-btn').textContent = '📦';
       document.getElementById('s-add-label').value = '';
       await loadCallMenu();
       await renderSettingsCMI();
