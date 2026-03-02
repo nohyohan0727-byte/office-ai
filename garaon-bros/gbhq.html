@@ -1892,14 +1892,25 @@
 
     async function fetchWikiImage(nameEn) {
       try {
+        // 1) Wikipedia 검색 API로 정확한 제목 찾기
+        const searchUrl = 'https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch='
+          + encodeURIComponent(nameEn + ' board game');
+        const sr = await fetch(searchUrl);
+        if (!sr.ok) { console.log('[Wiki] 검색 실패:', sr.status); return; }
+        const sd = await sr.json();
+        const title = sd.query?.search?.[0]?.title;
+        if (!title) { console.log('[Wiki] 검색 결과 없음:', nameEn); return; }
+        console.log('[Wiki] 검색 제목:', title);
+
+        // 2) summary API로 이미지 가져오기
         const res = await fetch(
-          'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(nameEn),
+          'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title),
           { headers: { 'Accept': 'application/json' } }
         );
-        if (!res.ok) { console.log('[Wiki] HTTP', res.status, nameEn); return; }
+        if (!res.ok) { console.log('[Wiki] summary 실패:', res.status, title); return; }
         const d = await res.json();
         const url = d.thumbnail?.source || d.originalimage?.source;
-        if (!url) { console.log('[Wiki] 이미지 없음:', nameEn); return; }
+        if (!url) { console.log('[Wiki] 이미지 없음:', title); return; }
         console.log('[Wiki] 이미지 발견:', url);
         const imgEl = document.getElementById('f-image');
         if (imgEl) {
