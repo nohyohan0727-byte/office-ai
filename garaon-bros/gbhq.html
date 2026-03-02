@@ -1535,7 +1535,7 @@
           const visitors = grouped[date];
           const dayCallsRaw = callsByDate[date] || [];
           const snackSummary = dayCallsRaw.length
-            ? dayCallsRaw.map(c=>`${c.menu_emoji||'📦'}${c.menu_label}${c.qty>1?' x'+c.qty:''}`).join(' · ')
+            ? dayCallsRaw.map(c=>`${c.item_emoji||'📦'}${c.item_label||''}${c.qty>1?' x'+c.qty:''}${c.note?' ('+c.note+')':''}`).join(' · ')
             : null;
           return `
             <div class="vh-date-group">
