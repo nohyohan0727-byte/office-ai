@@ -1027,7 +1027,7 @@
       let visitors = [];
       if (db) {
         try {
-          const { data } = await db.from('visitors').select('id,name,nickname,avatar').order('name');
+          const { data } = await db.from('visitors').select('id,name,nickname,avatar,photo_url').order('name');
           visitors = data || [];
         } catch(e) {}
       }
@@ -1040,7 +1040,7 @@
       grid.innerHTML = visitors.map(v => `
         <div class="checkin-card" id="cc-${v.id}" onclick="toggleCheckin(${v.id})">
           <span class="checkin-check">✓</span>
-          <span class="checkin-card-emoji">${v.avatar || '🧑'}</span>
+          <span class="checkin-card-emoji">${v.photo_url ? `<img src="${v.photo_url}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">` : (v.avatar || '🧑')}</span>
           <div class="checkin-card-name">${vDisplayName(v)}</div>
         </div>`).join('');
     }
@@ -1518,7 +1518,7 @@
       document.getElementById('add-visitor-overlay').style.display = 'flex';
 
       const todayIds = new Set(JSON.parse(sessionStorage.getItem('gb_today_visitors') || '[]'));
-      const { data } = await getDB().from('visitors').select('id,name,nickname,avatar').order('name');
+      const { data } = await getDB().from('visitors').select('id,name,nickname,avatar,photo_url').order('name');
       const all = data || [];
       const inSession = all.filter(v => todayIds.has(v.id));
       const notYet    = all.filter(v => !todayIds.has(v.id));
@@ -1530,8 +1530,9 @@
       } else {
         curEl.innerHTML = inSession.map(v => {
           const label = v.nickname || v.name || '?';
+          const face = v.photo_url ? `<img src="${v.photo_url}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` : `<span style="font-size:18px;">${v.avatar||'🧑'}</span>`;
           return `<div style="display:flex;align-items:center;gap:6px;background:#0b0b1a;border:1px solid #333;border-radius:20px;padding:6px 12px;">
-            <span style="font-size:18px;">${v.avatar||'🧑'}</span>
+            ${face}
             <span style="font-size:13px;font-weight:700;color:#00ff88;">${label}</span>
           </div>`;
         }).join('');
@@ -1548,7 +1549,7 @@
           return `<div id="lc-${v.id}" onclick="toggleLate(${v.id})" style="
             cursor:pointer;background:#0b0b1a;border:2px solid #222;border-radius:12px;
             padding:12px 6px;text-align:center;transition:all .15s;" data-name="${label}">
-            <div style="font-size:26px;margin-bottom:4px;">${v.avatar||'🧑'}</div>
+            <div style="font-size:26px;margin-bottom:4px;">${v.photo_url ? `<img src="${v.photo_url}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">` : (v.avatar||'🧑')}</div>
             <div style="font-size:12px;font-weight:700;color:#bbb;">${label}</div>
           </div>`;
         }).join('');
