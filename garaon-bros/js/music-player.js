@@ -45,7 +45,7 @@
 
     if (/^[a-zA-Z0-9]{22}$/.test(id) && !forceType) { type = 'playlist'; }
 
-    return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`;
+    return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0&autoplay=1`;
   }
 
   /* ── DOM 삽입 ── */
