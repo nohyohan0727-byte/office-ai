@@ -34,20 +34,16 @@
   function saveState () { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
   /* ── embed URL 생성 ── */
-  function embedUrl (spotifyUri) {
-    // playlist, album, track 등 다양한 형식 지원
-    let type = 'playlist', id = spotifyUri;
+  function embedUrl (spotifyUri, forceType) {
+    let type = forceType || 'playlist', id = spotifyUri;
 
-    // open.spotify.com URL
     const urlMatch = spotifyUri.match(/open\.spotify\.com\/(playlist|album|track|episode)\/([a-zA-Z0-9]+)/);
-    if (urlMatch) { type = urlMatch[1]; id = urlMatch[2]; }
+    if (urlMatch) { type = forceType || urlMatch[1]; id = urlMatch[2]; }
 
-    // spotify:playlist:xxx URI
     const uriMatch = spotifyUri.match(/spotify:(playlist|album|track):([a-zA-Z0-9]+)/);
-    if (uriMatch) { type = uriMatch[1]; id = uriMatch[2]; }
+    if (uriMatch) { type = forceType || uriMatch[1]; id = uriMatch[2]; }
 
-    // 이미 ID만 들어온 경우 playlist로 간주
-    if (/^[a-zA-Z0-9]{22}$/.test(id)) { type = 'playlist'; }
+    if (/^[a-zA-Z0-9]{22}$/.test(id) && !forceType) { type = 'playlist'; }
 
     return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`;
   }
@@ -59,7 +55,7 @@
     bindEvents();
     // 이전 세션 복원
     if (state.currentId) {
-      setPlaying(state.currentId, state.currentName || '', state.currentUri || '', false);
+      setPlaying(state.currentId, state.currentName || '', state.currentUri || '', false, state.currentType || 'playlist');
     }
   }
 
@@ -131,19 +127,18 @@
 }
 .mp-search-btn:disabled { opacity: .4; cursor: default; }
 
-/* URL 입력 */
-.mp-url-row { display: flex; gap: 8px; margin-bottom: 14px; }
-.mp-url-input {
-  flex: 1; background: #151526; border: 1px solid #333;
-  color: #eee; padding: 10px 14px; border-radius: 10px;
-  font-size: 13px; font-family: 'Nunito', sans-serif; outline: none;
+/* 카테고리 탭 */
+.mp-category-label {
+  font-size: 10px; color: #888; font-weight: 700;
+  padding: 6px 0 4px; margin-top: 8px; letter-spacing: .03em;
+  border-bottom: 1px solid #222; display: flex; align-items: center; gap: 6px;
 }
-.mp-url-input:focus { border-color: #00ff88; }
-.mp-url-btn {
-  background: #00ff88; color: #0b0b1a; border: none;
-  border-radius: 10px; padding: 0 16px; font-weight: 900;
-  font-size: 13px; cursor: pointer; white-space: nowrap;
+.mp-category-label span { font-size: 13px; }
+.mp-result-type {
+  font-size: 9px; color: #00d4ff; background: #00d4ff18;
+  padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0;
 }
+.mp-result-sub { font-size: 10px; color: #666; margin-top: 1px; }
 
 /* 프리셋 그리드 */
 .mp-preset-grid {
@@ -190,9 +185,13 @@
   max-height: 0; overflow: hidden; transition: max-height .3s ease;
   background: #0b0b1a;
 }
-#gb-music-embed.open { max-height: 160px; }
+#gb-music-embed.open { max-height: 380px; }
+#gb-music-embed.open.compact { max-height: 160px; }
 #gb-music-embed iframe {
   width: 100%; height: 152px; border: none; border-radius: 0;
+}
+#gb-music-embed.open:not(.compact) iframe {
+  height: 352px;
 }
 
 /* ── body 여백 ── */
@@ -209,7 +208,8 @@ body { padding-top: 44px !important; }
     bar.innerHTML = `
       <span class="m-icon">🎵</span>
       <span class="m-name" id="m-track-name">음악을 선택하세요</span>
-      <button class="m-btn" id="m-btn-embed" title="플레이어 열기/닫기">🎵</button>
+      <button class="m-btn" id="m-btn-embed" title="미니 플레이어">🎵</button>
+      <button class="m-btn" id="m-btn-list" title="재생목록 보기">📋</button>
       <button class="m-btn" id="m-btn-stop" title="정지">⏹</button>
       <button class="m-btn" id="m-btn-panel" title="검색/선택">🔍</button>
     `;
@@ -224,16 +224,10 @@ body { padding-top: 44px !important; }
     panel.innerHTML = `
       <div class="mp-section-title">🔍 SPOTIFY 검색</div>
       <div class="mp-search-row">
-        <input class="mp-search-input" id="mp-search-q" placeholder="플레이리스트 검색..." />
+        <input class="mp-search-input" id="mp-search-q" placeholder="곡, 앨범, 플레이리스트 검색..." />
         <button class="mp-search-btn" id="mp-search-go">검색</button>
       </div>
       <div id="mp-search-results" class="mp-results"></div>
-
-      <div class="mp-section-title">🔗 SPOTIFY URL 붙여넣기</div>
-      <div class="mp-url-row">
-        <input class="mp-url-input" id="mp-url-input" placeholder="https://open.spotify.com/playlist/..." />
-        <button class="mp-url-btn" id="mp-url-go">재생</button>
-      </div>
 
       <div class="mp-section-title">🎲 추천 플레이리스트</div>
       <div class="mp-preset-grid" id="mp-preset-grid"></div>
@@ -268,13 +262,35 @@ body { padding-top: 44px !important; }
       document.getElementById('m-btn-panel').classList.toggle('on', panelOpen);
     };
 
-    // embed 토글
+    // embed 미니 토글 (compact — 작은 플레이어)
     document.getElementById('m-btn-embed').onclick = () => {
       if (!iframePlaying) return;
       const embedEl = document.getElementById('gb-music-embed');
       const panel = document.getElementById('gb-music-panel');
-      embedEl.classList.toggle('open');
-      if (embedEl.classList.contains('open')) { panel.classList.remove('open'); panelOpen = false; }
+      // 이미 compact으로 열려 있으면 닫기
+      if (embedEl.classList.contains('open') && embedEl.classList.contains('compact')) {
+        embedEl.classList.remove('open', 'compact');
+        return;
+      }
+      embedEl.classList.add('open', 'compact');
+      panel.classList.remove('open'); panelOpen = false;
+      document.getElementById('m-btn-panel').classList.remove('on');
+    };
+
+    // 재생목록 보기 (풀 사이즈 embed — 트랙리스트 포함)
+    document.getElementById('m-btn-list').onclick = () => {
+      if (!iframePlaying) return;
+      const embedEl = document.getElementById('gb-music-embed');
+      const panel = document.getElementById('gb-music-panel');
+      // 이미 풀 사이즈로 열려 있으면 닫기
+      if (embedEl.classList.contains('open') && !embedEl.classList.contains('compact')) {
+        embedEl.classList.remove('open');
+        return;
+      }
+      embedEl.classList.add('open');
+      embedEl.classList.remove('compact');
+      panel.classList.remove('open'); panelOpen = false;
+      document.getElementById('m-btn-panel').classList.remove('on');
     };
 
     // 정지
@@ -283,17 +299,14 @@ body { padding-top: 44px !important; }
     // 검색
     document.getElementById('mp-search-go').onclick = doSearch;
     document.getElementById('mp-search-q').onkeydown = e => { if (e.key === 'Enter') doSearch(); };
-
-    // URL 재생
-    document.getElementById('mp-url-go').onclick = playFromUrl;
-    document.getElementById('mp-url-input').onkeydown = e => { if (e.key === 'Enter') playFromUrl(); };
   }
 
   /* ── 재생 ── */
-  function setPlaying (id, name, uri, autoShow) {
+  function setPlaying (id, name, uri, autoShow, type) {
     state.currentId   = id;
     state.currentName = name;
     state.currentUri  = uri;
+    state.currentType = type || 'playlist';
     saveState();
 
     iframePlaying = true;
@@ -303,9 +316,16 @@ body { padding-top: 44px !important; }
 
     // iframe
     const embedEl = document.getElementById('gb-music-embed');
-    embedEl.innerHTML = `<iframe src="${embedUrl(uri || id)}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+    const isTrack = (type === 'track');
+    embedEl.innerHTML = `<iframe src="${embedUrl(uri || id, type)}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
     if (autoShow) {
       embedEl.classList.add('open');
+      // 곡은 compact, 앨범/플레이리스트는 풀 사이즈(재생목록 보이게)
+      if (isTrack) {
+        embedEl.classList.add('compact');
+      } else {
+        embedEl.classList.remove('compact');
+      }
       document.getElementById('gb-music-panel').classList.remove('open');
       panelOpen = false;
       document.getElementById('m-btn-panel').classList.remove('on');
@@ -332,22 +352,7 @@ body { padding-top: 44px !important; }
     document.querySelectorAll('.mp-preset').forEach(el => el.classList.remove('active'));
   }
 
-  /* ── URL 재생 ── */
-  function playFromUrl () {
-    const input = document.getElementById('mp-url-input');
-    const url = input.value.trim();
-    if (!url) return;
-    // Spotify URL/URI 에서 이름 추출 시도
-    const match = url.match(/\/(playlist|album|track)\/([a-zA-Z0-9]+)/);
-    const type = match ? match[1] : 'playlist';
-    const name = type === 'playlist' ? '사용자 플레이리스트'
-               : type === 'album'   ? '사용자 앨범'
-               : '사용자 트랙';
-    setPlaying(match ? match[2] : url, name, url, true);
-    input.value = '';
-  }
-
-  /* ── Spotify 검색 (n8n 프록시) ── */
+  /* ── Spotify 검색 (n8n 프록시) — 곡 + 앨범 + 플레이리스트 ── */
   async function doSearch () {
     const q = document.getElementById('mp-search-q').value.trim();
     if (!q) return;
@@ -361,37 +366,90 @@ body { padding-top: 44px !important; }
       const res = await fetch(SPOTIFY_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, type: 'playlist', limit: 8 }),
+        body: JSON.stringify({ query: q, type: 'track,album,playlist', limit: 8 }),
       });
       if (!res.ok) throw new Error('검색 실패');
       const data = await res.json();
 
-      const items = data.playlists || data.items || data || [];
-      if (!items.length) {
+      const tracks    = data.tracks    || [];
+      const albums    = data.albums    || [];
+      const playlists = data.playlists || [];
+
+      if (!tracks.length && !albums.length && !playlists.length) {
         results.innerHTML = '<div class="mp-loading">결과가 없습니다</div>';
         return;
       }
 
       results.innerHTML = '';
-      items.forEach(item => {
-        const el = document.createElement('div');
-        el.className = 'mp-result-item';
-        const img = (item.images && item.images[0] && item.images[0].url) || '';
-        const name = item.name || '알 수 없음';
-        const owner = (item.owner && item.owner.display_name) || '';
-        const id = item.id || '';
-        el.innerHTML = `
-          ${img ? `<img class="mp-result-img" src="${img}" alt="">` : '<div class="mp-result-img"></div>'}
-          <div class="mp-result-info">
-            <div class="mp-result-name">${name}</div>
-            <div class="mp-result-owner">${owner}</div>
-          </div>
-        `;
-        el.onclick = () => setPlaying(id, name, `spotify:playlist:${id}`, true);
-        results.appendChild(el);
-      });
+
+      // 곡 결과
+      if (tracks.length) {
+        results.innerHTML += '<div class="mp-category-label"><span>🎵</span> 곡</div>';
+        tracks.forEach(t => {
+          const el = document.createElement('div');
+          el.className = 'mp-result-item';
+          const img = (t.images && t.images[0] && t.images[0].url) || '';
+          const dur = t.duration_ms ? Math.floor(t.duration_ms / 60000) + ':' + String(Math.floor((t.duration_ms % 60000) / 1000)).padStart(2, '0') : '';
+          el.innerHTML = `
+            ${img ? `<img class="mp-result-img" src="${img}" alt="">` : '<div class="mp-result-img"></div>'}
+            <div class="mp-result-info">
+              <div class="mp-result-name">${t.name || '알 수 없음'}</div>
+              <div class="mp-result-owner">${t.artist || ''}${dur ? ' · ' + dur : ''}</div>
+            </div>
+            <span class="mp-result-type">곡</span>
+          `;
+          el.onclick = () => setPlaying(t.id, t.name, `spotify:track:${t.id}`, true, 'track');
+          results.appendChild(el);
+        });
+      }
+
+      // 앨범 결과
+      if (albums.length) {
+        const label = document.createElement('div');
+        label.className = 'mp-category-label';
+        label.innerHTML = '<span>💿</span> 앨범';
+        results.appendChild(label);
+        albums.forEach(a => {
+          const el = document.createElement('div');
+          el.className = 'mp-result-item';
+          const img = (a.images && a.images[0] && a.images[0].url) || '';
+          el.innerHTML = `
+            ${img ? `<img class="mp-result-img" src="${img}" alt="">` : '<div class="mp-result-img"></div>'}
+            <div class="mp-result-info">
+              <div class="mp-result-name">${a.name || '알 수 없음'}</div>
+              <div class="mp-result-owner">${a.artist || ''}${a.total_tracks ? ' · ' + a.total_tracks + '곡' : ''}</div>
+            </div>
+            <span class="mp-result-type">앨범</span>
+          `;
+          el.onclick = () => setPlaying(a.id, a.name, `spotify:album:${a.id}`, true, 'album');
+          results.appendChild(el);
+        });
+      }
+
+      // 플레이리스트 결과
+      if (playlists.length) {
+        const label = document.createElement('div');
+        label.className = 'mp-category-label';
+        label.innerHTML = '<span>📂</span> 플레이리스트';
+        results.appendChild(label);
+        playlists.forEach(p => {
+          const el = document.createElement('div');
+          el.className = 'mp-result-item';
+          const img = (p.images && p.images[0] && p.images[0].url) || '';
+          el.innerHTML = `
+            ${img ? `<img class="mp-result-img" src="${img}" alt="">` : '<div class="mp-result-img"></div>'}
+            <div class="mp-result-info">
+              <div class="mp-result-name">${p.name || '알 수 없음'}</div>
+              <div class="mp-result-owner">${p.owner || ''}</div>
+            </div>
+            <span class="mp-result-type">리스트</span>
+          `;
+          el.onclick = () => setPlaying(p.id, p.name, `spotify:playlist:${p.id}`, true, 'playlist');
+          results.appendChild(el);
+        });
+      }
     } catch (err) {
-      results.innerHTML = `<div class="mp-error">검색 오류: ${err.message}<br><small>Spotify URL을 직접 붙여넣어 보세요</small></div>`;
+      results.innerHTML = `<div class="mp-error">검색 오류: ${err.message}</div>`;
     } finally {
       btn.disabled = false;
     }
