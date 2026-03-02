@@ -1073,8 +1073,9 @@
         const today = new Date().toISOString().slice(0, 10);
         const { count, error } = await db.from('call_history')
           .select('*', { count: 'exact', head: true })
+          .eq('item_label', label)
           .eq('visit_date', today);
-        console.log('[고릴라] today:', today, 'count:', count, 'error:', error);
+        console.log('[고릴라] label:', label, 'today:', today, 'count:', count, 'error:', error);
         if (error) { console.error('[고릴라] 조회 오류:', error); return 0; }
         return count || 0;
       } catch(e) { console.error('[고릴라] 예외:', e); return 0; }
@@ -1130,9 +1131,12 @@
         try {
           const vdate = new Date().toISOString().slice(0, 10);
           const rows = entries.map(({ item, qty }) => ({
+              item_label:  item.label,
+              item_emoji:  item.emoji || '📦',
               qty,
               visit_date:  vdate,
               called_at:   new Date().toISOString(),
+              note: (item.label === '기타' || item.id === 'etc') ? customText || null : null,
             }));
           console.log('[호출] insert 데이터:', rows);
           const result = await db.from('call_history').insert(rows);
