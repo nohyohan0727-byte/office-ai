@@ -9,6 +9,7 @@ const LK_CONFIG = {
   WEBHOOKS: {
     REGISTER:         '/launchkit-register',
     LOGIN:            '/launchkit-login',
+    CREATE_PROJECT:   '/launchkit-create-project',
     INTERVIEW:        '/launchkit-interview',
     GENERATE_IR:      '/launchkit-generate-ir',
     GENERATE_LANDING: '/launchkit-generate-landing',

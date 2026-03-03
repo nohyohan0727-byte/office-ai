@@ -279,18 +279,36 @@ async function startInterview() {
   addMsg('system', `선택하신 유형: <strong>${getTypeName(selectedType)}</strong><br>AI가 필요한 정보를 질문할 거예요. 편하게 답변해주세요!`);
   showTyping();
   try {
-    const res = await lkFetch(LK_CONFIG.WEBHOOKS.INTERVIEW, {
-      action: 'start',
+    // 1. 프로젝트 먼저 생성
+    const createRes = await lkFetch(LK_CONFIG.WEBHOOKS.CREATE_PROJECT, {
       project_type: selectedType,
       title,
     });
-    projectId = res.project_id;
+    if (!createRes.project_id) throw new Error(createRes.message || '프로젝트 생성 실패');
+    projectId = createRes.project_id;
+
+    // 2. URL 업데이트 (새로고침 시 복구용)
+    history.replaceState(null, '', '?id=' + projectId);
+
     hideTyping();
-    addMsg('ai', res.message);
-  } catch {
+    // 3. 유형별 첫 AI 안내 메시지
+    addMsg('ai', getFirstMessage(selectedType));
+  } catch (err) {
     hideTyping();
-    addMsg('ai', '안녕하세요! 새로운 프로젝트를 시작해볼게요. 회사명 또는 서비스명을 알려주세요.');
+    addMsg('ai', '프로젝트 생성 중 오류가 발생했습니다. 새로고침 후 다시 시도해주세요.');
   }
+}
+
+function getFirstMessage(type) {
+  const greet = {
+    ir_simple:               '안녕하세요! 간단 IR 자료 작성을 도와드릴게요.',
+    ir_detail:               '안녕하세요! 상세 IR 자료 작성을 도와드릴게요.',
+    landing_simple:          '안녕하세요! 간단 랜딩페이지 제작을 도와드릴게요.',
+    landing_detail:          '안녕하세요! 상세 랜딩페이지 제작을 도와드릴게요.',
+    'ir_detail+landing_detail': '안녕하세요! IR 자료와 랜딩페이지를 함께 제작해드릴게요.',
+  };
+  return (greet[type] || '안녕하세요! 새 프로젝트를 시작해볼게요.') +
+    '\n먼저 회사명 또는 서비스명을 알려주세요.';
 }
 
 async function sendMsg() {

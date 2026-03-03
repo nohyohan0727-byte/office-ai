@@ -251,9 +251,11 @@ async function loadProjects() {
 }
 
 function renderProjects(projects, stats) {
+  const irCount      = projects.filter(p => p.ir_html).length;
+  const landingCount = projects.filter(p => p.landing_html).length;
   document.getElementById('stat-total').textContent   = stats.total   ?? projects.length;
-  document.getElementById('stat-ir').textContent      = stats.ir      ?? '-';
-  document.getElementById('stat-landing').textContent = stats.landing ?? '-';
+  document.getElementById('stat-ir').textContent      = stats.ir      ?? irCount;
+  document.getElementById('stat-landing').textContent = stats.landing ?? landingCount;
 
   const area = document.getElementById('projects-area');
   if (!projects.length) {
