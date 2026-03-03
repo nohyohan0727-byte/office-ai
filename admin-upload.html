@@ -499,11 +499,6 @@
 
   // ── 로그인 ────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
-    const savedKey = sessionStorage.getItem('admin_key');
-    if (savedKey) {
-      ADMIN_KEY = savedKey;
-      showMain();
-    }
     document.getElementById('pwInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
     });
@@ -531,9 +526,8 @@
         throw new Error('invalid');
       }
 
-      // 성공 (200 또는 기타) → 키 저장 후 진입
+      // 성공 (200 또는 기타) → 진입 (키는 세션에 저장하지 않음)
       ADMIN_KEY = key;
-      sessionStorage.setItem('admin_key', key);
       showMain();
     } catch (e) {
       errorEl.textContent = '관리자 키가 올바르지 않습니다.';
@@ -548,7 +542,6 @@
 
   function doLogout() {
     ADMIN_KEY = '';
-    sessionStorage.removeItem('admin_key');
     document.getElementById('mainScreen').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('pwInput').value = '';
