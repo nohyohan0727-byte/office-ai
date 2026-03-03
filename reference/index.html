@@ -390,30 +390,10 @@ tailwind.config = {
           <li class="flex items-start gap-2.5 text-sm text-gray-700 font-medium"><svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>전담 매니저 배정</li>
         </ul>
 
-        <!-- 신규 모듈 프리뷰 -->
-        <div class="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100 rounded-xl p-4 mb-4">
-          <p class="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2.5">구독 시 무료로 추가되는 기능들</p>
-          <div class="space-y-2">
-            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📊</span><span>AI 자동 보고서 — 주간/월간 리포트 원클릭 생성</span></div>
-            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📧</span><span>이메일 자동 분류 & AI 회신 초안 작성</span></div>
-            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📝</span><span>전자 결재 & 계약서 AI 검토 시스템</span></div>
-            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📅</span><span>AI 일정 관리 — 회의 자동 조율 & 리마인더</span></div>
-            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📈</span><span>매출/비용 데이터 자동 분석 대시보드</span></div>
-            <div class="flex items-center gap-2 text-xs text-gray-400"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">✨</span><span>그 외 업데이트되는 모든 편의 기능...</span></div>
-          </div>
-        </div>
-
-        <!-- 희소성 메시지 -->
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
-          <p class="text-xs sm:text-sm text-amber-800 font-semibold text-center leading-relaxed">
-            지금 구독하면 위 기능이 출시될 때<br class="sm:hidden">
-            <strong>추가 결제 없이 자동 활성화</strong>됩니다
-          </p>
-        </div>
-
-        <a href="#contact" class="block text-center py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 transition shadow-lg shadow-blue-600/25">
+        <a href="#contact" class="block text-center py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 transition shadow-lg shadow-blue-600/25 mb-3">
           통합 구독 시작하기
         </a>
+        <p class="text-[11px] text-center text-gray-400">아래 추가 기능이 모두 포함됩니다 ↓</p>
       </div>
 
       <!-- Enterprise -->
@@ -474,6 +454,80 @@ tailwind.config = {
       </div>
       <p class="text-center text-xs text-gray-400 mt-4">개별 구매 총합 <span class="line-through">₩156,000/월</span> → 통합 구독 시 <strong class="text-blue-600">₩89,000/월</strong></p>
     </div>
+
+    <!-- ★ Professional 이상 구독 시 제공되는 추가 기능 카드 ★ -->
+    <div class="mt-14 relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-blue-600/5 rounded-3xl"></div>
+      <div class="relative bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-8 shadow-lg shadow-blue-100/50">
+        <!-- 헤더 -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs font-bold shadow-md">Professional+</span>
+            <span class="px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">얼리버드 전용</span>
+          </div>
+          <h3 class="text-lg sm:text-xl font-extrabold text-gray-900">구독 즉시 + 향후 무료 제공 기능</h3>
+        </div>
+        <p class="text-sm text-gray-500 mb-6">Professional 이상 구독 고객에게는 아래 기능이 출시되는 즉시, <strong class="text-blue-600">추가 결제 없이 자동 활성화</strong>됩니다.</p>
+
+        <!-- 기능 카드 그리드 -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div class="bg-gradient-to-br from-blue-50 to-blue-50/50 rounded-xl p-4 border border-blue-100">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-base">📊</span>
+              <span class="font-bold text-sm text-gray-900">AI 자동 보고서</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">주간·월간 리포트를 AI가 자동 생성. 데이터를 모으고 정리하는 시간을 0으로 만듭니다.</p>
+          </div>
+          <div class="bg-gradient-to-br from-purple-50 to-purple-50/50 rounded-xl p-4 border border-purple-100">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-base">📧</span>
+              <span class="font-bold text-sm text-gray-900">이메일 AI 분류 & 회신</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">수신 메일을 자동 분류하고, 맥락에 맞는 회신 초안을 AI가 작성해줍니다.</p>
+          </div>
+          <div class="bg-gradient-to-br from-emerald-50 to-emerald-50/50 rounded-xl p-4 border border-emerald-100">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-base">📝</span>
+              <span class="font-bold text-sm text-gray-900">전자 결재 & 계약서 검토</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">결재 라인 자동 설정. 계약서의 위험 조항을 AI가 사전에 검토해줍니다.</p>
+          </div>
+          <div class="bg-gradient-to-br from-amber-50 to-amber-50/50 rounded-xl p-4 border border-amber-100">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-base">📅</span>
+              <span class="font-bold text-sm text-gray-900">AI 일정 관리</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">참석자 일정을 분석해 최적 회의 시간을 자동 조율. 리마인더까지 알아서 보냅니다.</p>
+          </div>
+          <div class="bg-gradient-to-br from-rose-50 to-rose-50/50 rounded-xl p-4 border border-rose-100">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-base">📈</span>
+              <span class="font-bold text-sm text-gray-900">매출·비용 분석 대시보드</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">엑셀 없이 매출 추이와 비용 구조를 AI가 시각화. 이상 징후 자동 알림.</p>
+          </div>
+          <div class="bg-gradient-to-br from-gray-50 to-gray-50/50 rounded-xl p-4 border border-dashed border-gray-200">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-base">✨</span>
+              <span class="font-bold text-sm text-gray-400">계속 추가됩니다</span>
+            </div>
+            <p class="text-xs text-gray-400 leading-relaxed">재고 관리, 근태 자동화, AI 번역 등 업무 편의 기능이 지속적으로 업데이트됩니다.</p>
+          </div>
+        </div>
+
+        <!-- 하단 CTA -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p class="text-sm font-bold text-amber-900">얼리버드 구독자는 위 기능을 평생 무료로 이용합니다</p>
+            <p class="text-xs text-amber-700 mt-0.5">지금 가입하면, 개별 출시가 ₩39,000/월인 기능도 추가 비용 0원</p>
+          </div>
+          <a href="#contact" class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-sm font-bold hover:opacity-90 transition shadow-md">
+            통합 구독 시작 →
+          </a>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
