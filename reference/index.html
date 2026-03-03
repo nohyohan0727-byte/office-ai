@@ -291,6 +291,32 @@ tailwind.config = {
         <p class="text-sm text-gray-500 leading-relaxed">외근 중에도 실시간 업무 현황을 확인하고, 중요 문서 승인과 채팅 알림을 모바일에서 바로 처리합니다.</p>
       </div>
     </div>
+
+    <!-- 추가 예정 기능 프리뷰 -->
+    <div class="mt-10 bg-white rounded-2xl border border-dashed border-blue-200 p-6">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+        <span class="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold">Professional 구독 전용</span>
+        <p class="text-sm text-gray-500">로드맵 이후에도 계속 추가되는 편의 기능</p>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div class="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5">
+          <span class="text-sm">📊</span>AI 자동 보고서
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5">
+          <span class="text-sm">📧</span>이메일 AI 분류
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5">
+          <span class="text-sm">📝</span>전자 결재 시스템
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5">
+          <span class="text-sm">📅</span>AI 일정 관리
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5">
+          <span class="text-sm">📈</span>매출 분석 대시보드
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-3">통합 구독 고객은 위 기능이 출시되는 즉시, 추가 비용 없이 자동 활성화됩니다.</p>
+    </div>
   </div>
 </section>
 
@@ -364,11 +390,24 @@ tailwind.config = {
           <li class="flex items-start gap-2.5 text-sm text-gray-700 font-medium"><svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>전담 매니저 배정</li>
         </ul>
 
+        <!-- 신규 모듈 프리뷰 -->
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-100 rounded-xl p-4 mb-4">
+          <p class="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2.5">구독 시 무료로 추가되는 기능들</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📊</span><span>AI 자동 보고서 — 주간/월간 리포트 원클릭 생성</span></div>
+            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📧</span><span>이메일 자동 분류 & AI 회신 초안 작성</span></div>
+            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📝</span><span>전자 결재 & 계약서 AI 검토 시스템</span></div>
+            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📅</span><span>AI 일정 관리 — 회의 자동 조율 & 리마인더</span></div>
+            <div class="flex items-center gap-2 text-xs text-gray-700"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">📈</span><span>매출/비용 데이터 자동 분석 대시보드</span></div>
+            <div class="flex items-center gap-2 text-xs text-gray-400"><span class="w-5 h-5 rounded-md bg-white flex items-center justify-center text-[10px] shadow-sm shrink-0">✨</span><span>그 외 업데이트되는 모든 편의 기능...</span></div>
+          </div>
+        </div>
+
         <!-- 희소성 메시지 -->
         <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
           <p class="text-xs sm:text-sm text-amber-800 font-semibold text-center leading-relaxed">
-            지금 통합 구독 시, 내년 출시될<br class="sm:hidden">
-            <strong>'AI 자동 보고서'</strong> 모듈까지<br class="sm:hidden"> 무료로 선점하세요
+            지금 구독하면 위 기능이 출시될 때<br class="sm:hidden">
+            <strong>추가 결제 없이 자동 활성화</strong>됩니다
           </p>
         </div>
 
@@ -445,10 +484,23 @@ tailwind.config = {
     <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">
       지금 시작하면, 앞으로의 모든 업데이트가<br class="hidden sm:block"> 무료입니다
     </h2>
-    <p class="text-sm sm:text-base text-blue-200 leading-relaxed mb-8">
-      얼리버드 통합 구독 고객에게는 CRM, AI 회의록, 사내 규정 검색,<br class="hidden sm:block">
-      모바일 대시보드 등 향후 출시되는 모든 모듈이 추가 비용 없이 제공됩니다.
+    <p class="text-sm sm:text-base text-blue-200 leading-relaxed mb-6">
+      얼리버드 통합 구독 고객에게는 향후 출시되는<br class="hidden sm:block">
+      모든 업무 편의 모듈이 추가 비용 없이 제공됩니다.
     </p>
+    <!-- 구체적 기능 나열 -->
+    <div class="flex flex-wrap justify-center gap-2 mb-8 max-w-2xl mx-auto">
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">CRM 고객 관리</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">AI 회의록 요약</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">사내 규정 검색</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">모바일 대시보드</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">AI 자동 보고서</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">이메일 AI 분류</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">전자 결재</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">AI 일정 관리</span>
+      <span class="px-3 py-1.5 rounded-full bg-white/10 text-blue-100 text-xs font-medium border border-white/10">매출 분석</span>
+      <span class="px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">+ 모든 신규 기능</span>
+    </div>
     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 text-amber-300 text-xs sm:text-sm font-semibold mb-8 animate-pulse">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       얼리버드 혜택은 한정 수량으로 제공됩니다
