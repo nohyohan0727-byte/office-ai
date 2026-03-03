@@ -1,11 +1,11 @@
 // LaunchKit 설정
 const LK_CONFIG = {
   // Supabase (garaon-bros 기존 프로젝트 공유 - lk_ 테이블 사용)
-  SUPABASE_URL:  'https://mkmxhmoocqnkltjxdfbm.supabase.co',
-  SUPABASE_ANON: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8',
+  SUPABASE_URL:  LK_ENV.SUPABASE_URL,
+  SUPABASE_ANON: LK_ENV.SUPABASE_ANON,
 
   // n8n 웹훅 엔드포인트
-  WEBHOOK_BASE: 'https://jknetworks.app.n8n.cloud/webhook',
+  WEBHOOK_BASE: LK_ENV.WEBHOOK_BASE,
   WEBHOOKS: {
     REGISTER:         '/launchkit-register',
     LOGIN:            '/launchkit-login',

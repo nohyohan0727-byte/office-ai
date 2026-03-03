@@ -10,6 +10,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
 
   <!--
@@ -189,12 +190,12 @@
     /* =========================================================
        ⚙️  SUPABASE 설정 — 여기에 본인 값을 입력하세요
        ========================================================= */
-    const SUPABASE_URL      = 'https://mkmxhmoocqnkltjxdfbm.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8';
+    const SUPABASE_URL      = ENV.SUPABASE_URL;
+    const SUPABASE_ANON_KEY = ENV.SUPABASE_ANON;
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     /* ---- 상수 ---- */
-    const APP_PASSWORD = '!20150910!';
+    const APP_PASSWORD = ENV.APP_PASSWORD;
 
     const PRESET_PLAYERS = [
       { name: '가온', emoji: '⚔️', role: '사령관',  color: '#00ff88', isAdmin: true,  isRaon: false },

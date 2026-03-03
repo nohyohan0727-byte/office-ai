@@ -6,12 +6,16 @@ Run: python create_workflows.py
 import json, urllib.request, urllib.error, uuid, sys, io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-N8N_URL = "https://jknetworks.app.n8n.cloud"
-N8N_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMTM4NWNiNC1mZmVkLTQ5YmItYjdlYi1iZWZkMGZmZWEwOGUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzcwNjk1NTY2LCJleHAiOjE3Nzg0MjUyMDB9.uIz72k9V_t5Z-AX3airrdYhkWDZLBdxv4cOnUmGoRd8"
+import os
+N8N_URL = os.environ.get("N8N_CLOUD_URL", "https://jknetworks.app.n8n.cloud")
+N8N_KEY = os.environ.get("N8N_API_KEY", "")  # .env 파일에서 N8N_API_KEY 설정 필요
+if not N8N_KEY:
+    print("ERROR: N8N_API_KEY 환경변수가 설정되지 않았습니다. .env 파일을 확인하세요.")
+    sys.exit(1)
 
 # Supabase (garaon-bros 기존 프로젝트 공유)
-SB_URL = "https://mkmxhmoocqnkltjxdfbm.supabase.co"
-SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8"
+SB_URL = os.environ.get("SUPABASE_URL", "https://mkmxhmoocqnkltjxdfbm.supabase.co")
+SB_KEY = os.environ.get("SUPABASE_ANON_KEY", "")  # .env 파일에서 설정
 
 # OpenAI credential (n8n에 저장된 기존 크리덴셜)
 OPENAI_CRED_ID   = "3Ce5sE9uZ6LPb2sk"

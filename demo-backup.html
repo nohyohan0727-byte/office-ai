@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KS AI 체험 - Office AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.4);
+      --gradient-main: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --text-white: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-white);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .demo-header {
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      backdrop-filter: blur(10px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      color: var(--text-white);
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    .header-logo {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .header-logo span { color: var(--primary); }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .ai-avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--gradient-main);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .header-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .header-sub {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .status-text {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    /* Session bar */
+    .session-bar {
+      background: rgba(30, 41, 59, 0.8);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .session-bar label {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .session-bar input {
+      flex: 1;
+      padding: 5px 10px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--text-white);
+      max-width: 200px;
+    }
+
+    .session-bar input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .session-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    /* Messages */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    /* Welcome */
+    .welcome-card {
+      margin: auto;
+      text-align: center;
+      max-width: 480px;
+      padding: 2rem;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .welcome-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--gradient-main);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 1rem;
+    }
+
+    .welcome-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-card p {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 1.2rem;
+    }
+
+    .sample-questions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .sample-q {
+      padding: 0.6rem 1rem;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .sample-q:hover {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--text-white);
+      border-color: var(--primary);
+    }
+
+    /* Message bubbles */
+    .message {
+      display: flex;
+      flex-direction: column;
+      max-width: 78%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .msg-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      padding: 0 4px;
+    }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.65;
+      word-break: break-word;
+    }
+
+    .message.user .bubble {
+      background: var(--gradient-main);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot .bubble {
+      background: var(--bg-card);
+      color: var(--text-white);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .message.error .bubble {
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* ── Formatted bot response ── */
+    .resp-section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-white);
+      margin: 1rem 0 0.5rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid rgba(59,130,246,0.2);
+    }
+    .resp-section-header:first-child { margin-top: 0; }
+
+    .resp-dot {
+      color: var(--primary);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .resp-para {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.75;
+      margin: 0.6rem 0;
+      text-align: justify;
+    }
+    
+    /* Bot response 추가 스타일 */
+    .message.bot .bubble strong {
+      color: var(--text-white);
+      font-weight: 600;
+    }
+    
+    .message.bot .bubble br {
+      line-height: 1.8;
+    }
+    
+    /* 목록 항목 간격 개선 */
+    .message.bot .bubble div:not(:last-child) {
+      margin-bottom: 0.4rem;
+    }
+
+    .resp-list {
+      list-style: none;
+      margin: 0.3rem 0 0.3rem 0.2rem;
+    }
+
+    .resp-list li {
+      position: relative;
+      padding: 0.2rem 0 0.2rem 1.1rem;
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    .resp-list li::before {
+      content: '–';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .resp-refs {
+      margin-top: 0.9rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .bubble a {
+      color: #60a5fa;
+      word-break: break-all;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .bubble a:hover { color: var(--primary); }
+
+    .msg-meta {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .token-badge {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    /* Typing indicator */
+    .typing-wrap {
+      align-self: flex-start;
+    }
+
+    .typing {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* Input area */
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      background: rgba(15, 23, 42, 0.9);
+      flex-shrink: 0;
+    }
+
+    #messageInput {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-white);
+      resize: none;
+      height: 44px;
+      max-height: 120px;
+      overflow-y: auto;
+      transition: border-color 0.2s;
+    }
+
+    #messageInput::placeholder { color: var(--text-dim); }
+
+    #messageInput:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    #sendBtn {
+      background: var(--gradient-main);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    #sendBtn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    #sendBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #sendBtn svg { width: 18px; height: 18px; }
+
+    /* Disclaimer */
+    .disclaimer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 6px;
+      border-top: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.5);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="demo-header">
+    <div class="header-left">
+      <a href="index.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        메인으로
+      </a>
+      <div class="header-divider"></div>
+      <div class="header-logo">office-ai<span>.app</span></div>
+    </div>
+
+    <div class="header-center">
+      <div class="ai-avatar">🤖</div>
+      <div>
+        <div class="header-title">KS AI 어시스턴트</div>
+        <div class="header-sub">KS 인증 전문 AI · 무료 체험</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="status-indicator"></div>
+      <span class="status-text">온라인</span>
+    </div>
+  </header>
+
+  <!-- Session bar -->
+  <div class="session-bar">
+    <label>세션 ID</label>
+    <input type="text" id="sessionId" value="demo-001" placeholder="세션 ID">
+    <span class="session-hint">💡 같은 세션 ID를 사용하면 대화 내용이 유지됩니다</span>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+    <div class="welcome-card" id="welcomeCard">
+      <div class="welcome-icon">🤖</div>
+      <h3>KS 인증 AI에 오신 걸 환영합니다</h3>
+      <p>KS 인증 심사 규격, 준비 서류, 심사 주기 등<br>KS 관련 질문은 무엇이든 답변해 드립니다.</p>
+      <div class="sample-questions">
+        <button class="sample-q" onclick="askSample(this)">KS 인증 심사 주기가 어떻게 되나요?</button>
+        <button class="sample-q" onclick="askSample(this)">KS Q 8001 인증 취득에 필요한 서류는?</button>
+        <button class="sample-q" onclick="askSample(this)">KS 인증 갱신 절차를 알려주세요</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input area -->
+  <div class="input-area">
+    <textarea id="messageInput" placeholder="KS 인증에 관해 질문하세요... (Enter: 전송, Shift+Enter: 줄바꿈)"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+
+  <div class="disclaimer">
+    이 서비스는 체험용입니다 · KS 인증 관련 최종 판단은 전문가와 상담하세요
+  </div>
+
+<script>
+  const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/rag-chat";
+  const API_KEY = new URLSearchParams(location.search).get('key') || sessionStorage.getItem('rag_key') || '';
+
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  function askSample(btn) {
+    inputEl.value = btn.textContent;
+    sendMessage();
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatBotResponse(text) {
+    // HTML 이스케이프 처리
+    const escapeHtml = (str) => {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    };
+    
+    let formatted = escapeHtml(text);
+    
+    // 줄바꿈 처리
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    // 번호 목록 처리 (1. 2. 3. 등)
+    formatted = formatted.replace(/^(\d+\.\s)/gm, '<strong>$1</strong>');
+    
+    // 불릿 포인트 처리 (- 또는 • 시작)
+    formatted = formatted.replace(/^[-•]\s/gm, '<span style="color: var(--primary); font-weight: bold;">• </span>');
+    
+    // 강조 텍스트 처리 (**텍스트** 또는 __텍스트__)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--text-white);">$1</strong>');
+    formatted = formatted.replace(/__(.*?)__/g, '<strong style="color: var(--text-white);">$1</strong>');
+    
+    // 제목 처리 (### 제목)
+    formatted = formatted.replace(/^###\s(.+)$/gm, '<div class="resp-section-header"><span class="resp-dot">●</span>$1</div>');
+    formatted = formatted.replace(/^##\s(.+)$/gm, '<div class="resp-section-header"><span class="resp-dot">●</span>$1</div>');
+    
+    // URL 링크 처리
+    formatted = formatted.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
+    
+    // 단락 구분 (빈 줄로 구분된 텍스트를 단락으로 처리)
+    const paragraphs = formatted.split('<br><br>');
+    if (paragraphs.length > 1) {
+      formatted = paragraphs.map(p => p.trim() ? `<div class="resp-para">${p}</div>` : '').join('');
+    }
+    
+    return formatted;
+  }
+
+  function removeWelcome() {
+    const w = document.getElementById('welcomeCard');
+    if (w) w.remove();
+  }
+
+  function addMessage(text, type, tokensRemaining) {
+    removeWelcome();
+
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+
+    const label = document.createElement('div');
+    label.className = 'msg-label';
+    label.textContent = type === 'user' ? '나' : 'KS AI';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    
+    // AI 응답의 가독성을 위해 포맷팅 적용
+    if (type === 'bot') {
+      bubble.innerHTML = formatBotResponse(text);
+    } else {
+      bubble.textContent = text;
+    }
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    meta.textContent = getTime();
+
+    div.appendChild(label);
+    div.appendChild(bubble);
+    div.appendChild(meta);
+
+    if (type === 'bot' && tokensRemaining !== undefined) {
+      const badge = document.createElement('span');
+      badge.className = 'token-badge';
+      badge.textContent = `잔여 토큰: ${tokensRemaining.toLocaleString()}`;
+      div.appendChild(badge);
+    }
+
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    removeWelcome();
+    const wrap = document.createElement('div');
+    wrap.className = 'typing-wrap';
+    wrap.id = 'typing-indicator';
+    wrap.innerHTML = `<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById('typing-indicator');
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    const message = inputEl.value.trim();
+    const sessionId = document.getElementById('sessionId').value.trim() || 'demo-001';
+
+    if (!message) return;
+
+    inputEl.value = '';
+    sendBtn.disabled = true;
+
+    addMessage(message, 'user');
+    showTyping();
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: API_KEY, session_id: sessionId, message })
+      });
+
+      const data = await res.json();
+      removeTyping();
+
+      if (data.success) {
+        addMessage(data.response, 'bot', data.tokens_remaining);
+      } else {
+        addMessage(`오류: ${data.message}`, 'error');
+      }
+    } catch (err) {
+      removeTyping();
+      addMessage(`네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.`, 'error');
+    }
+
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+</script>
+</body>
+</html>

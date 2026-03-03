@@ -28,3 +28,18 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# === 보안: API 키 / 시크릿 ===
+.env
+.env.*
+!.env.example
+*.env
+
+# ENV 설정 파일 (실제 키 포함)
+**/js/env.js
+**/env.js
+!**/js/env.example.js
+!**/env.example.js
+
+# 스크립트 내 시크릿
+launchkit/n8n/create_workflows.py

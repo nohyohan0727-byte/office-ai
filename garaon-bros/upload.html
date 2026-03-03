@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>가라온 브로즈 — 사진 업로드</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/env.js"></script>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -57,8 +58,8 @@
   </div>
 
   <script>
-    const SB_URL  = 'https://mkmxhmoocqnkltjxdfbm.supabase.co';
-    const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8';
+    const SB_URL  = ENV.SUPABASE_URL;
+    const SB_ANON = ENV.SUPABASE_ANON;
     const db = supabase.createClient(SB_URL, SB_ANON);
     const TOKEN_EXPIRE_MIN = 5;
 
