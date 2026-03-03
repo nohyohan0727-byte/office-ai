@@ -1,566 +1,528 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JK Networks — 개발 레퍼런스</title>
-<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Office-AI Groupware — 기업 보안 AI 그룹웨어</title>
+<meta name="description" content="기업 문서가 외부로 유출되지 않는 RAG 기반 보안 AI 그룹웨어. 사내 문서 채팅, 워크스페이스, 실시간 데이터 관리를 하나로.">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Pretendard', 'system-ui', 'sans-serif'] },
+      colors: {
+        brand: { 50:'#eff6ff',100:'#dbeafe',200:'#bfdbfe',300:'#93c5fd',400:'#60a5fa',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a' }
+      },
+      animation: {
+        'glow': 'glow 2s ease-in-out infinite alternate',
+        'float': 'float 6s ease-in-out infinite',
+      },
+      keyframes: {
+        glow: { '0%': { boxShadow: '0 0 20px rgba(59,130,246,0.3)' }, '100%': { boxShadow: '0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(59,130,246,0.2)' } },
+        float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+      }
+    }
+  }
+}
+</script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f5f6fa;--white:#ffffff;--card:#ffffff;
-  --primary:#2563eb;--primary-light:#dbeafe;--primary-dark:#1d4ed8;
-  --green:#059669;--green-light:#d1fae5;
-  --purple:#7c3aed;--purple-light:#ede9fe;
-  --amber:#d97706;--amber-light:#fef3c7;
-  --slate:#475569;--slate-light:#f1f5f9;
-  --text:#1e293b;--text-sub:#64748b;--border:#e2e8f0;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 6px rgba(0,0,0,.05),0 2px 4px rgba(0,0,0,.04);
-  --shadow-lg:0 10px 25px rgba(0,0,0,.06),0 4px 10px rgba(0,0,0,.04);
-}
-body{
-  font-family:'Pretendard',system-ui,-apple-system,sans-serif;
-  background:var(--bg);color:var(--text);
-  min-height:100vh;padding:0 0 60px;
-  -webkit-font-smoothing:antialiased;
-}
-
-/* ── 헤더 ── */
-header{
-  background:var(--white);border-bottom:1px solid var(--border);
-  padding:0 40px;height:64px;display:flex;align-items:center;
-  justify-content:space-between;position:sticky;top:0;z-index:50;
-  box-shadow:var(--shadow);
-}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-mark{
-  width:36px;height:36px;background:var(--primary);border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:800;font-size:14px;letter-spacing:-.5px;
-}
-.logo-text{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px}
-.logo-sub{font-size:11px;color:var(--text-sub);margin-top:1px;font-weight:500}
-.header-right{display:flex;align-items:center;gap:12px}
-.header-badge{
-  background:var(--primary-light);color:var(--primary);
-  border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;
-}
-.header-contact{font-size:12px;color:var(--text-sub);font-weight:500}
-
-/* ── 히어로 ── */
-.hero{
-  text-align:center;padding:56px 40px 48px;
-  background:linear-gradient(180deg,var(--white) 0%,var(--bg) 100%);
-}
-.hero h1{font-size:32px;font-weight:800;color:var(--text);margin-bottom:12px;letter-spacing:-.5px}
-.hero h1 em{color:var(--primary);font-style:normal}
-.hero p{font-size:15px;color:var(--text-sub);line-height:1.8;max-width:540px;margin:0 auto}
-.hero-stats{
-  display:flex;justify-content:center;gap:40px;margin-top:28px;
-}
-.hero-stat{text-align:center}
-.hero-stat .num{font-size:28px;font-weight:800;color:var(--primary)}
-.hero-stat .label{font-size:12px;color:var(--text-sub);margin-top:2px;font-weight:500}
-
-/* ── 컨테이너 ── */
-.container{max-width:1100px;margin:0 auto;padding:0 24px}
-
-/* ── 카테고리 영역 ── */
-.category{margin-bottom:48px}
-.category-header{
-  display:flex;align-items:center;gap:10px;
-  margin-bottom:20px;padding-bottom:12px;
-  border-bottom:2px solid var(--border);
-}
-.category-num{
-  width:28px;height:28px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:800;color:#fff;flex-shrink:0;
-}
-.category-num.blue{background:var(--primary)}
-.category-num.green{background:var(--green)}
-.category-num.purple{background:var(--purple)}
-.category-num.amber{background:var(--amber)}
-.category-title{font-size:17px;font-weight:700;color:var(--text)}
-.category-desc{font-size:13px;color:var(--text-sub);margin-left:auto;font-weight:500}
-
-/* ── 카드 그리드 ── */
-.grid{display:grid;gap:20px}
-.grid-3{grid-template-columns:repeat(3,1fr)}
-.grid-2{grid-template-columns:repeat(2,1fr)}
-@media(max-width:900px){.grid-3,.grid-2{grid-template-columns:1fr}}
-
-/* ── 카드 ── */
-.card{
-  background:var(--card);border-radius:16px;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-  transition:transform .2s,box-shadow .2s;
-  overflow:hidden;
-}
-.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-.card-accent{height:4px;width:100%}
-.card-accent.blue{background:var(--primary)}
-.card-accent.green{background:var(--green)}
-.card-accent.purple{background:var(--purple)}
-.card-accent.amber{background:var(--amber)}
-
-.card-header{padding:20px 22px 14px}
-.card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.card-emoji{
-  width:40px;height:40px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;font-size:20px;
-}
-.card-emoji.blue{background:var(--primary-light)}
-.card-emoji.green{background:var(--green-light)}
-.card-emoji.purple{background:var(--purple-light)}
-.card-emoji.amber{background:var(--amber-light)}
-.card-title{font-size:17px;font-weight:700;color:var(--text)}
-.card-desc{font-size:13px;color:var(--text-sub);line-height:1.7}
-
-.card-body{padding:0 22px 16px}
-
-/* ── 태그 ── */
-.tag{
-  display:inline-block;padding:3px 10px;border-radius:6px;
-  font-size:11px;font-weight:600;
-}
-.tag.blue{color:var(--primary);background:var(--primary-light)}
-.tag.green{color:var(--green);background:var(--green-light)}
-.tag.purple{color:var(--purple);background:var(--purple-light)}
-.tag.amber{color:var(--amber);background:var(--amber-light)}
-.tag.gray{color:var(--slate);background:var(--slate-light)}
-.stack{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
-
-/* ── 기능 리스트 ── */
-.feature-list{list-style:none;display:flex;flex-direction:column;gap:5px}
-.feature-list li{
-  display:flex;align-items:flex-start;gap:7px;
-  font-size:13px;color:var(--text);line-height:1.6;
-}
-.feature-list li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--border);margin-top:7px;flex-shrink:0}
-
-/* ── 버튼 ── */
-.card-footer{
-  padding:14px 22px;border-top:1px solid var(--border);
-  display:flex;gap:8px;flex-wrap:wrap;background:var(--slate-light);
-}
-.btn{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:7px 14px;border-radius:8px;font-size:12px;
-  font-weight:600;text-decoration:none;border:none;cursor:pointer;
-  transition:all .15s;font-family:inherit;
-}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:var(--primary-dark)}
-.btn-green{background:var(--green);color:#fff}
-.btn-green:hover{filter:brightness(1.1)}
-.btn-purple{background:var(--purple);color:#fff}
-.btn-purple:hover{filter:brightness(1.1)}
-.btn-outline{background:var(--white);color:var(--text);border:1px solid var(--border)}
-.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
-
-/* ── 미니 기능 스트립 ── */
-.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mini-item{
-  background:var(--slate-light);border-radius:10px;
-  padding:10px 12px;display:flex;align-items:center;gap:10px;
-  border:1px solid var(--border);
-}
-.mini-item .mi-icon{font-size:18px;flex-shrink:0}
-.mini-item .mi-title{font-size:12px;font-weight:700;color:var(--text)}
-.mini-item .mi-desc{font-size:11px;color:var(--text-sub)}
-
-/* ── 푸터 ── */
-footer{
-  margin-top:48px;padding:32px 40px;
-  background:var(--white);border-top:1px solid var(--border);
-  text-align:center;
-}
-.contact-box{
-  display:inline-flex;align-items:center;gap:24px;
-  background:var(--slate-light);border:1px solid var(--border);
-  border-radius:14px;padding:18px 32px;margin-bottom:14px;
-}
-.contact-box .c-label{font-size:12px;color:var(--text-sub);font-weight:500}
-.contact-box .c-name{font-size:16px;font-weight:700;color:var(--text)}
-.contact-box .c-divider{width:1px;height:32px;background:var(--border)}
-.contact-box .c-phone{font-size:20px;font-weight:800;color:var(--primary)}
-.footer-copy{font-size:12px;color:var(--text-sub)}
+  .gradient-text { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .card-glow { position: relative; }
+  .card-glow::before { content:''; position:absolute; inset:-2px; border-radius:1.25rem; background:linear-gradient(135deg,#3b82f6,#7c3aed,#3b82f6); z-index:-1; animation: border-rotate 3s linear infinite; }
+  @keyframes border-rotate { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+  .roadmap-line { position:relative; }
+  .roadmap-line::before { content:''; position:absolute; left:1.25rem; top:0; bottom:0; width:2px; background:linear-gradient(180deg,#3b82f6,#7c3aed); }
+  @media(min-width:768px){ .roadmap-line::before { left:50%; transform:translateX(-50%); } }
 </style>
 </head>
-<body>
+<body class="bg-white text-gray-900 antialiased">
 
-<!-- ── 헤더 ── -->
-<header>
-  <div class="logo">
-    <div class="logo-mark">JK</div>
-    <div>
-      <div class="logo-text">JK Networks</div>
-      <div class="logo-sub">개발 레퍼런스</div>
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 z-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
+      </div>
+      <span class="text-lg font-extrabold tracking-tight">Office-AI</span>
+    </a>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+      <a href="#features" class="hover:text-blue-600 transition">기능</a>
+      <a href="#roadmap" class="hover:text-blue-600 transition">로드맵</a>
+      <a href="#pricing" class="hover:text-blue-600 transition">가격</a>
+      <a href="#contact" class="hover:text-blue-600 transition">문의</a>
+    </div>
+    <a href="#pricing" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition shadow-sm">
+      무료 체험 시작
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <!-- 모바일 메뉴 버튼 -->
+    <button onclick="document.getElementById('mobileMenu').classList.toggle('hidden')" class="sm:hidden p-2 rounded-lg hover:bg-gray-100">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <!-- 모바일 메뉴 -->
+  <div id="mobileMenu" class="hidden sm:hidden border-t border-gray-100 bg-white px-4 pb-4">
+    <a href="#features" class="block py-2.5 text-sm font-medium text-gray-700">기능</a>
+    <a href="#roadmap" class="block py-2.5 text-sm font-medium text-gray-700">로드맵</a>
+    <a href="#pricing" class="block py-2.5 text-sm font-medium text-gray-700">가격</a>
+    <a href="#contact" class="block py-2.5 text-sm font-medium text-gray-700">문의</a>
+    <a href="#pricing" class="mt-2 block text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold">무료 체험 시작</a>
+  </div>
+</nav>
+
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="pt-28 pb-20 sm:pt-36 sm:pb-28 px-4 bg-gradient-to-b from-blue-50/80 via-white to-white overflow-hidden">
+  <div class="max-w-4xl mx-auto text-center">
+    <!-- 배지 -->
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs sm:text-sm font-semibold mb-6">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      RAG 기반 폐쇄형 보안 AI
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[3.4rem] font-extrabold leading-tight tracking-tight mb-6">
+      기업 문서가 외부로<br class="sm:hidden"> 유출되지 않는<br>
+      <span class="gradient-text">보안 AI 그룹웨어</span>
+    </h1>
+
+    <p class="text-base sm:text-lg text-gray-500 leading-relaxed max-w-2xl mx-auto mb-10">
+      일반 AI 챗봇에 회사 문서를 넣으시나요?<br class="hidden sm:block">
+      Office-AI는 <strong class="text-gray-700">우리 회사 데이터만 학습하는 폐쇄형 RAG 시스템</strong>으로,<br class="hidden sm:block">
+      외부 유출 걱정 없이 사내 문서를 안전하게 활용합니다.
+    </p>
+
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
+      <a href="#pricing" class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm sm:text-base hover:bg-blue-700 transition shadow-lg shadow-blue-600/25">
+        무료 체험 시작하기
+      </a>
+      <a href="#features" class="w-full sm:w-auto px-7 py-3.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm sm:text-base hover:border-blue-300 hover:text-blue-600 transition">
+        기능 둘러보기
+      </a>
+    </div>
+
+    <!-- 신뢰 지표 -->
+    <div class="flex flex-wrap justify-center gap-6 sm:gap-10">
+      <div class="text-center">
+        <div class="text-2xl sm:text-3xl font-extrabold text-gray-900">256-bit</div>
+        <div class="text-xs sm:text-sm text-gray-400 mt-1">AES 암호화</div>
+      </div>
+      <div class="w-px h-10 bg-gray-200 hidden sm:block"></div>
+      <div class="text-center">
+        <div class="text-2xl sm:text-3xl font-extrabold text-gray-900">100%</div>
+        <div class="text-xs sm:text-sm text-gray-400 mt-1">사내망 데이터 보존</div>
+      </div>
+      <div class="w-px h-10 bg-gray-200 hidden sm:block"></div>
+      <div class="text-center">
+        <div class="text-2xl sm:text-3xl font-extrabold text-gray-900">5,000+</div>
+        <div class="text-xs sm:text-sm text-gray-400 mt-1">처리 문서</div>
+      </div>
+      <div class="w-px h-10 bg-gray-200 hidden sm:block"></div>
+      <div class="text-center">
+        <div class="text-2xl sm:text-3xl font-extrabold text-gray-900">99.9%</div>
+        <div class="text-xs sm:text-sm text-gray-400 mt-1">가동률</div>
+      </div>
     </div>
   </div>
-  <div class="header-right">
-    <span class="header-contact">office-ai.app</span>
-    <div class="header-badge">2026년 3월 기준</div>
-  </div>
-</header>
-
-<!-- ── 히어로 ── -->
-<div class="hero">
-  <h1><em>JK Networks</em> 개발 포트폴리오</h1>
-  <p>AI · 자동화 · 웹앱 개발 — 실제 운영 중인 서비스와 개발 산출물을 한눈에 확인하세요</p>
-  <div class="hero-stats">
-    <div class="hero-stat"><div class="num">5+</div><div class="label">운영 중 서비스</div></div>
-    <div class="hero-stat"><div class="num">8</div><div class="label">게임 도구</div></div>
-    <div class="hero-stat"><div class="num">5</div><div class="label">자동화 워크플로우</div></div>
-  </div>
-</div>
+</section>
 
 
-<div class="container">
-
-<!-- ═══════════════════════════════════════
-     카테고리 1 — AI 솔루션
-═══════════════════════════════════════ -->
-<div class="category">
-  <div class="category-header">
-    <div class="category-num blue">01</div>
-    <div class="category-title">AI 솔루션</div>
-    <div class="category-desc">보안 AI 채팅 · RAG · 데모 체험</div>
-  </div>
-  <div class="grid grid-3">
-
-    <!-- TrustRAG Chat -->
-    <div class="card">
-      <div class="card-accent purple"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji purple">🔐</div>
-          <div class="card-title">TrustRAG Chat</div>
+<!-- ═══════════ PAIN POINTS ═══════════ -->
+<section class="py-16 sm:py-20 px-4 bg-gray-50">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-3">이런 고민, 하고 계시죠?</h2>
+      <p class="text-gray-500 text-sm sm:text-base">대부분의 기업이 겪는 AI 도입의 세 가지 걸림돌</p>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-5">
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div class="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
         </div>
-        <div class="card-desc">
-          KS인증 기반 보안 AI 채팅.<br>
-          사용자 인증 후 내부 문서 기반 Q&A 제공.
-        </div>
+        <h3 class="font-bold text-base mb-2">AI 챗봇의 정보 유출 위험</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">ChatGPT, Gemini에 사내 문서를 올리면 학습 데이터로 활용될 수 있습니다. 기밀 정보가 외부로 새어나갈 위험이 있습니다.</p>
       </div>
-      <div class="card-body">
-        <div class="stack">
-          <span class="tag purple">n8n RAG</span>
-          <span class="tag blue">Supabase Vector</span>
-          <span class="tag green">OpenAI</span>
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 1 0-14 0 7 7 0 0 0 14 0z"/></svg>
         </div>
-        <ul class="feature-list">
-          <li>Google Sheets API Key 인증</li>
-          <li>문서 업로드 → 벡터화 → 채팅</li>
-          <li>마크다운 렌더링 응답</li>
+        <h3 class="font-bold text-base mb-2">흩어진 사내 문서 검색 비효율</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">규정집, 매뉴얼, 계약서가 여기저기 흩어져 있어 필요한 정보를 찾는 데만 업무 시간의 20%를 소비합니다.</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div class="w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>
+        </div>
+        <h3 class="font-bold text-base mb-2">그룹웨어와 AI의 따로 운영</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">업무 도구와 AI가 분리되어 있어 데이터를 매번 복사-붙여넣기해야 합니다. 통합 운영이 절실합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ FEATURES ═══════════ -->
+<section id="features" class="py-16 sm:py-24 px-4">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold mb-4">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+        현재 운영 중
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-3">지금 바로 사용할 수 있는 기능</h2>
+      <p class="text-gray-500 text-sm sm:text-base">이미 구현되어 운영 중인 핵심 모듈 3가지</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- 기능 1 -->
+      <div class="group rounded-2xl border border-gray-100 p-6 sm:p-7 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-5 group-hover:bg-blue-100 transition">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">RAG 보안 문서 채팅</h3>
+        <p class="text-sm text-gray-500 leading-relaxed mb-4">사내 문서를 벡터화하여 AI가 학습합니다. 외부 서버로 데이터가 전송되지 않으며, 오직 우리 회사 데이터만 기반으로 정확한 답변을 제공합니다.</p>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>KS인증 기반 사용자 인증</li>
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>마크다운 렌더링 응답</li>
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-blue-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>실시간 웹 검색 연동</li>
         </ul>
       </div>
-      <div class="card-footer">
-        <a href="../trustrag/chat.html" class="btn btn-purple" target="_blank">채팅 열기</a>
-        <a href="../trustrag/upload.html" class="btn btn-outline" target="_blank">업로드</a>
-        <a href="../trustrag/b3f9s1.html" class="btn btn-outline" target="_blank">어드민</a>
-      </div>
-    </div>
 
-    <!-- AI 데모 -->
-    <div class="card">
-      <div class="card-accent blue"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji blue">🤖</div>
-          <div class="card-title">AI 데모 체험</div>
+      <!-- 기능 2 -->
+      <div class="group rounded-2xl border border-gray-100 p-6 sm:p-7 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300">
+        <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-5 group-hover:bg-purple-100 transition">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </div>
-        <div class="card-desc">
-          office-ai.app 공개 AI 데모.<br>
-          문서 자동화 AI를 직접 체험해볼 수 있는 페이지.
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="stack">
-          <span class="tag blue">RAG 채팅</span>
-          <span class="tag green">마크다운</span>
-          <span class="tag gray">DOMPurify</span>
-        </div>
-        <ul class="feature-list">
-          <li>실시간 스트리밍 응답</li>
-          <li>마크다운 포맷 렌더링</li>
-          <li>멀티 카테고리 지원</li>
+        <h3 class="font-bold text-lg mb-2">워크스페이스 분리</h3>
+        <p class="text-sm text-gray-500 leading-relaxed mb-4">개인용 워크스페이스와 팀 워크스페이스를 분리하여 운영합니다. 부서별 접근 권한 설정으로 민감한 정보를 안전하게 관리합니다.</p>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-purple-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>개인 / 팀 스페이스 분리</li>
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-purple-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>부서별 접근 권한 관리</li>
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-purple-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>문서 버전 이력 추적</li>
         </ul>
       </div>
-      <div class="card-footer">
-        <a href="../demo.html" class="btn btn-primary" target="_blank">데모 실행</a>
-      </div>
-    </div>
 
-    <!-- office-ai.app -->
-    <div class="card">
-      <div class="card-accent green"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji green">🌐</div>
-          <div class="card-title">office-ai.app</div>
+      <!-- 기능 3 -->
+      <div class="group rounded-2xl border border-gray-100 p-6 sm:p-7 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all duration-300">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-5 group-hover:bg-emerald-100 transition">
+          <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
         </div>
-        <div class="card-desc">
-          업무 자동화 AI 서비스 랜딩 페이지.<br>
-          견적서·인보이스·계약서 자동화, 보안 RAG 서비스 소개.
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="stack">
-          <span class="tag green">Netlify</span>
-          <span class="tag blue">n8n Cloud</span>
-          <span class="tag amber">Supabase</span>
-          <span class="tag gray">GitHub</span>
-        </div>
-        <ul class="feature-list">
-          <li>보안 RAG 패키지 서비스 소개</li>
-          <li>AI 데모 체험 페이지</li>
-          <li>대표 프로필 & 자동화 사례 6가지</li>
-          <li>GitHub → Netlify 자동 배포</li>
+        <h3 class="font-bold text-lg mb-2">실시간 데이터 관리</h3>
+        <p class="text-sm text-gray-500 leading-relaxed mb-4">Supabase 연동으로 실시간 데이터 동기화를 지원합니다. 문서 업로드부터 벡터 저장, 팀 공유까지 하나의 파이프라인으로 연결됩니다.</p>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>실시간 데이터 동기화</li>
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>자동 벡터 저장 파이프라인</li>
+          <li class="flex items-start gap-2 text-sm text-gray-600"><svg class="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>관리자 대시보드 제공</li>
         </ul>
       </div>
-      <div class="card-footer">
-        <a href="../index.html" class="btn btn-green" target="_blank">사이트 보기</a>
-        <a href="../register.html" class="btn btn-outline" target="_blank">등록</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ ROADMAP ═══════════ -->
+<section id="roadmap" class="py-16 sm:py-24 px-4 bg-gray-50">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-14">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold mb-4">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 10 10-12h-9l1-10z"/></svg>
+        Coming Soon
       </div>
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-3">계속 진화하는 그룹웨어</h2>
+      <p class="text-gray-500 text-sm sm:text-base">통합 구독 고객은 아래 모든 신규 모듈을 <strong class="text-blue-600">추가 비용 없이</strong> 이용합니다</p>
     </div>
 
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════
-     카테고리 2 — 업무 자동화
-═══════════════════════════════════════ -->
-<div class="category">
-  <div class="category-header">
-    <div class="category-num green">02</div>
-    <div class="category-title">업무 자동화</div>
-    <div class="category-desc">n8n 워크플로우 · 문서 관리 · 백엔드</div>
-  </div>
-  <div class="grid grid-2">
-
-    <!-- n8n RAG 워크플로우 -->
-    <div class="card">
-      <div class="card-accent green"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji green">⚙️</div>
-          <div class="card-title">n8n RAG 워크플로우</div>
+    <div class="grid sm:grid-cols-2 gap-5">
+      <!-- 로드맵 1 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">2026 Q2</span>
+          </div>
         </div>
-        <div class="card-desc">
-          n8n Cloud 기반 5개 핵심 워크플로우.<br>
-          문서 업로드, 채팅, 사용자 인증을 자동화합니다.
+        <h3 class="font-bold text-base mb-2">CRM 결합형 고객 관리</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">고객 정보와 커뮤니케이션 이력을 자동으로 연결합니다. 상담 내역 기반 AI 후속 조치 제안까지.</p>
+      </div>
+
+      <!-- 로드맵 2 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M16 13H8m8 4H8m2-8H8"/></svg>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">2026 Q3</span>
+          </div>
+        </div>
+        <h3 class="font-bold text-base mb-2">AI 회의록 요약 & 할 일 자동 생성</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">회의 내용을 자동 요약하고, 담당자별 할 일(Task)을 생성합니다. 놓치는 후속 업무가 없어집니다.</p>
+      </div>
+
+      <!-- 로드맵 3 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">2026 Q3</span>
+          </div>
+        </div>
+        <h3 class="font-bold text-base mb-2">사내 규정 & 매뉴얼 즉시 검색</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">복잡한 사내 규정을 자연어로 질문하면 관련 조항을 즉시 찾아줍니다. 신입 온보딩 시간을 80% 단축합니다.</p>
+      </div>
+
+      <!-- 로드맵 4 -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">2026 Q4</span>
+          </div>
+        </div>
+        <h3 class="font-bold text-base mb-2">모바일 대시보드 & 알림</h3>
+        <p class="text-sm text-gray-500 leading-relaxed">외근 중에도 실시간 업무 현황을 확인하고, 중요 문서 승인과 채팅 알림을 모바일에서 바로 처리합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ PRICING ═══════════ -->
+<section id="pricing" class="py-16 sm:py-24 px-4">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-6">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-3">심플한 가격, 확실한 가치</h2>
+      <p class="text-gray-500 text-sm sm:text-base">필요한 모듈만 선택하거나, 통합 구독으로 모든 것을 누리세요</p>
+    </div>
+
+    <!-- 절약 배너 -->
+    <div class="max-w-lg mx-auto mb-12 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-4 sm:p-5 text-center shadow-lg shadow-blue-600/20">
+      <p class="text-sm sm:text-base font-bold mb-1">모듈 4개 개별 구매 시 월 ₩156,000</p>
+      <p class="text-xs sm:text-sm opacity-90">통합 구독이면 <strong class="text-yellow-300 text-base sm:text-lg">월 ₩89,000</strong>으로 43% 절약!</p>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6 items-start">
+
+      <!-- Starter -->
+      <div class="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-gray-900 mb-1">Starter</h3>
+          <p class="text-sm text-gray-500">필요한 기능만 골라서 시작</p>
+        </div>
+        <div class="mb-6">
+          <span class="text-4xl font-extrabold">₩39,000</span>
+          <span class="text-sm text-gray-500">/월 · 모듈당</span>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>원하는 모듈 1개 선택</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>사용자 5명까지</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>이메일 지원</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-400"><svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span class="line-through">신규 모듈 무료 제공</span></li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-400"><svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg><span class="line-through">우선 기술 지원</span></li>
+        </ul>
+        <a href="#contact" class="block text-center py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:border-blue-300 hover:text-blue-600 transition">
+          시작하기
+        </a>
+      </div>
+
+      <!-- Professional (RECOMMENDED) -->
+      <div class="relative card-glow rounded-[1.25rem] bg-white p-6 sm:p-8 lg:-mt-4 lg:mb-0">
+        <!-- 배지들 -->
+        <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 flex gap-2">
+          <span class="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold shadow-lg">Best Value</span>
+          <span class="px-3 py-1 rounded-full bg-amber-500 text-white text-xs font-bold shadow-lg animate-pulse">Early Bird</span>
+        </div>
+
+        <div class="mb-6 pt-4">
+          <h3 class="text-lg font-bold text-gray-900 mb-1">Professional</h3>
+          <p class="text-sm text-gray-500">모든 기능 + 미래 업데이트까지</p>
+        </div>
+        <div class="mb-2">
+          <span class="text-sm text-gray-400 line-through mr-2">₩156,000</span>
+          <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">43% OFF</span>
+        </div>
+        <div class="mb-6">
+          <span class="text-4xl font-extrabold gradient-text">₩89,000</span>
+          <span class="text-sm text-gray-500">/월</span>
+        </div>
+        <ul class="space-y-3 mb-6">
+          <li class="flex items-start gap-2.5 text-sm text-gray-700 font-medium"><svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg><strong>모든 모듈</strong> 포함 (현재 3개 + α)</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-700 font-medium"><svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>사용자 <strong>무제한</strong></li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-700 font-medium"><svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>우선 기술 지원 (24h 응답)</li>
+          <li class="flex items-start gap-2.5 text-sm font-bold text-blue-700">
+            <svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            향후 신규 모듈 평생 무료 제공
+          </li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-700 font-medium"><svg class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>전담 매니저 배정</li>
+        </ul>
+
+        <!-- 희소성 메시지 -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
+          <p class="text-xs sm:text-sm text-amber-800 font-semibold text-center leading-relaxed">
+            지금 통합 구독 시, 내년 출시될<br class="sm:hidden">
+            <strong>'AI 자동 보고서'</strong> 모듈까지<br class="sm:hidden"> 무료로 선점하세요
+          </p>
+        </div>
+
+        <a href="#contact" class="block text-center py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-sm hover:opacity-90 transition shadow-lg shadow-blue-600/25">
+          통합 구독 시작하기
+        </a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-gray-900 mb-1">Enterprise</h3>
+          <p class="text-sm text-gray-500">대규모 조직 맞춤 구축</p>
+        </div>
+        <div class="mb-6">
+          <span class="text-4xl font-extrabold">별도 문의</span>
+        </div>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>Professional 전체 기능 포함</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>온프레미스 / 프라이빗 클라우드</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>SSO & LDAP 연동</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>SLA 99.99% 보장</li>
+          <li class="flex items-start gap-2.5 text-sm text-gray-600"><svg class="w-4 h-4 text-gray-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>맞춤 AI 모델 튜닝</li>
+        </ul>
+        <a href="#contact" class="block text-center py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:border-blue-300 hover:text-blue-600 transition">
+          상담 요청
+        </a>
+      </div>
+
+    </div>
+
+    <!-- 개별 모듈 가격표 -->
+    <div class="mt-14">
+      <h3 class="text-center text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">개별 모듈 가격 비교</h3>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        <div class="rounded-xl border border-gray-100 bg-white p-4 text-center">
+          <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-4.5 h-4.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="text-sm font-bold mb-1">RAG 보안 채팅</div>
+          <div class="text-lg font-extrabold text-gray-900">₩39,000<span class="text-xs font-normal text-gray-400">/월</span></div>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-white p-4 text-center">
+          <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-4.5 h-4.5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div class="text-sm font-bold mb-1">워크스페이스</div>
+          <div class="text-lg font-extrabold text-gray-900">₩39,000<span class="text-xs font-normal text-gray-400">/월</span></div>
+        </div>
+        <div class="rounded-xl border border-gray-100 bg-white p-4 text-center">
+          <div class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-4.5 h-4.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg>
+          </div>
+          <div class="text-sm font-bold mb-1">데이터 관리</div>
+          <div class="text-lg font-extrabold text-gray-900">₩39,000<span class="text-xs font-normal text-gray-400">/월</span></div>
+        </div>
+        <div class="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-center">
+          <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-4.5 h-4.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="text-sm font-bold mb-1 text-gray-400">CRM (출시 예정)</div>
+          <div class="text-lg font-extrabold text-gray-400">₩39,000<span class="text-xs font-normal">/월</span></div>
         </div>
       </div>
-      <div class="card-body">
-        <div class="stack">
-          <span class="tag green">n8n Cloud</span>
-          <span class="tag blue">OpenAI</span>
-          <span class="tag amber">Supabase</span>
-          <span class="tag gray">SerpAPI</span>
+      <p class="text-center text-xs text-gray-400 mt-4">개별 구매 총합 <span class="line-through">₩156,000/월</span> → 통합 구독 시 <strong class="text-blue-600">₩89,000/월</strong></p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ FINAL CTA ═══════════ -->
+<section class="py-16 sm:py-20 px-4 bg-gradient-to-br from-gray-900 via-blue-950 to-gray-900">
+  <div class="max-w-3xl mx-auto text-center">
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-4">
+      지금 시작하면, 앞으로의 모든 업데이트가<br class="hidden sm:block"> 무료입니다
+    </h2>
+    <p class="text-sm sm:text-base text-blue-200 leading-relaxed mb-8">
+      얼리버드 통합 구독 고객에게는 CRM, AI 회의록, 사내 규정 검색,<br class="hidden sm:block">
+      모바일 대시보드 등 향후 출시되는 모든 모듈이 추가 비용 없이 제공됩니다.
+    </p>
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 text-amber-300 text-xs sm:text-sm font-semibold mb-8 animate-pulse">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      얼리버드 혜택은 한정 수량으로 제공됩니다
+    </div>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href="#contact" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-white text-gray-900 font-bold text-sm sm:text-base hover:bg-gray-100 transition shadow-xl">
+        무료 체험 신청하기
+      </a>
+      <a href="portfolio.html" class="w-full sm:w-auto px-8 py-3.5 rounded-xl border border-white/20 text-white font-semibold text-sm sm:text-base hover:bg-white/10 transition">
+        개발 포트폴리오 보기
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer id="contact" class="py-12 sm:py-14 px-4 bg-white border-t border-gray-100">
+  <div class="max-w-5xl mx-auto">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+      <!-- 회사 정보 -->
+      <div class="sm:col-span-2 lg:col-span-1">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/></svg>
+          </div>
+          <span class="font-extrabold text-sm">Office-AI</span>
         </div>
-        <ul class="feature-list">
-          <li>RAG-4-Secure-Chat — KS인증 AI 채팅</li>
-          <li>RAG-Webhook-Admin-Upload — 문서 업로드</li>
-          <li>RAG-3-User-Registration — 사용자 등록</li>
-          <li>웹 검색 연동 (Google 실시간)</li>
+        <p class="text-xs text-gray-500 leading-relaxed">RAG 기반 보안 AI 그룹웨어.<br>기업 문서의 안전한 AI 활용을 실현합니다.</p>
+      </div>
+      <!-- 서비스 -->
+      <div>
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">서비스</h4>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li><a href="#features" class="hover:text-blue-600 transition">RAG 보안 채팅</a></li>
+          <li><a href="#features" class="hover:text-blue-600 transition">워크스페이스</a></li>
+          <li><a href="#features" class="hover:text-blue-600 transition">데이터 관리</a></li>
+          <li><a href="#roadmap" class="hover:text-blue-600 transition">로드맵</a></li>
         </ul>
       </div>
-      <div class="card-footer">
-        <a href="../admin-upload.html" class="btn btn-outline" target="_blank">관리자 업로드</a>
-      </div>
-    </div>
-
-    <!-- 관리자 도구 -->
-    <div class="card">
-      <div class="card-accent amber"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji amber">📋</div>
-          <div class="card-title">관리자 도구</div>
-        </div>
-        <div class="card-desc">
-          문서 업로드 및 벡터 DB 관리.<br>
-          Base64 JSON → Supabase Vector Store 자동 파이프라인.
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="stack">
-          <span class="tag amber">Webhook</span>
-          <span class="tag blue">Supabase</span>
-          <span class="tag gray">Base64</span>
-        </div>
-        <ul class="feature-list">
-          <li>파일 업로드 → 벡터화 자동 처리</li>
-          <li>documents_admin_upload 테이블 관리</li>
-          <li>관리자 페이지 UI 제공</li>
+      <!-- 회사 -->
+      <div>
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">회사</h4>
+        <ul class="space-y-2 text-sm text-gray-600">
+          <li><a href="portfolio.html" class="hover:text-blue-600 transition">포트폴리오</a></li>
+          <li><a href="../index.html" class="hover:text-blue-600 transition">office-ai.app</a></li>
+          <li><a href="#pricing" class="hover:text-blue-600 transition">가격 정책</a></li>
         </ul>
       </div>
-      <div class="card-footer">
-        <a href="../admin-upload.html" class="btn btn-outline" target="_blank">업로드 페이지</a>
-        <a href="../trustrag/b3f9s1.html" class="btn btn-outline" target="_blank">어드민</a>
+      <!-- 연락처 -->
+      <div>
+        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">문의</h4>
+        <div class="space-y-2 text-sm text-gray-600">
+          <p class="font-semibold text-gray-900">제이케이네트웍스</p>
+          <p>대표 노진광</p>
+          <p class="font-bold text-blue-600 text-base">010-3127-4528</p>
+        </div>
       </div>
     </div>
-
+    <div class="border-t border-gray-100 pt-6 text-center">
+      <p class="text-xs text-gray-400">&copy; 2026 JK Networks. All rights reserved. &middot; office-ai.app</p>
+    </div>
   </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════
-     카테고리 3 — 앱 개발 프로젝트
-═══════════════════════════════════════ -->
-<div class="category">
-  <div class="category-header">
-    <div class="category-num purple">03</div>
-    <div class="category-title">앱 개발 프로젝트</div>
-    <div class="category-desc">고객사 납품 · 스마트앱 · 유틸리티</div>
-  </div>
-  <div class="grid grid-2">
-
-    <!-- 가라온 브로즈 -->
-    <div class="card">
-      <div class="card-accent purple"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji purple">🎲</div>
-          <div class="card-title">가라온 브로즈</div>
-        </div>
-        <div class="card-desc">
-          보드게임카페 전용 스마트 앱.<br>
-          게임 추천, 방문자 관리, 음악 플레이어, 집주인 호출까지 올인원 솔루션.
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="stack">
-          <span class="tag purple">Supabase</span>
-          <span class="tag green">Netlify</span>
-          <span class="tag amber">Telegram Bot</span>
-          <span class="tag blue">Spotify API</span>
-          <span class="tag gray">Wikipedia API</span>
-        </div>
-        <ul class="feature-list">
-          <li>인원수·연령대 기반 게임 자동 추천</li>
-          <li>QR 촬영 방문자 체크인 & 방문기록 카드</li>
-          <li>집주인 ↔ 아이들 텔레그램 실시간 호출</li>
-          <li>Spotify 음악 — 페이지 이동 중에도 재생 유지</li>
-          <li>사다리·퀴즈·타이머 등 게임 도구 8종</li>
-          <li>YouTube 인라인 재생 & 별점 후기 시스템</li>
-        </ul>
-      </div>
-      <div class="card-footer">
-        <a href="../garaon-bros/index.html" class="btn btn-purple" target="_blank">앱 실행</a>
-        <a href="garaon-bros-ppt.html" class="btn btn-outline" target="_blank">소개자료</a>
-        <a href="../garaon-bros/gbhq.html" class="btn btn-outline" target="_blank">DB 관리</a>
-      </div>
-    </div>
-
-    <!-- 게임 도구 & 추천 -->
-    <div class="card">
-      <div class="card-accent purple"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji purple">🛠️</div>
-          <div class="card-title">게임 도구 & 추천</div>
-        </div>
-        <div class="card-desc">
-          가라온 브로즈 내장 디지털 도구 8종과<br>
-          DB 기반 스마트 게임 추천 시스템.
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="mini-grid">
-          <div class="mini-item"><span class="mi-icon">🪜</span><div><div class="mi-title">사다리 게임</div><div class="mi-desc">자동 생성 + 애니메이션</div></div></div>
-          <div class="mini-item"><span class="mi-icon">🧩</span><div><div class="mi-title">보드게임 퀴즈</div><div class="mi-desc">카테고리별 + 정지버튼</div></div></div>
-          <div class="mini-item"><span class="mi-icon">⏱️</span><div><div class="mi-title">게임 타이머</div><div class="mi-desc">카운트다운 + 경고음</div></div></div>
-          <div class="mini-item"><span class="mi-icon">🎲</span><div><div class="mi-title">주사위</div><div class="mi-desc">다중 주사위 동시 지원</div></div></div>
-          <div class="mini-item"><span class="mi-icon">🃏</span><div><div class="mi-title">카드 셔플</div><div class="mi-desc">랜덤 카드 분배</div></div></div>
-          <div class="mini-item"><span class="mi-icon">🎯</span><div><div class="mi-title">게임 추천</div><div class="mi-desc">인원·연령대 필터링</div></div></div>
-        </div>
-      </div>
-      <div class="card-footer">
-        <a href="../garaon-bros/game-tools.html" class="btn btn-outline" target="_blank">도구 실행</a>
-        <a href="../garaon-bros/recommend.html" class="btn btn-outline" target="_blank">추천 실행</a>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════
-     카테고리 4 — 소개 자료
-═══════════════════════════════════════ -->
-<div class="category">
-  <div class="category-header">
-    <div class="category-num amber">04</div>
-    <div class="category-title">소개 자료</div>
-    <div class="category-desc">프레젠테이션 · 문서</div>
-  </div>
-  <div class="grid grid-3">
-
-    <div class="card">
-      <div class="card-accent amber"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji amber">📊</div>
-          <div class="card-title">가라온 브로즈 소개자료</div>
-        </div>
-        <div class="card-desc">11슬라이드 HTML 프레젠테이션.<br>다크 테마, 화살표 키 이동, 전체화면 지원.</div>
-      </div>
-      <div class="card-footer">
-        <a href="garaon-bros-ppt.html" class="btn btn-primary" target="_blank">발표자료 열기</a>
-      </div>
-    </div>
-
-    <div class="card" style="border-style:dashed;opacity:.45">
-      <div class="card-accent" style="background:var(--border)"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji" style="background:var(--slate-light)">📄</div>
-          <div class="card-title" style="color:var(--text-sub)">준비 중</div>
-        </div>
-        <div class="card-desc">추가 소개자료가 이 자리에 들어옵니다.</div>
-      </div>
-      <div class="card-footer">
-        <span class="btn btn-outline" style="cursor:default;opacity:.5">곧 공개</span>
-      </div>
-    </div>
-
-    <div class="card" style="border-style:dashed;opacity:.45">
-      <div class="card-accent" style="background:var(--border)"></div>
-      <div class="card-header">
-        <div class="card-top">
-          <div class="card-emoji" style="background:var(--slate-light)">📄</div>
-          <div class="card-title" style="color:var(--text-sub)">준비 중</div>
-        </div>
-        <div class="card-desc">추가 소개자료가 이 자리에 들어옵니다.</div>
-      </div>
-      <div class="card-footer">
-        <span class="btn btn-outline" style="cursor:default;opacity:.5">곧 공개</span>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-</div><!-- /container -->
-
-
-<!-- ── 푸터 ── -->
-<footer>
-  <div class="contact-box">
-    <div>
-      <div class="c-label">개발 의뢰</div>
-      <div class="c-name">제이케이네트웍스 대표 &nbsp; 노진광</div>
-    </div>
-    <div class="c-divider"></div>
-    <div class="c-phone">010-3127-4528</div>
-  </div>
-  <div class="footer-copy">© 2026 JK Networks. All rights reserved. &nbsp;·&nbsp; office-ai.app</div>
 </footer>
 
+<script>
+// 모바일 메뉴 - 링크 클릭 시 닫기
+document.querySelectorAll('#mobileMenu a').forEach(a => {
+  a.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('hidden'));
+});
+// 스크롤 시 네비게이션 그림자
+window.addEventListener('scroll', () => {
+  document.querySelector('nav').classList.toggle('shadow-md', window.scrollY > 10);
+});
+</script>
 </body>
 </html>
