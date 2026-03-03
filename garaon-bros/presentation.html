@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가라온 브로즈 — 소개자료</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Press+Start+2P&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0b0b1a; --card:#151526; --card2:#1e1e38;
+    --cyan:#00d4ff; --green:#00ff88; --purple:#cc44ff;
+    --yellow:#ffd700; --red:#ff4466;
+    --white:#f0f0ff; --gray:#778899; --dgray:#333355;
+  }
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg)}
+  body{font-family:'Nunito',sans-serif;color:var(--white)}
+
+  /* ── 슬라이드 컨테이너 ── */
+  .slides-wrap{
+    width:100%;height:100%;position:relative;overflow:hidden;
+  }
+  .slide{
+    position:absolute;top:0;left:0;width:100%;height:100%;
+    display:flex;flex-direction:column;
+    padding:28px 52px 24px;
+    opacity:0;pointer-events:none;
+    transition:opacity .4s ease;
+  }
+  .slide.active{opacity:1;pointer-events:all}
+
+  /* ── 공통 레이아웃 ── */
+  .top-bar{height:6px;position:absolute;top:0;left:0;right:0}
+  .slide-title{font-size:26px;font-weight:900;margin-bottom:4px;padding-top:12px}
+  .slide-divider{height:1px;background:var(--dgray);margin:8px 0 20px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;min-height:0}
+  .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;flex:1;min-height:0}
+
+  /* ── 카드 ── */
+  .card{
+    background:var(--card);border-radius:16px;padding:20px;
+    border:2px solid var(--dgray);
+  }
+  .card.cyan  {border-color:var(--cyan)}
+  .card.green {border-color:var(--green)}
+  .card.purple{border-color:var(--purple)}
+  .card.yellow{border-color:var(--yellow)}
+  .card.red   {border-color:var(--red)}
+  .card-title{font-size:15px;font-weight:900;margin-bottom:8px}
+  .card-icon {font-size:28px;margin-bottom:8px;display:block}
+  .card-desc {font-size:12px;color:var(--gray);line-height:1.7}
+
+  /* ── 텍스트 색상 ── */
+  .cyan  {color:var(--cyan)}
+  .green {color:var(--green)}
+  .purple{color:var(--purple)}
+  .yellow{color:var(--yellow)}
+  .red   {color:var(--red)}
+  .gray  {color:var(--gray)}
+  .white {color:var(--white)}
+
+  /* ── 배지 ── */
+  .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:800;border:1px solid}
+  .badge.cyan  {color:var(--cyan);border-color:var(--cyan);background:#00d4ff11}
+  .badge.green {color:var(--green);border-color:var(--green);background:#00ff8811}
+  .badge.purple{color:var(--purple);border-color:var(--purple);background:#cc44ff11}
+  .badge.yellow{color:var(--yellow);border-color:var(--yellow);background:#ffd70011}
+  .badge.red   {color:var(--red);border-color:var(--red);background:#ff446611}
+
+  /* ── 목록 ── */
+  .list-item{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:8px 12px;margin-bottom:6px;
+    background:var(--card);border-radius:10px;
+    border-left:3px solid var(--cyan);
+    font-size:13px;
+  }
+  .list-item .num{font-weight:900;min-width:22px;font-size:15px}
+  .list-item .content{}
+  .list-item .content b{display:block;font-size:13px;margin-bottom:2px}
+  .list-item .content span{font-size:11px;color:var(--gray)}
+
+  /* ── 흐름 다이어그램 ── */
+  .flow-item{
+    display:flex;align-items:center;gap:12px;
+    padding:8px 14px;margin-bottom:4px;
+    background:var(--card);border-radius:10px;
+    font-size:12px;
+  }
+  .flow-arrow{color:var(--dgray);font-size:18px;margin:0 4px}
+
+  /* ── 표 ── */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:var(--card2);color:var(--cyan);padding:8px 12px;text-align:left;font-weight:800}
+  td{padding:7px 12px;border-bottom:1px solid var(--dgray)}
+  tr:last-child td{border-bottom:none}
+
+  /* ── 네비게이션 ── */
+  #nav{
+    position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:12px;z-index:100;
+    background:rgba(11,11,26,.85);backdrop-filter:blur(8px);
+    border:1px solid var(--dgray);border-radius:40px;padding:8px 20px;
+  }
+  #nav button{
+    background:none;border:none;color:var(--gray);cursor:pointer;
+    font-size:18px;padding:4px 10px;border-radius:8px;transition:all .15s;
+  }
+  #nav button:hover{background:var(--dgray);color:var(--white)}
+  #nav .counter{font-size:12px;color:var(--gray);min-width:50px;text-align:center;font-weight:700}
+
+  /* ── 진행 바 ── */
+  #progress-bar{
+    position:fixed;bottom:0;left:0;height:3px;background:var(--cyan);
+    transition:width .3s ease;z-index:101;
+  }
+
+  /* ── 단축키 도움말 ── */
+  #hint{
+    position:fixed;top:12px;right:16px;font-size:10px;color:var(--dgray);
+    font-family:'Nunito',sans-serif;
+  }
+
+  /* ═══════════════════════════════════
+     슬라이드별 스타일
+  ═══════════════════════════════════ */
+
+  /* 표지 */
+  #s1{justify-content:center;align-items:center;text-align:center}
+  #s1 .big-icon{font-size:90px;margin-bottom:16px;
+    animation:float 3s ease-in-out infinite}
+  #s1 .main-title{
+    font-family:'Press Start 2P',monospace;font-size:28px;
+    color:var(--cyan);line-height:1.8;margin-bottom:10px;
+    text-shadow:0 0 20px #00d4ff88;
+  }
+  #s1 .sub-title{font-size:18px;color:var(--yellow);font-weight:900;margin-bottom:8px}
+  #s1 .desc{font-size:13px;color:var(--gray);margin-bottom:24px;line-height:1.8}
+  #s1 .tags{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @keyframes glow{0%,100%{text-shadow:0 0 10px #00d4ff88}50%{text-shadow:0 0 30px #00d4ffcc,0 0 60px #00d4ff44}}
+
+  /* 목차 */
+  #s2 .toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1}
+  #s2 .toc-item{
+    display:flex;align-items:center;gap:14px;
+    padding:10px 16px;background:var(--card);border-radius:12px;
+    border-left:3px solid;
+  }
+  #s2 .toc-num{font-size:20px;font-weight:900;min-width:30px}
+  #s2 .toc-text b{display:block;font-size:14px;margin-bottom:2px}
+  #s2 .toc-text span{font-size:11px;color:var(--gray)}
+
+  /* 기술 스택 카드 */
+  .spec-row{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--dgray);font-size:12px}
+  .spec-row:last-child{border-bottom:none}
+  .spec-key{color:var(--yellow);font-weight:800;min-width:90px}
+  .spec-val{color:var(--white)}
+
+  /* 도구 그리드 */
+  .tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;flex:1}
+  .tool-card{
+    background:var(--card);border-radius:14px;padding:16px;
+    border:2px solid;text-align:center;
+  }
+  .tool-card .t-icon{font-size:32px;margin-bottom:8px;display:block}
+  .tool-card .t-num{font-size:10px;font-weight:900;margin-bottom:4px;opacity:.6}
+  .tool-card .t-title{font-size:13px;font-weight:900;margin-bottom:6px}
+  .tool-card .t-desc{font-size:10px;color:var(--gray);line-height:1.6}
+
+  /* 화면 맵 */
+  .screen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;flex:1}
+  .screen-card{
+    background:var(--card);border-radius:14px;padding:18px;
+    border:2px solid;
+  }
+  .screen-card .s-icon{font-size:32px;margin-bottom:8px}
+  .screen-card .s-title{font-size:15px;font-weight:900;margin-bottom:4px}
+  .screen-card .s-file{font-size:10px;color:var(--dgray);margin-bottom:6px;font-family:monospace}
+  .screen-card .s-desc{font-size:11px;color:var(--gray);line-height:1.6}
+
+  /* 마무리 */
+  #s11{justify-content:center;align-items:center;text-align:center}
+  #s11 .url-box{
+    background:var(--card);border:2px solid var(--green);border-radius:14px;
+    padding:14px 28px;font-size:16px;color:var(--green);font-weight:900;
+    margin:16px 0;font-family:monospace;
+    box-shadow:0 0 20px #00ff8833;
+  }
+  #s11 .plans{text-align:left;max-width:600px;margin:0 auto}
+  #s11 .plans li{padding:6px 0;font-size:13px;color:var(--gray);list-style:none;border-bottom:1px solid var(--dgray)}
+
+</style>
+</head>
+<body>
+
+<div id="hint">← → 화살표 / 스페이스 이동 &nbsp;|&nbsp; F 전체화면</div>
+<div id="progress-bar"></div>
+
+<div class="slides-wrap">
+
+<!-- ══════════════════════════════════════════
+     슬라이드 1 — 표지
+══════════════════════════════════════════ -->
+<section class="slide" id="s1">
+  <div class="top-bar" style="background:var(--cyan)"></div>
+  <div class="big-icon">🎮</div>
+  <div class="main-title">가라온 브로즈</div>
+  <div class="sub-title">보드게임카페 전용 스마트 앱</div>
+  <div class="desc">
+    게임 추천 &nbsp;·&nbsp; 방문자 관리 &nbsp;·&nbsp; 음악 플레이어<br>
+    집주인 호출 &nbsp;·&nbsp; 게임 도구 8종
+  </div>
+  <div class="tags">
+    <span class="badge cyan">🟣 Supabase</span>
+    <span class="badge green">🟢 Netlify</span>
+    <span class="badge cyan">🔵 n8n</span>
+    <span class="badge yellow">🟡 Telegram</span>
+    <span class="badge purple">🎵 Spotify</span>
+  </div>
+  <div style="margin-top:20px;font-size:11px;color:var(--dgray)">2026. 03 &nbsp;·&nbsp; JK Networks</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 2 — 목차
+══════════════════════════════════════════ -->
+<section class="slide" id="s2">
+  <div class="top-bar" style="background:var(--cyan)"></div>
+  <div class="slide-title cyan">📋 &nbsp;목차</div>
+  <div class="slide-divider"></div>
+  <div class="toc-grid">
+    <div class="toc-item" style="border-color:var(--cyan)">
+      <div class="toc-num cyan">01</div>
+      <div class="toc-text"><b>프로젝트 소개</b><span>무엇을 왜 만들었는가</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--green)">
+      <div class="toc-num green">02</div>
+      <div class="toc-text"><b>서비스 구성</b><span>6개 화면 & 기술 스택</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--purple)">
+      <div class="toc-num purple">03</div>
+      <div class="toc-text"><b>게임 추천 시스템</b><span>인원수·연령대 기반 필터링</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--yellow)">
+      <div class="toc-num yellow">04</div>
+      <div class="toc-text"><b>게임 DB 관리</b><span>보드게임·맨손게임·호출메뉴</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--red)">
+      <div class="toc-num red">05</div>
+      <div class="toc-text"><b>방문자 관리</b><span>QR 체크인·방문기록·단체사진</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--cyan)">
+      <div class="toc-num cyan">06</div>
+      <div class="toc-text"><b>게임 도구 8종</b><span>사다리·퀴즈·타이머 등</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--green)">
+      <div class="toc-num green">07</div>
+      <div class="toc-text"><b>음악 플레이어</b><span>Spotify · 페이지 이동 중 재생유지</span></div>
+    </div>
+    <div class="toc-item" style="border-color:var(--purple)">
+      <div class="toc-num purple">08</div>
+      <div class="toc-text"><b>집주인 호출 & 알림</b><span>텔레그램 실시간 양방향</span></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 3 — 프로젝트 소개
+══════════════════════════════════════════ -->
+<section class="slide" id="s3">
+  <div class="top-bar" style="background:var(--green)"></div>
+  <div class="slide-title green">01 &nbsp;|&nbsp; 프로젝트 소개</div>
+  <div class="slide-divider"></div>
+  <div class="two-col">
+    <div>
+      <div style="font-size:15px;font-weight:900;color:var(--cyan);margin-bottom:10px">🏪 개발 배경</div>
+      <div style="font-size:13px;line-height:1.9;color:var(--white);background:var(--card);border-radius:12px;padding:14px;margin-bottom:18px;border-left:3px solid var(--cyan)">
+        가라온·라온 형제를 위한 프라이빗 보드게임카페를 운영하면서
+        게임 추천, 방문자 관리, 주문 호출 등을 수작업으로 처리하는
+        비효율을 해소하고자 전용 앱을 개발하였습니다.
+      </div>
+      <div style="font-size:15px;font-weight:900;color:var(--cyan);margin-bottom:10px">🎯 핵심 목표</div>
+      <div class="list-item" style="border-color:var(--green)"><span class="num">✅</span><div class="content">인원수·나이에 맞는 게임 자동 추천</div></div>
+      <div class="list-item" style="border-color:var(--green)"><span class="num">✅</span><div class="content">방문자 체크인/아웃 및 방문기록 카드 관리</div></div>
+      <div class="list-item" style="border-color:var(--green)"><span class="num">✅</span><div class="content">아이들 ↔ 집주인 실시간 텔레그램 호출</div></div>
+      <div class="list-item" style="border-color:var(--green)"><span class="num">✅</span><div class="content">사다리·퀴즈·타이머 등 게임 보조 도구 8종</div></div>
+      <div class="list-item" style="border-color:var(--green)"><span class="num">✅</span><div class="content">Spotify 배경음악 — 페이지 이동 중에도 재생 유지</div></div>
+    </div>
+    <div class="card cyan">
+      <div style="font-size:15px;font-weight:900;color:var(--cyan);margin-bottom:14px">⚙️ 기술 스택</div>
+      <div class="spec-row"><span class="spec-key">프론트엔드</span><span class="spec-val">순수 HTML · CSS · JavaScript</span></div>
+      <div class="spec-row"><span class="spec-key">데이터베이스</span><span class="spec-val">Supabase (PostgreSQL + Storage)</span></div>
+      <div class="spec-row"><span class="spec-key">음악</span><span class="spec-val">Spotify Embed API + iframe SPA</span></div>
+      <div class="spec-row"><span class="spec-key">알림</span><span class="spec-val">Telegram Bot API (양방향)</span></div>
+      <div class="spec-row"><span class="spec-key">배포</span><span class="spec-val">Netlify → office-ai.app</span></div>
+      <div class="spec-row"><span class="spec-key">자동화</span><span class="spec-val">n8n Cloud (Webhook 연동)</span></div>
+      <div class="spec-row"><span class="spec-key">이미지</span><span class="spec-val">Wikipedia API + QR 촬영 업로드</span></div>
+      <div class="spec-row"><span class="spec-key">AI 검색</span><span class="spec-val">게임 정보 자동 입력 (ChatGPT)</span></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 4 — 서비스 구성
+══════════════════════════════════════════ -->
+<section class="slide" id="s4">
+  <div class="top-bar" style="background:var(--purple)"></div>
+  <div class="slide-title purple">02 &nbsp;|&nbsp; 서비스 구성</div>
+  <div class="slide-divider"></div>
+  <div class="screen-grid">
+    <div class="screen-card" style="border-color:var(--cyan)">
+      <div class="s-icon">🏠</div>
+      <div class="s-title cyan">메인 허브</div>
+      <div class="s-file">index.html</div>
+      <div class="s-desc">체크인·체크아웃 진입점<br>Spotify 음악 플레이어 호스트<br>전체 메뉴 카드 네비게이션</div>
+    </div>
+    <div class="screen-card" style="border-color:var(--green)">
+      <div class="s-icon">🎯</div>
+      <div class="s-title green">게임 추천</div>
+      <div class="s-file">recommend.html</div>
+      <div class="s-desc">인원수 & 연령대 필터<br>카테고리별 분류 (8종)<br>게임 카드 + 상세 모달</div>
+    </div>
+    <div class="screen-card" style="border-color:var(--yellow)">
+      <div class="s-icon">📊</div>
+      <div class="s-title yellow">게임 DB 관리</div>
+      <div class="s-file">gbhq.html</div>
+      <div class="s-desc">보드게임·맨손게임 등록/편집<br>방문자·호출메뉴 관리<br>AI 검색 자동 입력</div>
+    </div>
+    <div class="screen-card" style="border-color:var(--purple)">
+      <div class="s-icon">🛠️</div>
+      <div class="s-title purple">게임 도구</div>
+      <div class="s-file">game-tools.html</div>
+      <div class="s-desc">사다리·퀴즈·타이머 등 8종<br>퀴즈 정지 버튼<br>사다리 게임 애니메이션</div>
+    </div>
+    <div class="screen-card" style="border-color:var(--red)">
+      <div class="s-icon">📝</div>
+      <div class="s-title red">게임 후기</div>
+      <div class="s-file">review.html</div>
+      <div class="s-desc">별점 & 코멘트 남기기<br>방문자 연동<br>게임별 후기 목록</div>
+    </div>
+    <div class="screen-card" style="border-color:var(--cyan)">
+      <div class="s-icon">📸</div>
+      <div class="s-title cyan">QR 촬영 업로드</div>
+      <div class="s-file">upload.html</div>
+      <div class="s-desc">일회용 토큰 방식<br>폰 카메라 → Supabase Storage<br>자동 프로필 반영</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 5 — 게임 추천 시스템
+══════════════════════════════════════════ -->
+<section class="slide" id="s5">
+  <div class="top-bar" style="background:var(--purple)"></div>
+  <div class="slide-title purple">03 &nbsp;|&nbsp; 게임 추천 시스템</div>
+  <div class="slide-divider"></div>
+  <div class="two-col">
+    <div>
+      <div style="font-size:14px;font-weight:900;color:var(--purple);margin-bottom:12px">🎯 추천 흐름</div>
+      <div class="list-item" style="border-color:var(--purple)">
+        <span class="num purple">1️⃣</span>
+        <div class="content"><b>인원수 선택</b><span>2명 ~ 10명+ 버튼 탭</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--purple)">
+        <span class="num purple">2️⃣</span>
+        <div class="content"><b>연령대 필터</b><span>아동(~10) / 청소년(11~17) / 성인(18+) / 전체</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--purple)">
+        <span class="num purple">3️⃣</span>
+        <div class="content"><b>카테고리 선택</b><span>전략·카드·파티·협력·추리·경제·공포·롤플레이</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--purple)">
+        <span class="num purple">4️⃣</span>
+        <div class="content"><b>결과 카드 표시</b><span>이미지·난이도·플레이시간·재미도 ★★★★☆</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--purple)">
+        <span class="num purple">5️⃣</span>
+        <div class="content"><b>상세 보기</b><span>규칙·팁·YouTube 영상·AI 검색 자동 입력</span></div>
+      </div>
+    </div>
+    <div class="card purple">
+      <div style="font-size:14px;font-weight:900;color:var(--purple);margin-bottom:14px">🗄️ DB 테이블 구조</div>
+      <div style="font-size:12px;color:var(--yellow);font-weight:800;margin-bottom:6px">📦 board_games</div>
+      <div style="font-size:11px;color:var(--gray);line-height:1.8;padding-left:8px;margin-bottom:14px">
+        name / name_en<br>
+        min_players / max_players<br>
+        play_time_min / difficulty / fun_score<br>
+        categories[] &nbsp; age_min<br>
+        image_url / description<br>
+        rules / tips / youtube_url
+      </div>
+      <div style="font-size:12px;color:var(--yellow);font-weight:800;margin-bottom:6px">📦 hand_games</div>
+      <div style="font-size:11px;color:var(--gray);line-height:1.8;padding-left:8px">
+        name / min_players / max_players<br>
+        categories[] &nbsp; age_min<br>
+        description / rules / tips<br>
+        materials (도구 없이 하는 게임)
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 6 — 게임 DB 관리 (GBHQ)
+══════════════════════════════════════════ -->
+<section class="slide" id="s6">
+  <div class="top-bar" style="background:var(--yellow)"></div>
+  <div class="slide-title yellow">04 &nbsp;|&nbsp; 게임 DB 관리 &nbsp;(GBHQ)</div>
+  <div class="slide-divider"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1">
+    <div class="card cyan">
+      <span class="card-icon">🎲</span>
+      <div class="card-title cyan">보드게임 관리</div>
+      <div class="card-desc">
+        · 게임 목록 카드형 UI<br>
+        · 수정 아이콘(우상단) + 읽기전용 상세보기<br>
+        · AI 검색 → 이름 입력 시 모든 필드 자동 채우기<br>
+        · Wikipedia 이미지 자동 가져오기<br>
+        · YouTube 인라인 재생 지원
+      </div>
+    </div>
+    <div class="card green">
+      <span class="card-icon">✋</span>
+      <div class="card-title green">맨손 게임</div>
+      <div class="card-desc">
+        · 도구 없이 사람끼리 하는 게임<br>
+        · 별도 테이블 (hand_games)<br>
+        · 카테고리: 언어·신체·추리·창의·조용·시끌벅적<br>
+        · 인원수·연령대 필터 동일 적용
+      </div>
+    </div>
+    <div class="card purple">
+      <span class="card-icon">🧑‍🤝‍🧑</span>
+      <div class="card-title purple">방문자 & 방문기록</div>
+      <div class="card-desc">
+        · QR 촬영으로 프로필 사진 업로드<br>
+        · 이모지 아바타 선택 (피커 팝업)<br>
+        · 방문기록 카드형 UI (3개월~전체 필터)<br>
+        · 단체사진 업로드 최대 5장, 개별 삭제<br>
+        · 방문기록 ↔ 게임 호출 이력 연동
+      </div>
+    </div>
+    <div class="card yellow">
+      <span class="card-icon">📋</span>
+      <div class="card-title yellow">호출 메뉴 관리</div>
+      <div class="card-desc">
+        · 메뉴 아이템 등록 (이름 + 이모지 피커)<br>
+        · 솔드아웃(품절) 표시 — 빨간 SOLD OUT 뱃지<br>
+        · 아이들 → 텔레그램으로 집주인 호출<br>
+        · 집주인 → 아이들 메시지 모달 수신<br>
+        · 확인 시 텔레그램 자동 답장 + 알림음 반복
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 7 — 방문자 관리
+══════════════════════════════════════════ -->
+<section class="slide" id="s7">
+  <div class="top-bar" style="background:var(--red)"></div>
+  <div class="slide-title red">05 &nbsp;|&nbsp; 방문자 관리</div>
+  <div class="slide-divider"></div>
+  <div class="two-col">
+    <div>
+      <div style="font-size:14px;font-weight:900;color:var(--red);margin-bottom:12px">📲 체크인 흐름</div>
+      <div class="list-item" style="border-color:var(--red)">
+        <span class="num">1.</span>
+        <div class="content"><b>이름 입력</b><span>기존 방문자 자동완성 지원</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--red)">
+        <span class="num">2.</span>
+        <div class="content"><b>나이 입력</b><span>연령대 필터에 자동 반영됨</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--red)">
+        <span class="num">3.</span>
+        <div class="content"><b>사진 방식 선택</b><span>① QR 촬영&nbsp; ② 이모지 아바타 선택</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--red)">
+        <span class="num">4.</span>
+        <div class="content"><b>QR 촬영</b><span>일회용 토큰 생성 → 폰 카메라 → Supabase Storage</span></div>
+      </div>
+      <div class="list-item" style="border-color:var(--red)">
+        <span class="num">5.</span>
+        <div class="content"><b>체크인 완료</b><span>방문기록 자동 생성 + 환영 팝업</span></div>
+      </div>
+      <div style="margin-top:14px;font-size:14px;font-weight:900;color:var(--red)">🚪 체크아웃</div>
+      <div style="font-size:12px;color:var(--gray);padding:10px;background:var(--card);border-radius:10px;margin-top:8px;border-left:3px solid var(--red)">
+        하단 체크아웃 바에서 퇴장 인원 선택 → 일괄 체크아웃<br>
+        체크아웃 시 체류 시간 자동 계산
+      </div>
+    </div>
+    <div class="card red">
+      <div style="font-size:14px;font-weight:900;color:var(--red);margin-bottom:14px">📋 방문기록 기능</div>
+      <div class="spec-row"><span class="spec-key" style="color:var(--cyan)">카드형 UI</span><span class="spec-val">방문자 사진·이름·호출이력 카드</span></div>
+      <div class="spec-row"><span class="spec-key" style="color:var(--cyan)">기간 필터</span><span class="spec-val">3개월 / 6개월 / 1년 / 전체</span></div>
+      <div class="spec-row"><span class="spec-key" style="color:var(--cyan)">호출 이력</span><span class="spec-val">item_label·emoji·note 저장</span></div>
+      <div class="spec-row"><span class="spec-key" style="color:var(--cyan)">단체사진</span><span class="spec-val">QR 촬영 방식, 최대 5장</span></div>
+      <div class="spec-row"><span class="spec-key" style="color:var(--cyan)">사진 삭제</span><span class="spec-val">단체사진 개별 삭제 버튼(X)</span></div>
+      <div style="margin-top:16px;font-size:14px;font-weight:900;color:var(--red)">🗄️ DB 테이블</div>
+      <div style="font-size:11px;color:var(--gray);line-height:1.8;margin-top:8px;padding-left:8px">
+        <b class="yellow">visitors</b>: id · name · age · avatar · memo<br>
+        <b class="yellow">game_reviews</b>: game_id · visitor_name · rating · comment
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 8 — 게임 도구 8종
+══════════════════════════════════════════ -->
+<section class="slide" id="s8">
+  <div class="top-bar" style="background:var(--cyan)"></div>
+  <div class="slide-title cyan">06 &nbsp;|&nbsp; 게임 도구 &nbsp;8종</div>
+  <div class="slide-divider"></div>
+  <div class="tools-grid">
+    <div class="tool-card" style="border-color:var(--cyan)">
+      <span class="t-icon">🪜</span>
+      <div class="t-num cyan">01</div>
+      <div class="t-title cyan">사다리 게임</div>
+      <div class="t-desc">참여자 이름 입력 후<br>자동 사다리 생성<br>결과 애니메이션</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--green)">
+      <span class="t-icon">🧩</span>
+      <div class="t-num green">02</div>
+      <div class="t-title green">보드게임 퀴즈</div>
+      <div class="t-desc">카테고리별 퀴즈<br>정지 버튼 지원<br>타이머 연동</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--yellow)">
+      <span class="t-icon">⏱️</span>
+      <div class="t-num yellow">03</div>
+      <div class="t-title yellow">게임 타이머</div>
+      <div class="t-desc">카운트다운<br>경고음<br>라운드 자동 리셋</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--purple)">
+      <span class="t-icon">🎲</span>
+      <div class="t-num purple">04</div>
+      <div class="t-title purple">주사위</div>
+      <div class="t-desc">1~6 랜덤 굴리기<br>다중 주사위<br>동시 지원</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--cyan)">
+      <span class="t-icon">🃏</span>
+      <div class="t-num cyan">05</div>
+      <div class="t-title cyan">카드 셔플</div>
+      <div class="t-desc">가상 카드 덱<br>원하는 장수 뽑기<br>셔플 애니메이션</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--green)">
+      <span class="t-icon">🔢</span>
+      <div class="t-num green">06</div>
+      <div class="t-title green">점수판</div>
+      <div class="t-desc">팀·인원별 점수<br>라운드 히스토리<br>실시간 갱신</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--yellow)">
+      <span class="t-icon">🎵</span>
+      <div class="t-num yellow">07</div>
+      <div class="t-title yellow">BGM 플레이어</div>
+      <div class="t-desc">Spotify 통합<br>페이지 이동 중<br>재생 유지</div>
+    </div>
+    <div class="tool-card" style="border-color:var(--purple)">
+      <span class="t-icon">🔍</span>
+      <div class="t-num purple">08</div>
+      <div class="t-title purple">게임 검색</div>
+      <div class="t-desc">실시간 필터링<br>DB 전체 게임<br>빠른 탐색</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 9 — 음악 플레이어
+══════════════════════════════════════════ -->
+<section class="slide" id="s9">
+  <div class="top-bar" style="background:var(--green)"></div>
+  <div class="slide-title green">07 &nbsp;|&nbsp; 음악 플레이어 &nbsp;(Spotify 연동)</div>
+  <div class="slide-divider"></div>
+  <div class="two-col">
+    <div>
+      <div style="font-size:14px;font-weight:900;color:var(--green);margin-bottom:10px">🎵 핵심 기술: iframe SPA 방식</div>
+      <div style="font-size:12px;line-height:1.9;color:var(--white);background:var(--card);border-radius:12px;padding:14px;margin-bottom:16px;border-left:3px solid var(--green)">
+        일반 SPA에서 페이지를 이동하면 Spotify 재생이 끊깁니다.<br>
+        이를 해결하기 위해 <b class="green">메인 페이지를 Spotify 플레이어 호스트로 고정</b>하고,
+        나머지 콘텐츠를 &lt;iframe&gt; 내에서 로드하는 방식을 적용했습니다.
+      </div>
+      <div class="list-item" style="border-color:var(--green)"><span>🔍</span><div class="content"><b>통합 검색</b><span>곡·앨범·플레이리스트 전체 검색</span></div></div>
+      <div class="list-item" style="border-color:var(--green)"><span>▶️</span><div class="content"><b>자동 연동</b><span>Spotify Embed API autoplay=1</span></div></div>
+      <div class="list-item" style="border-color:var(--green)"><span>📱</span><div class="content"><b>반응형 배너</b><span>빔프로젝터 모드 확대 지원</span></div></div>
+      <div class="list-item" style="border-color:var(--green)"><span>🎶</span><div class="content"><b>로그인 여부</b><span>비회원 미리듣기 / 회원 전곡 재생</span></div></div>
+    </div>
+    <div class="card green">
+      <div style="font-size:14px;font-weight:900;color:var(--green);margin-bottom:14px">🔄 페이지 이동 흐름</div>
+      <div class="flow-item" style="border-left:3px solid var(--green)">
+        <span>▶</span> <div><b>메인 페이지 로드</b><br><span class="gray" style="font-size:10px">Spotify iframe 초기화 + 재생 시작</span></div>
+      </div>
+      <div style="text-align:center;color:var(--dgray);font-size:20px;margin:2px 0">↓</div>
+      <div class="flow-item" style="border-left:3px solid var(--cyan)">
+        <span>📄</span> <div><b>콘텐츠 영역</b><br><span class="gray" style="font-size:10px">별도 &lt;iframe&gt;으로 서브 페이지 렌더링</span></div>
+      </div>
+      <div style="text-align:center;color:var(--dgray);font-size:20px;margin:2px 0">↓</div>
+      <div class="flow-item" style="border-left:3px solid var(--yellow)">
+        <span>🔗</span> <div><b>링크 클릭</b><br><span class="gray" style="font-size:10px">location.href 인터셉트 → iframe.src 변경</span></div>
+      </div>
+      <div style="text-align:center;color:var(--dgray);font-size:20px;margin:2px 0">↓</div>
+      <div class="flow-item" style="border-left:3px solid var(--green)">
+        <span>✅</span> <div><b>음악 끊김 없음</b><br><span class="gray" style="font-size:10px">메인 Spotify 플레이어에 영향 없음</span></div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--gray);background:var(--card2);border-radius:8px;padding:8px 12px">
+        💡 카드 링크를 onclick 직접 호출 방식으로 변경하여 음악 끊김 완전 방지
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 10 — 집주인 호출 & 텔레그램
+══════════════════════════════════════════ -->
+<section class="slide" id="s10">
+  <div class="top-bar" style="background:var(--purple)"></div>
+  <div class="slide-title purple">08 &nbsp;|&nbsp; 집주인 호출 &nbsp;&amp;&nbsp; 텔레그램 연동</div>
+  <div class="slide-divider"></div>
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card purple" style="flex:1">
+        <div style="font-size:14px;font-weight:900;color:var(--purple);margin-bottom:10px">📱 아이들 → 집주인</div>
+        <div class="list-item" style="border-color:var(--purple)"><span>①</span><div class="content">호출 메뉴에서 아이템 탭 (예: 🍕 피자 주세요)</div></div>
+        <div class="list-item" style="border-color:var(--purple)"><span>②</span><div class="content">앱에서 Telegram Bot API 직접 호출</div></div>
+        <div class="list-item" style="border-color:var(--purple)"><span>③</span><div class="content">집주인 텔레그램으로 주문 내용 도착</div></div>
+        <div class="list-item" style="border-color:var(--purple)"><span>④</span><div class="content">방문기록에 호출 이력 자동 저장</div></div>
+      </div>
+      <div class="card cyan" style="flex:1">
+        <div style="font-size:14px;font-weight:900;color:var(--cyan);margin-bottom:10px">💬 집주인 → 아이들</div>
+        <div class="list-item" style="border-color:var(--cyan)"><span>①</span><div class="content">집주인이 텔레그램에서 메시지 전송</div></div>
+        <div class="list-item" style="border-color:var(--cyan)"><span>②</span><div class="content">앱이 n8n Webhook으로 메시지 수신</div></div>
+        <div class="list-item" style="border-color:var(--cyan)"><span>③</span><div class="content">모달 팝업 + 알림음 반복 재생</div></div>
+        <div class="list-item" style="border-color:var(--cyan)"><span>④</span><div class="content">확인 버튼 → 텔레그램 자동 답장</div></div>
+      </div>
+    </div>
+    <div class="card yellow">
+      <div style="font-size:14px;font-weight:900;color:var(--yellow);margin-bottom:14px">🛒 호출 메뉴 특별 기능</div>
+      <div class="spec-row"><span class="spec-key">솔드아웃</span><span class="spec-val">품절 처리 → 빨간 SOLD OUT 뱃지 + 탭 비활성화</span></div>
+      <div class="spec-row"><span class="spec-key">이모지 피커</span><span class="spec-val">메뉴 등록 시 이모지 선택 팝업</span></div>
+      <div class="spec-row"><span class="spec-key">알림음 반복</span><span class="spec-val">집주인 메시지 수신 시 확인 전까지 반복</span></div>
+      <div class="spec-row"><span class="spec-key">호출 히스토리</span><span class="spec-val">item_label · item_emoji · note 저장</span></div>
+      <div style="margin-top:16px;background:var(--card2);border-radius:10px;padding:12px">
+        <div style="font-size:12px;font-weight:900;color:var(--yellow);margin-bottom:8px">📡 기술 흐름</div>
+        <div style="font-size:11px;color:var(--gray);line-height:1.9">
+          아이들 호출 → <span class="cyan">Telegram Bot API</span> 직접 전송<br>
+          집주인 메시지 → <span class="green">n8n Webhook</span> → <span class="cyan">앱 폴링 수신</span><br>
+          Bot Token: config.js 에 저장 (프론트 직접 호출)
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     슬라이드 11 — 마무리
+══════════════════════════════════════════ -->
+<section class="slide" id="s11">
+  <div class="top-bar" style="background:var(--cyan)"></div>
+  <div style="text-align:center;margin-top:20px">
+    <div style="font-size:70px;animation:float 3s ease-in-out infinite">🎮</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:24px;color:var(--cyan);margin:12px 0 6px;text-shadow:0 0 20px #00d4ff66">
+      가라온 브로즈
+    </div>
+    <div style="font-size:16px;color:var(--yellow);font-weight:900;margin-bottom:14px">
+      보드게임카페 전용 스마트 앱 — 완성
+    </div>
+    <div class="url-box">🌐 &nbsp;office-ai.app/garaon-bros/</div>
+    <div style="font-size:14px;color:var(--gray);font-weight:900;margin:18px 0 10px">💡 향후 계획</div>
+    <ul class="plans" style="max-width:520px;margin:0 auto">
+      <li>· 게임 리뷰 별점 누적 통계 대시보드</li>
+      <li>· 맞춤형 게임 추천 AI 강화 (플레이 이력 기반)</li>
+      <li>· 방문자 포인트 / 도장 적립 시스템</li>
+      <li>· PWA 오프라인 지원</li>
+    </ul>
+    <div style="margin-top:22px;font-size:11px;color:var(--dgray)">JK Networks &nbsp;·&nbsp; 2026.03</div>
+    <div style="margin-top:14px;display:inline-block;background:var(--card);border:1px solid var(--dgray);border-radius:12px;padding:10px 24px;font-size:13px;color:var(--gray)">
+      📞 &nbsp;개발 의뢰 &nbsp;: &nbsp;<span style="color:var(--white);font-weight:900">제이케이네트웍스 대표 노진광</span>
+      &nbsp;&nbsp;<span style="color:var(--cyan);font-weight:900">010-3127-4528</span>
+    </div>
+  </div>
+</section>
+
+</div><!-- /slides-wrap -->
+
+
+<!-- ── 네비게이션 ── -->
+<div id="nav">
+  <button id="btn-prev" title="이전 (←)">◀</button>
+  <span class="counter" id="counter">1 / 11</span>
+  <button id="btn-next" title="다음 (→)">▶</button>
+  <button id="btn-fs" title="전체화면 (F)" style="margin-left:8px;font-size:14px">⛶</button>
+</div>
+
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('counter');
+  const progressBar = document.getElementById('progress-bar');
+  const total = slides.length;
+  let cur = 0;
+
+  function go(n) {
+    slides[cur].classList.remove('active');
+    cur = (n + total) % total;
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${total}`;
+    progressBar.style.width = `${((cur + 1) / total) * 100}%`;
+  }
+
+  go(0);
+
+  document.getElementById('btn-prev').onclick = () => go(cur - 1);
+  document.getElementById('btn-next').onclick = () => go(cur + 1);
+  document.getElementById('btn-fs').onclick = () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ')  { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft')                     { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'f' || e.key === 'F')            {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+</script>
+</body>
+</html>
