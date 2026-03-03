@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaunchKit - 결과물</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#e0e7ff;
+  --border:#e2e8f0;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --bg:#f8fafc;--card:#ffffff;--success:#10b981;
+}
+body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+a{text-decoration:none;color:inherit}
+
+/* TOP BAR */
+.topbar{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-logo{font-size:18px;font-weight:900;color:var(--primary)}
+.topbar-logo span{color:var(--text)}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text)}
+.topbar-sep{color:var(--border)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.action-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;transition:.2s;font-family:'Pretendard',sans-serif;
+}
+.action-btn.outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}
+.action-btn.outline:hover{border-color:var(--primary);color:var(--primary)}
+.action-btn.primary{background:var(--primary);color:#fff}
+.action-btn.primary:hover{background:var(--primary-dark)}
+.action-btn.success{background:var(--success);color:#fff}
+.action-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* TABS */
+.tab-bar{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;gap:0;flex-shrink:0;
+}
+.tab{
+  padding:14px 20px;font-size:14px;font-weight:700;
+  cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;
+  transition:.2s;
+}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab:hover:not(.active){color:var(--text2)}
+.tab-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--primary-light);color:var(--primary);
+  font-size:10px;font-weight:700;margin-left:6px;
+}
+
+/* CONTENT */
+.content{flex:1;overflow:hidden;display:flex}
+.preview-wrap{flex:1;overflow-y:auto;padding:24px;display:none}
+.preview-wrap.active{display:block}
+
+/* IR PREVIEW */
+.ir-preview-inner{
+  max-width:840px;margin:0 auto;
+  background:#fff;border-radius:16px;
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.ir-header{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+  padding:40px;color:#fff;
+}
+.ir-header h1{font-size:28px;font-weight:900;margin-bottom:8px}
+.ir-header p{font-size:14px;opacity:.8}
+.ir-body{padding:40px}
+.ir-body h2{font-size:20px;font-weight:800;color:var(--text);margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--primary-light)}
+.ir-body h2:first-child{margin-top:0}
+.ir-body p{font-size:14px;line-height:1.8;color:var(--text2);margin-bottom:12px}
+.ir-body ul{padding-left:20px;margin-bottom:12px}
+.ir-body li{font-size:14px;line-height:1.8;color:var(--text2);margin-bottom:4px}
+.ir-body table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px}
+.ir-body th{background:var(--primary-light);color:var(--primary);padding:10px 14px;text-align:left;font-weight:700}
+.ir-body td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text2)}
+
+/* LANDING PREVIEW */
+.landing-frame{width:100%;height:100%;border:none;display:none}
+.landing-frame.active{display:block}
+.landing-placeholder{
+  max-width:600px;margin:60px auto;text-align:center;
+  background:#fff;border:1px solid var(--border);border-radius:16px;padding:48px;
+}
+.landing-placeholder h2{font-size:20px;font-weight:800;margin-bottom:10px}
+.landing-placeholder p{font-size:14px;color:var(--text3)}
+
+/* LOADING */
+.loading-overlay{
+  position:absolute;inset:0;background:rgba(248,250,252,.9);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:10;
+}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{margin-top:16px;font-size:15px;font-weight:600;color:var(--text2)}
+.loading-sub{margin-top:8px;font-size:13px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="dashboard.html" class="topbar-logo">Launch<span>Kit</span></a>
+    <span class="topbar-sep">|</span>
+    <div class="topbar-title" id="proj-title">불러오는 중...</div>
+  </div>
+  <div class="topbar-right">
+    <button class="action-btn outline" id="btn-edit" onclick="goEdit()">✏️ 수정 요청</button>
+    <button class="action-btn outline" id="btn-dl-html" onclick="downloadHtml()">⬇ HTML</button>
+    <button class="action-btn primary" id="btn-dl-pdf" onclick="downloadPdf()">📄 PDF</button>
+    <button class="action-btn success" id="btn-dl-landing" onclick="downloadLanding()" style="display:none">🌐 랜딩 HTML</button>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <div class="tab active" id="tab-ir" onclick="switchTab('ir')">
+    📄 IR 문서 <span class="tab-badge" id="ir-badge">✓</span>
+  </div>
+  <div class="tab" id="tab-landing" onclick="switchTab('landing')">
+    🌐 랜딩페이지 <span class="tab-badge" id="landing-badge" style="display:none">✓</span>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content" style="position:relative">
+
+  <!-- IR TAB -->
+  <div class="preview-wrap active" id="panel-ir">
+    <div class="ir-preview-inner">
+      <div class="ir-header">
+        <h1 id="ir-company">사업계획서</h1>
+        <p id="ir-subtitle">LaunchKit AI 생성 문서</p>
+      </div>
+      <div class="ir-body" id="ir-body">
+        <div style="text-align:center;padding:60px;color:#94a3b8">IR 문서를 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LANDING TAB -->
+  <div class="preview-wrap" id="panel-landing">
+    <div id="landing-container">
+      <div class="landing-placeholder" id="landing-placeholder">
+        <div style="font-size:48px;margin-bottom:16px">🌐</div>
+        <h2>랜딩페이지 미리보기</h2>
+        <p>랜딩페이지가 생성된 경우 여기서 확인할 수 있습니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loading" style="display:none">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">자료를 불러오는 중...</div>
+    <div class="loading-sub" id="loading-sub"></div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+if (!LK_Auth.requireLogin()) throw '';
+
+const urlId = new URLSearchParams(location.search).get('id');
+if (!urlId) location.href = 'dashboard.html';
+
+let projectData = null;
+
+async function loadProject() {
+  showLoading('자료를 불러오는 중...');
+  try {
+    const res = await lkFetch(LK_CONFIG.WEBHOOKS.GET_PROJECT, { project_id: parseInt(urlId) });
+    projectData = res.project;
+    renderProject(projectData);
+  } catch {
+    document.getElementById('ir-body').innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444">프로젝트를 불러올 수 없습니다.</div>';
+  }
+  hideLoading();
+}
+
+function renderProject(p) {
+  document.getElementById('proj-title').textContent = p.title;
+  document.title = 'LaunchKit - ' + p.title;
+
+  if (p.company_name) {
+    document.getElementById('ir-company').textContent = p.company_name + ' 사업계획서';
+  }
+  document.getElementById('ir-subtitle').textContent = new Date(p.created_at).toLocaleDateString('ko-KR') + ' · LaunchKit AI 생성';
+
+  // IR HTML
+  if (p.ir_html) {
+    document.getElementById('ir-body').innerHTML = p.ir_html;
+  } else {
+    document.getElementById('ir-body').innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">IR 문서가 아직 생성되지 않았습니다.</div>';
+    document.getElementById('btn-dl-html').disabled = true;
+    document.getElementById('btn-dl-pdf').disabled  = true;
+  }
+
+  // LANDING HTML
+  if (p.landing_html) {
+    document.getElementById('landing-badge').style.display = '';
+    document.getElementById('btn-dl-landing').style.display = '';
+    document.getElementById('tab-landing').style.color = '';
+    renderLanding(p.landing_html);
+  }
+}
+
+function renderLanding(html) {
+  const container = document.getElementById('landing-container');
+  container.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:100%;height:calc(100vh - 120px);border:none;border-radius:12px;';
+  container.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+}
+
+function switchTab(tab) {
+  document.getElementById('panel-ir').classList.toggle('active',      tab === 'ir');
+  document.getElementById('panel-landing').classList.toggle('active', tab === 'landing');
+  document.getElementById('tab-ir').classList.toggle('active',      tab === 'ir');
+  document.getElementById('tab-landing').classList.toggle('active', tab === 'landing');
+
+  const isIR = tab === 'ir';
+  document.getElementById('btn-dl-html').style.display    = isIR ? '' : 'none';
+  document.getElementById('btn-dl-pdf').style.display     = isIR ? '' : 'none';
+  document.getElementById('btn-dl-landing').style.display = (!isIR && projectData?.landing_html) ? '' : 'none';
+}
+
+function goEdit() { location.href = 'interview.html?id=' + urlId; }
+
+function downloadHtml() {
+  if (!projectData?.ir_html) return;
+  const full = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>${esc(projectData.title)}</title>
+<style>body{font-family:sans-serif;max-width:800px;margin:40px auto;padding:0 24px;color:#1e293b;line-height:1.7}
+h1{color:#4f46e5;border-bottom:2px solid #e0e7ff;padding-bottom:12px}
+h2{color:#1e293b;margin-top:32px}table{width:100%;border-collapse:collapse}
+th{background:#e0e7ff;padding:10px;text-align:left}td{padding:9px;border-bottom:1px solid #e2e8f0}</style>
+</head><body><h1>${esc(projectData.company_name || projectData.title)} 사업계획서</h1>${projectData.ir_html}</body></html>`;
+  const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: (projectData.title || 'IR') + '.html' });
+  a.click(); URL.revokeObjectURL(url);
+}
+
+async function downloadPdf() {
+  if (!projectData?.ir_html) return;
+  showLoading('PDF 생성 중...', '잠시만 기다려주세요');
+  const el = document.createElement('div');
+  el.style.cssText = 'font-family:sans-serif;max-width:800px;margin:0 auto;padding:24px;color:#1e293b;line-height:1.7';
+  el.innerHTML = `<h1 style="color:#4f46e5;border-bottom:2px solid #e0e7ff;padding-bottom:12px">${esc(projectData.company_name || projectData.title)} 사업계획서</h1>${projectData.ir_html}`;
+  document.body.appendChild(el);
+  await html2pdf().set({
+    margin:10,filename:(projectData.title||'IR')+'.pdf',
+    html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(el).save();
+  document.body.removeChild(el);
+  hideLoading();
+}
+
+function downloadLanding() {
+  if (!projectData?.landing_html) return;
+  const blob = new Blob([projectData.landing_html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url, download: (projectData.title || 'landing') + '-homepage.html' });
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function showLoading(text, sub = '') {
+  document.getElementById('loading-text').textContent = text;
+  document.getElementById('loading-sub').textContent  = sub;
+  document.getElementById('loading').style.display    = 'flex';
+}
+function hideLoading() { document.getElementById('loading').style.display = 'none'; }
+function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+loadProject();
+</script>
+</body>
+</html>

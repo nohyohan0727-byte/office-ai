@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaunchKit - AI 사업계획서 & 홈페이지 자동 생성</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#6366f1;
+  --primary-dark:#4f46e5;
+  --primary-light:#e0e7ff;
+  --secondary:#0ea5e9;
+  --accent:#8b5cf6;
+  --success:#10b981;
+  --bg:#ffffff;
+  --bg2:#f8fafc;
+  --bg3:#f1f5f9;
+  --border:#e2e8f0;
+  --text:#1e293b;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --shadow:0 4px 24px rgba(99,102,241,.12);
+  --shadow-lg:0 8px 40px rgba(99,102,241,.18);
+}
+body{font-family:'Pretendard',sans-serif;color:var(--text);background:var(--bg);line-height:1.6}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 40px;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.nav-logo{font-size:22px;font-weight:900;color:var(--primary)}
+.nav-logo span{color:var(--text)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{font-size:14px;font-weight:500;color:var(--text2);transition:.2s}
+.nav-links a:hover{color:var(--primary)}
+.nav-cta{
+  background:var(--primary);color:#fff;
+  padding:9px 22px;border-radius:8px;
+  font-size:14px;font-weight:700;transition:.2s;
+}
+.nav-cta:hover{background:var(--primary-dark)}
+
+/* HERO */
+.hero{
+  padding:140px 40px 100px;
+  text-align:center;
+  background:linear-gradient(160deg,#fafbff 0%,#eef2ff 50%,#faf5ff 100%);
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;
+  background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--primary-light);color:var(--primary);
+  padding:6px 16px;border-radius:99px;
+  font-size:13px;font-weight:700;margin-bottom:24px;
+  border:1px solid rgba(99,102,241,.2);
+}
+.hero h1{
+  font-size:56px;font-weight:900;line-height:1.2;
+  color:var(--text);margin-bottom:20px;
+}
+.hero h1 .hl{
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-sub{
+  font-size:20px;color:var(--text2);max-width:580px;
+  margin:0 auto 40px;font-weight:400;
+}
+.hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{
+  background:var(--primary);color:#fff;
+  padding:14px 32px;border-radius:10px;
+  font-size:16px;font-weight:700;transition:.2s;
+  box-shadow:0 4px 16px rgba(99,102,241,.35);
+}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px)}
+.btn-outline{
+  background:#fff;color:var(--primary);
+  padding:14px 32px;border-radius:10px;
+  font-size:16px;font-weight:700;transition:.2s;
+  border:2px solid var(--primary);
+}
+.btn-outline:hover{background:var(--primary-light)}
+.hero-preview{
+  margin-top:60px;max-width:900px;margin-left:auto;margin-right:auto;
+  background:#fff;border-radius:16px;
+  box-shadow:var(--shadow-lg);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.preview-bar{
+  background:var(--bg3);padding:12px 16px;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);
+}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot.r{background:#ef4444}.dot.y{background:#f59e0b}.dot.g{background:#10b981}
+.preview-url{flex:1;background:#fff;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;color:var(--text3);text-align:center}
+.preview-body{
+  padding:32px;display:grid;grid-template-columns:1fr 1fr;gap:20px;
+  min-height:220px;
+}
+.preview-chat{
+  background:var(--bg2);border-radius:12px;padding:16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.chat-msg{
+  padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.5;max-width:85%;
+}
+.chat-ai{background:var(--primary-light);color:var(--primary-dark);align-self:flex-start}
+.chat-user{background:var(--primary);color:#fff;align-self:flex-end}
+.preview-doc{
+  background:var(--bg2);border-radius:12px;padding:16px;
+}
+.doc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px}
+.doc-line{height:8px;background:var(--border);border-radius:4px;margin-bottom:8px}
+.doc-line.w80{width:80%}.doc-line.w60{width:60%}.doc-line.w90{width:90%}.doc-line.w70{width:70%}
+.doc-line.accent{background:linear-gradient(90deg,var(--primary-light),var(--secondary));opacity:.5}
+
+/* SECTION COMMON */
+section{padding:80px 40px}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-label{
+  font-size:13px;font-weight:700;color:var(--primary);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;
+}
+.section-title{font-size:38px;font-weight:900;color:var(--text);margin-bottom:16px}
+.section-sub{font-size:17px;color:var(--text2);max-width:520px}
+
+/* HOW IT WORKS */
+.how{background:var(--bg)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;margin-top:56px}
+.step{
+  background:#fff;border:1px solid var(--border);border-radius:16px;
+  padding:32px 28px;text-align:center;
+  transition:.3s;position:relative;
+}
+.step:hover{box-shadow:var(--shadow);transform:translateY(-4px)}
+.step-num{
+  width:48px;height:48px;border-radius:12px;
+  background:var(--primary-light);color:var(--primary);
+  font-size:20px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 20px;
+}
+.step-icon{font-size:36px;margin-bottom:16px}
+.step h3{font-size:19px;font-weight:800;color:var(--text);margin-bottom:10px}
+.step p{font-size:14px;color:var(--text2);line-height:1.6}
+.step-arrow{
+  position:absolute;top:50%;right:-18px;
+  transform:translateY(-50%);
+  font-size:22px;color:var(--text3);
+  display:none;
+}
+@media(min-width:768px){.step-arrow{display:block}}
+
+/* FEATURES */
+.features{background:var(--bg2)}
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;margin-top:56px}
+.feat-card{
+  background:#fff;border:1px solid var(--border);border-radius:16px;
+  padding:28px;display:flex;gap:20px;align-items:flex-start;
+  transition:.3s;
+}
+.feat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.feat-icon{
+  width:52px;height:52px;border-radius:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+}
+.feat-icon.indigo{background:#e0e7ff}
+.feat-icon.sky{background:#e0f2fe}
+.feat-icon.purple{background:#f3e8ff}
+.feat-icon.green{background:#d1fae5}
+.feat-icon.orange{background:#ffedd5}
+.feat-icon.pink{background:#fce7f3}
+.feat-info h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px}
+.feat-info p{font-size:14px;color:var(--text2);line-height:1.6}
+
+/* PRICING */
+.pricing{background:#fff}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;align-items:start}
+.plan-card{
+  border:2px solid var(--border);border-radius:20px;
+  padding:32px;background:#fff;position:relative;transition:.3s;
+}
+.plan-card:hover{box-shadow:var(--shadow)}
+.plan-card.popular{
+  border-color:var(--primary);
+  box-shadow:var(--shadow-lg);
+}
+.popular-badge{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  background:var(--primary);color:#fff;
+  padding:4px 18px;border-radius:99px;
+  font-size:12px;font-weight:700;white-space:nowrap;
+}
+.plan-name{font-size:14px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.plan-price{font-size:40px;font-weight:900;color:var(--text);margin-bottom:4px}
+.plan-price span{font-size:16px;font-weight:500;color:var(--text3)}
+.plan-tokens{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--primary-light);color:var(--primary);
+  padding:5px 12px;border-radius:8px;
+  font-size:13px;font-weight:700;margin:16px 0;
+}
+.plan-divider{height:1px;background:var(--border);margin:20px 0}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.plan-features li{
+  font-size:14px;color:var(--text2);
+  display:flex;align-items:center;gap:8px;
+}
+.plan-features li::before{
+  content:'✓';color:var(--success);font-weight:700;flex-shrink:0;
+}
+.plan-features li.no::before{content:'✕';color:var(--text3)}
+.plan-features li.no{color:var(--text3)}
+.plan-btn{
+  width:100%;padding:13px;border-radius:10px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:.2s;border:none;
+}
+.plan-btn.free{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.plan-btn.free:hover{background:var(--border)}
+.plan-btn.primary{background:var(--primary);color:#fff}
+.plan-btn.primary:hover{background:var(--primary-dark)}
+.plan-btn.accent{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff}
+.plan-btn.accent:hover{opacity:.9}
+
+/* CTA */
+.cta-section{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+  padding:80px 40px;text-align:center;
+}
+.cta-section h2{font-size:40px;font-weight:900;color:#fff;margin-bottom:16px}
+.cta-section p{font-size:18px;color:rgba(255,255,255,.8);margin-bottom:36px}
+.btn-white{
+  background:#fff;color:var(--primary);
+  padding:14px 36px;border-radius:10px;
+  font-size:16px;font-weight:700;transition:.2s;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+}
+.btn-white:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.2)}
+
+/* FOOTER */
+footer{
+  background:var(--text);color:rgba(255,255,255,.6);
+  padding:40px;text-align:center;font-size:13px;
+}
+footer .footer-logo{font-size:20px;font-weight:900;color:#fff;margin-bottom:8px}
+footer .footer-contact{color:rgba(255,255,255,.4);font-size:12px;margin-top:8px}
+
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .hero{padding:120px 20px 60px}
+  .hero h1{font-size:34px}
+  .hero-sub{font-size:16px}
+  .steps,.features-grid,.plans{grid-template-columns:1fr}
+  section{padding:60px 20px}
+  .section-title{font-size:28px}
+  .preview-body{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Launch<span>Kit</span></div>
+  <div class="nav-links">
+    <a href="#how">사용방법</a>
+    <a href="#features">기능</a>
+    <a href="#pricing">요금제</a>
+    <a href="auth.html" class="nav-cta">무료 시작하기</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">✨ AI 기반 사업계획서 & 홈페이지 자동 생성</div>
+  <h1>아이디어를 <span class="hl">IR 자료</span>와<br>홈페이지로 만드세요</h1>
+  <p class="hero-sub">
+    대화형 AI가 사업 아이디어를 듣고, 전문 IR 사업계획서와 랜딩페이지를 자동으로 만들어드립니다.
+  </p>
+  <div class="hero-btns">
+    <a href="auth.html" class="btn-primary">무료로 시작하기</a>
+    <a href="#how" class="btn-outline">작동 방식 보기</a>
+  </div>
+
+  <div class="hero-preview">
+    <div class="preview-bar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <div class="preview-url">launchkit.app/interview</div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-chat">
+        <div class="chat-msg chat-ai">안녕하세요! 사업 아이디어를 편하게 말씀해주세요. 어떤 문제를 해결하고 싶으신가요?</div>
+        <div class="chat-msg chat-user">친환경 포장재 B2B 플랫폼을 만들려고 해요</div>
+        <div class="chat-msg chat-ai">좋은 아이디어네요! 주요 타겟 고객은 어떤 업종인가요? (예: 식품, 뷰티, 의류 등)</div>
+      </div>
+      <div class="preview-doc">
+        <div class="doc-title">📄 IR 사업계획서 생성 중...</div>
+        <div class="doc-line w90 accent"></div>
+        <div class="doc-line w80"></div>
+        <div class="doc-line w60"></div>
+        <div class="doc-line w90 accent"></div>
+        <div class="doc-line w70"></div>
+        <div class="doc-line w80"></div>
+        <div class="doc-line w60 accent"></div>
+        <div class="doc-line w90"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-inner">
+    <div class="section-label">How it works</div>
+    <div class="section-title">3단계로 완성되는<br>전문 사업 자료</div>
+    <div class="section-sub">복잡한 작업 없이 AI와 대화만 하면 됩니다</div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">💬</div>
+        <div class="step-num">1</div>
+        <h3>AI 인터뷰</h3>
+        <p>사업 아이디어, 목표, 타겟 고객 등을 AI와 자연스러운 대화로 정리합니다. 어렵지 않아요.</p>
+        <div class="step-arrow">→</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">📋</div>
+        <div class="step-num">2</div>
+        <h3>목차 & 구성 확인</h3>
+        <p>AI가 제안하는 IR 목차와 홈페이지 섹션 구성을 확인하고 원하는 방향으로 조정합니다.</p>
+        <div class="step-arrow">→</div>
+      </div>
+      <div class="step">
+        <div class="step-icon">🚀</div>
+        <div class="step-num">3</div>
+        <h3>결과물 다운로드</h3>
+        <p>IR 사업계획서(HTML/PDF)와 랜딩페이지(HTML)를 바로 받아서 사용할 수 있습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="section-label">Features</div>
+    <div class="section-title">LaunchKit이 제공하는 것들</div>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon indigo">🤖</div>
+        <div class="feat-info">
+          <h3>AI 인터랙티브 인터뷰</h3>
+          <p>AI가 비즈니스 전략가처럼 필요한 정보를 하나씩 자연스럽게 질문합니다. 두리뭉실한 아이디어도 OK.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon sky">📄</div>
+        <div class="feat-info">
+          <h3>전문 IR 사업계획서</h3>
+          <p>시장 분석, 경쟁사, 수익 모델, 투자 포인트까지 투자자가 원하는 형식으로 자동 작성됩니다.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon purple">🌐</div>
+        <div class="feat-info">
+          <h3>랜딩페이지 자동 생성</h3>
+          <p>브랜드 색깔에 맞는 홈페이지 HTML을 AI가 직접 만들어드립니다. 디자이너 없이도 됩니다.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon green">📥</div>
+        <div class="feat-info">
+          <h3>PDF & HTML 다운로드</h3>
+          <p>IR 문서는 PDF로, 홈페이지는 HTML 파일로 바로 다운로드해서 사용하세요.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon orange">🔢</div>
+        <div class="feat-info">
+          <h3>토큰 기반 유연한 사용</h3>
+          <p>작업 복잡도에 따라 토큰이 소비됩니다. 간단한 자료부터 상세한 자료까지 선택하세요.</p>
+        </div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon pink">💾</div>
+        <div class="feat-info">
+          <h3>프로젝트 저장 & 관리</h3>
+          <p>만들어진 자료는 대시보드에 저장됩니다. 언제든 다시 열어보거나 수정 요청할 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-inner">
+    <div class="section-label">Pricing</div>
+    <div class="section-title">합리적인 요금제</div>
+    <div class="section-sub">복잡한 자료일수록 토큰을 더 소비합니다. 내 용도에 맞는 플랜을 선택하세요.</div>
+
+    <div class="plans">
+      <!-- FREE -->
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">0<span>원/월</span></div>
+        <div class="plan-tokens">🔢 월 100 토큰</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>간단 IR 자료 (80토큰)</li>
+          <li>HTML 다운로드</li>
+          <li>1개 프로젝트 저장</li>
+          <li class="no">랜딩페이지 생성</li>
+          <li class="no">상세 IR 자료</li>
+          <li class="no">PDF 다운로드</li>
+        </ul>
+        <button class="plan-btn free" onclick="location.href='auth.html'">무료로 시작</button>
+      </div>
+
+      <!-- PRO -->
+      <div class="plan-card popular">
+        <div class="popular-badge">가장 인기</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">30,000<span>원/월</span></div>
+        <div class="plan-tokens">🔢 월 500 토큰</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>상세 IR 자료 (200토큰)</li>
+          <li>간단 랜딩페이지 (120토큰)</li>
+          <li>HTML + PDF 다운로드</li>
+          <li>무제한 프로젝트 저장</li>
+          <li>보통 IR 1개 + 랜딩 1개</li>
+          <li class="no">상세 랜딩페이지</li>
+        </ul>
+        <button class="plan-btn primary" onclick="location.href='auth.html?plan=pro'">프로 시작하기</button>
+      </div>
+
+      <!-- PRO MAX -->
+      <div class="plan-card">
+        <div class="plan-name">Pro Max</div>
+        <div class="plan-price">50,000<span>원/월</span></div>
+        <div class="plan-tokens">🔢 월 2,500 토큰</div>
+        <div class="plan-divider"></div>
+        <ul class="plan-features">
+          <li>상세 IR 자료 (200토큰)</li>
+          <li>상세 랜딩페이지 (300토큰)</li>
+          <li>HTML + PDF 다운로드</li>
+          <li>무제한 프로젝트 저장</li>
+          <li>보통 세트 5개 이상 가능</li>
+          <li>우선 생성 처리</li>
+        </ul>
+        <button class="plan-btn accent" onclick="location.href='auth.html?plan=pro_max'">맥스 시작하기</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>지금 바로 시작해보세요</h2>
+  <p>무료 플랜으로 AI 인터뷰를 경험해보세요. 신용카드 불필요.</p>
+  <a href="auth.html" class="btn-white">무료 회원가입</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">LaunchKit</div>
+  <div>AI 기반 사업계획서 & 홈페이지 자동 생성 서비스</div>
+  <div class="footer-contact">개발 의뢰: 제이케이네트웍스 대표 노진광 ㅣ 010-3127-4528</div>
+</footer>
+
+</body>
+</html>

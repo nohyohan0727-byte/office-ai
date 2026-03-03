@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaunchKit - 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#e0e7ff;
+  --secondary:#0ea5e9;--accent:#8b5cf6;--success:#10b981;--warn:#f59e0b;--danger:#ef4444;
+  --border:#e2e8f0;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --bg:#f8fafc;--card:#ffffff;
+}
+body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+
+/* SIDEBAR */
+.layout{display:flex;min-height:100vh}
+.sidebar{
+  width:240px;background:#fff;border-right:1px solid var(--border);
+  padding:24px 0;display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;z-index:50;
+}
+.sb-logo{padding:0 24px 24px;font-size:20px;font-weight:900;color:var(--primary);border-bottom:1px solid var(--border)}
+.sb-logo span{color:var(--text)}
+.sb-menu{padding:16px 0;flex:1}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 24px;font-size:14px;font-weight:600;
+  color:var(--text2);cursor:pointer;transition:.2s;
+}
+.sb-item:hover{background:var(--bg);color:var(--primary)}
+.sb-item.active{background:var(--primary-light);color:var(--primary)}
+.sb-item-icon{font-size:18px;width:22px;text-align:center}
+.sb-plan{
+  margin:0 16px 16px;padding:14px 16px;
+  border-radius:12px;background:var(--primary-light);
+}
+.sb-plan-name{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px}
+.sb-plan-tokens{font-size:22px;font-weight:900;color:var(--text);margin:4px 0 2px}
+.sb-plan-sub{font-size:11px;color:var(--text3)}
+.token-bar{height:6px;background:var(--border);border-radius:3px;margin:8px 0 4px;overflow:hidden}
+.token-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:.5s}
+.sb-logout{
+  margin:0 16px;padding:10px 16px;border-radius:8px;
+  font-size:13px;font-weight:600;color:var(--text3);
+  cursor:pointer;text-align:center;border:1px solid var(--border);
+  background:#fff;transition:.2s;
+}
+.sb-logout:hover{color:var(--danger);border-color:var(--danger)}
+
+/* MAIN */
+.main{margin-left:240px;padding:32px;flex:1}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.top-bar h1{font-size:24px;font-weight:900}
+.top-bar h1 span{font-weight:400;color:var(--text3);font-size:18px}
+.new-btn{
+  display:flex;align-items:center;gap:8px;
+  background:var(--primary);color:#fff;
+  padding:11px 22px;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  border:none;transition:.2s;
+}
+.new-btn:hover{background:var(--primary-dark);transform:translateY(-1px)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:20px 22px;
+}
+.stat-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-value{font-size:30px;font-weight:900;color:var(--text)}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.stat-icon{float:right;font-size:28px;opacity:.4;margin-top:-4px}
+
+/* PROJECTS */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:17px;font-weight:800}
+.empty-state{
+  background:var(--card);border:2px dashed var(--border);border-radius:16px;
+  padding:60px;text-align:center;
+}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px}
+.empty-sub{font-size:14px;color:var(--text3);margin-bottom:24px}
+.empty-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--primary);color:#fff;
+  padding:12px 24px;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  border:none;transition:.2s;
+}
+.empty-btn:hover{background:var(--primary-dark)}
+
+.projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.proj-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:24px;cursor:pointer;transition:.3s;
+}
+.proj-card:hover{box-shadow:0 4px 20px rgba(99,102,241,.12);transform:translateY(-2px);border-color:var(--primary)}
+.proj-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.proj-icon{width:44px;height:44px;border-radius:12px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:22px}
+.proj-status{
+  padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;
+}
+.status-interview{background:#fef3c7;color:#92400e}
+.status-confirming{background:#dbeafe;color:#1e40af}
+.status-generating{background:#f3e8ff;color:#6b21a8}
+.status-ir_done{background:#d1fae5;color:#065f46}
+.status-complete{background:#dcfce7;color:#14532d}
+.proj-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px}
+.proj-company{font-size:13px;color:var(--text3);margin-bottom:12px}
+.proj-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tag{
+  padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;
+  background:var(--bg);border:1px solid var(--border);color:var(--text2);
+}
+.tag.ir{background:#e0e7ff;border-color:#c7d2fe;color:var(--primary)}
+.tag.landing{background:#e0f2fe;border-color:#bae6fd;color:#0369a1}
+.proj-date{font-size:11px;color:var(--text3)}
+.proj-tokens{font-size:12px;color:var(--text3);font-weight:600}
+
+/* LOADING */
+.loading{text-align:center;padding:60px;color:var(--text3)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:20px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="index.html" class="sb-logo">Launch<span>Kit</span></a>
+    <nav class="sb-menu">
+      <div class="sb-item active">
+        <span class="sb-item-icon">🏠</span> 대시보드
+      </div>
+      <div class="sb-item" onclick="location.href='interview.html'">
+        <span class="sb-item-icon">💬</span> 새 프로젝트
+      </div>
+    </nav>
+    <div class="sb-plan" id="plan-box">
+      <div class="sb-plan-name" id="plan-name">Free</div>
+      <div class="sb-plan-tokens"><span id="tokens-remain">-</span> 토큰</div>
+      <div class="token-bar"><div class="token-fill" id="token-bar" style="width:0%"></div></div>
+      <div class="sb-plan-sub" id="tokens-total-text">/ - 토큰</div>
+    </div>
+    <div class="sb-logout" onclick="doLogout()">로그아웃</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="top-bar">
+      <h1>대시보드 <span id="user-greeting"></span></h1>
+      <button class="new-btn" onclick="location.href='interview.html'">
+        ✨ 새 프로젝트 시작
+      </button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-icon">📁</div>
+        <div class="stat-label">전체 프로젝트</div>
+        <div class="stat-value" id="stat-total">-</div>
+        <div class="stat-sub">생성된 프로젝트</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📄</div>
+        <div class="stat-label">IR 문서</div>
+        <div class="stat-value" id="stat-ir">-</div>
+        <div class="stat-sub">생성된 IR 자료</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌐</div>
+        <div class="stat-label">랜딩페이지</div>
+        <div class="stat-value" id="stat-landing">-</div>
+        <div class="stat-sub">생성된 홈페이지</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔢</div>
+        <div class="stat-label">사용 토큰</div>
+        <div class="stat-value" id="stat-tokens">-</div>
+        <div class="stat-sub">이번 달 소비</div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="section-header">
+      <div class="section-title">내 프로젝트</div>
+    </div>
+
+    <div id="projects-area">
+      <div class="loading">
+        <div class="spinner"></div>
+        프로젝트 불러오는 중...
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+if (!LK_Auth.requireLogin()) throw '';
+
+const user = LK_Auth.getUser();
+if (user) {
+  document.getElementById('user-greeting').textContent = user.name + '님';
+  updatePlanBox(user);
+}
+
+function updatePlanBox(u) {
+  const planNames = { free: 'Free', pro: 'Pro', pro_max: 'Pro Max' };
+  const total = LK_CONFIG.PLAN_TOKENS[u.plan] || 100;
+  const used  = u.tokens_used || 0;
+  const remain = total - used;
+  const pct    = Math.max(0, Math.min(100, (remain / total) * 100));
+  document.getElementById('plan-name').textContent = planNames[u.plan] || 'Free';
+  document.getElementById('tokens-remain').textContent = remain.toLocaleString();
+  document.getElementById('tokens-total-text').textContent = '/ ' + total.toLocaleString() + ' 토큰';
+  document.getElementById('token-bar').style.width = pct + '%';
+  document.getElementById('stat-tokens').textContent = used.toLocaleString();
+}
+
+const STATUS_LABEL = {
+  interview:  { text: '인터뷰 중',   cls: 'status-interview' },
+  confirming: { text: '구성 확인 중', cls: 'status-confirming' },
+  generating: { text: '생성 중',     cls: 'status-generating' },
+  ir_done:    { text: 'IR 완료',     cls: 'status-ir_done' },
+  complete:   { text: '완료',        cls: 'status-complete' },
+};
+
+async function loadProjects() {
+  try {
+    const data = await lkFetch(LK_CONFIG.WEBHOOKS.GET_PROJECTS);
+    renderProjects(data.projects || [], data.stats || {});
+  } catch {
+    document.getElementById('projects-area').innerHTML = '<div class="loading">프로젝트를 불러올 수 없습니다.</div>';
+  }
+}
+
+function renderProjects(projects, stats) {
+  document.getElementById('stat-total').textContent   = stats.total   ?? projects.length;
+  document.getElementById('stat-ir').textContent      = stats.ir      ?? '-';
+  document.getElementById('stat-landing').textContent = stats.landing ?? '-';
+
+  const area = document.getElementById('projects-area');
+  if (!projects.length) {
+    area.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">💡</div>
+        <div class="empty-title">아직 프로젝트가 없어요</div>
+        <div class="empty-sub">AI와 대화로 첫 번째 사업계획서를 만들어보세요</div>
+        <button class="empty-btn" onclick="location.href='interview.html'">✨ 첫 프로젝트 시작하기</button>
+      </div>`;
+    return;
+  }
+
+  const cards = projects.map(p => {
+    const s = STATUS_LABEL[p.status] || { text: p.status, cls: '' };
+    const tags = [];
+    if (p.ir_html)      tags.push('<div class="tag ir">IR 문서</div>');
+    if (p.landing_html) tags.push('<div class="tag landing">랜딩페이지</div>');
+    const date = new Date(p.created_at).toLocaleDateString('ko-KR');
+    return `
+      <div class="proj-card" onclick="openProject(${p.id}, '${p.status}')">
+        <div class="proj-top">
+          <div class="proj-icon">💼</div>
+          <span class="proj-status ${s.cls}">${s.text}</span>
+        </div>
+        <div class="proj-title">${esc(p.title)}</div>
+        <div class="proj-company">${esc(p.company_name || '')}</div>
+        <div class="proj-tags">${tags.join('') || '<div class="tag">인터뷰 진행 중</div>'}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="proj-date">${date}</div>
+          <div class="proj-tokens">-${p.tokens_used || 0} 토큰</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  area.innerHTML = `<div class="projects-grid">${cards}</div>`;
+}
+
+function openProject(id, status) {
+  if (['interview','confirming'].includes(status)) {
+    location.href = 'interview.html?id=' + id;
+  } else {
+    location.href = 'result.html?id=' + id;
+  }
+}
+
+function esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function doLogout() {
+  LK_Auth.clear();
+  location.href = 'auth.html';
+}
+
+loadProjects();
+</script>
+</body>
+</html>

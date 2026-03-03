@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaunchKit - AI 인터뷰</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#6366f1;--primary-dark:#4f46e5;--primary-light:#e0e7ff;
+  --border:#e2e8f0;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --bg:#f8fafc;--card:#ffffff;--success:#10b981;--warn:#f59e0b;
+}
+body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+a{text-decoration:none;color:inherit}
+
+/* TOP BAR */
+.topbar{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-logo{font-size:18px;font-weight:900;color:var(--primary)}
+.topbar-logo span{color:var(--text)}
+.topbar-sep{color:var(--border)}
+.proj-title-input{
+  font-size:15px;font-weight:700;color:var(--text);
+  border:none;outline:none;background:transparent;
+  min-width:200px;
+}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.token-chip{
+  display:flex;align-items:center;gap:6px;
+  background:var(--primary-light);color:var(--primary);
+  padding:5px 12px;border-radius:8px;font-size:13px;font-weight:700;
+}
+.step-indicator{display:flex;align-items:center;gap:8px}
+.step-dot{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+  background:var(--bg);border:2px solid var(--border);color:var(--text3);
+}
+.step-dot.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.step-dot.done{background:var(--success);border-color:var(--success);color:#fff}
+.step-line{width:24px;height:2px;background:var(--border)}
+.step-line.done{background:var(--success)}
+
+/* TYPE SELECT (step 0) */
+.type-select{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:40px;
+}
+.type-inner{max-width:700px;width:100%;text-align:center}
+.type-inner h2{font-size:28px;font-weight:900;margin-bottom:10px}
+.type-inner p{font-size:15px;color:var(--text2);margin-bottom:36px}
+.type-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.type-card{
+  background:#fff;border:2px solid var(--border);border-radius:16px;
+  padding:28px 20px;text-align:center;cursor:pointer;transition:.3s;
+}
+.type-card:hover{border-color:var(--primary);box-shadow:0 4px 20px rgba(99,102,241,.12)}
+.type-card.selected{border-color:var(--primary);background:var(--primary-light)}
+.type-card-icon{font-size:36px;margin-bottom:12px}
+.type-card h3{font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px}
+.type-card p{font-size:12px;color:var(--text2)}
+.type-card .cost{
+  display:inline-flex;align-items:center;gap:4px;
+  margin-top:10px;padding:3px 10px;border-radius:6px;
+  background:rgba(99,102,241,.1);color:var(--primary);
+  font-size:12px;font-weight:700;
+}
+.type-confirm-btn{
+  margin-top:28px;padding:14px 48px;
+  background:var(--primary);color:#fff;
+  border:none;border-radius:10px;font-size:16px;font-weight:700;
+  cursor:pointer;transition:.2s;font-family:'Pretendard',sans-serif;
+  opacity:.4;pointer-events:none;
+}
+.type-confirm-btn.ready{opacity:1;pointer-events:auto}
+.type-confirm-btn.ready:hover{background:var(--primary-dark)}
+
+/* CHAT */
+.chat-wrap{flex:1;display:none;flex-direction:column;overflow:hidden}
+.chat-messages{
+  flex:1;overflow-y:auto;padding:24px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.chat-messages::-webkit-scrollbar{width:4px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.msg-row{display:flex;gap:10px;align-items:flex-start}
+.msg-row.user{flex-direction:row-reverse}
+.msg-avatar{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.msg-avatar.ai{background:var(--primary-light)}
+.msg-avatar.user{background:var(--bg)}
+.msg-bubble{
+  max-width:70%;padding:12px 16px;border-radius:12px;
+  font-size:14px;line-height:1.6;
+}
+.msg-bubble.ai{
+  background:#fff;border:1px solid var(--border);color:var(--text);
+  border-top-left-radius:4px;
+}
+.msg-bubble.user{
+  background:var(--primary);color:#fff;
+  border-top-right-radius:4px;
+}
+.msg-bubble.system{
+  background:#fef3c7;border:1px solid #fde68a;color:#92400e;
+  max-width:100%;border-radius:10px;font-size:13px;
+}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--primary);opacity:.4;animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* CONFIRM PANEL */
+.confirm-panel{
+  background:#fff;border-top:1px solid var(--border);
+  padding:20px 24px;display:none;
+}
+.confirm-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:12px}
+.confirm-btns{display:flex;gap:10px}
+.btn-confirm{
+  flex:1;padding:11px;border-radius:9px;font-size:14px;font-weight:700;
+  cursor:pointer;transition:.2s;border:none;font-family:'Pretendard',sans-serif;
+}
+.btn-confirm.yes{background:var(--primary);color:#fff}
+.btn-confirm.yes:hover{background:var(--primary-dark)}
+.btn-confirm.edit{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-confirm.edit:hover{border-color:var(--primary);color:var(--primary)}
+
+/* INPUT */
+.chat-input-wrap{
+  background:#fff;border-top:1px solid var(--border);
+  padding:16px 24px;display:flex;gap:12px;align-items:flex-end;
+}
+.chat-input{
+  flex:1;padding:12px 16px;border:1.5px solid var(--border);
+  border-radius:10px;font-size:14px;font-family:'Pretendard',sans-serif;
+  resize:none;outline:none;max-height:120px;min-height:44px;
+  transition:.2s;color:var(--text);background:#fff;
+}
+.chat-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.send-btn{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--primary);color:#fff;border:none;
+  font-size:18px;cursor:pointer;transition:.2s;flex-shrink:0;
+}
+.send-btn:hover{background:var(--primary-dark)}
+.send-btn:disabled{opacity:.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="dashboard.html" class="topbar-logo">Launch<span>Kit</span></a>
+    <span class="topbar-sep">|</span>
+    <input class="proj-title-input" id="proj-title" value="새 프로젝트" maxlength="40">
+  </div>
+  <div class="topbar-right">
+    <div class="step-indicator">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot" id="sd2">2</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot" id="sd3">3</div>
+    </div>
+    <div class="token-chip">🔢 <span id="tokens-left">-</span> 토큰</div>
+  </div>
+</div>
+
+<!-- STEP 0: TYPE SELECT -->
+<div class="type-select" id="type-select">
+  <div class="type-inner">
+    <h2>어떤 자료가 필요하신가요?</h2>
+    <p>먼저 만들 자료 유형을 선택해주세요. AI가 맞춤 인터뷰를 진행합니다.</p>
+    <div class="type-cards">
+      <div class="type-card" data-type="ir_simple" onclick="selectType(this)">
+        <div class="type-card-icon">📋</div>
+        <h3>간단 IR 자료</h3>
+        <p>핵심 내용 중심의 기본 사업계획서</p>
+        <div class="cost">🔢 80 토큰</div>
+      </div>
+      <div class="type-card" data-type="ir_detail" onclick="selectType(this)">
+        <div class="type-card-icon">📄</div>
+        <h3>상세 IR 자료</h3>
+        <p>시장분석·경쟁사·수익모델 포함 상세본</p>
+        <div class="cost">🔢 200 토큰</div>
+      </div>
+      <div class="type-card" data-type="landing_simple" onclick="selectType(this)">
+        <div class="type-card-icon">🌐</div>
+        <h3>간단 랜딩페이지</h3>
+        <p>핵심 섹션만 담은 심플한 홈페이지</p>
+        <div class="cost">🔢 120 토큰</div>
+      </div>
+      <div class="type-card" data-type="landing_detail" onclick="selectType(this)">
+        <div class="type-card-icon">✨</div>
+        <h3>상세 랜딩페이지</h3>
+        <p>풍부한 섹션의 완성도 높은 홈페이지</p>
+        <div class="cost">🔢 300 토큰</div>
+      </div>
+      <div class="type-card" data-type="ir_detail+landing_detail" onclick="selectType(this)">
+        <div class="type-card-icon">🚀</div>
+        <h3>IR + 랜딩 세트</h3>
+        <p>상세 IR 자료 + 상세 랜딩페이지</p>
+        <div class="cost">🔢 500 토큰</div>
+      </div>
+    </div>
+    <button class="type-confirm-btn" id="type-btn" onclick="startInterview()">
+      인터뷰 시작하기 →
+    </button>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="chat-wrap" id="chat-wrap">
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="confirm-panel" id="confirm-panel">
+    <div class="confirm-title" id="confirm-title">목차 및 구성안이 맞으신가요?</div>
+    <div class="confirm-btns">
+      <button class="btn-confirm yes" onclick="confirmYes()">확인, 생성 시작!</button>
+      <button class="btn-confirm edit" onclick="confirmEdit()">수정 요청하기</button>
+    </div>
+  </div>
+  <div class="chat-input-wrap">
+    <textarea class="chat-input" id="chat-input" placeholder="메시지를 입력하세요..." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMsg()">↑</button>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+if (!LK_Auth.requireLogin()) throw '';
+
+const user = LK_Auth.getUser();
+let projectId = null;
+let selectedType = null;
+let chatStep = 'interview'; // interview | confirming | generating
+let isTyping = false;
+
+// URL 파라미터로 기존 프로젝트 불러오기
+const urlId = new URLSearchParams(location.search).get('id');
+if (urlId) {
+  projectId = parseInt(urlId);
+  showChat();
+  loadExistingProject(projectId);
+}
+
+// 토큰 표시
+if (user) {
+  const total = LK_CONFIG.PLAN_TOKENS[user.plan] || 100;
+  document.getElementById('tokens-left').textContent = (total - (user.tokens_used || 0)).toLocaleString();
+}
+
+function selectType(el) {
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+  document.getElementById('type-btn').classList.add('ready');
+}
+
+async function startInterview() {
+  if (!selectedType) return;
+  const title = document.getElementById('proj-title').value.trim() || '새 프로젝트';
+  showChat();
+  setStep(2);
+  addMsg('system', `선택하신 유형: <strong>${getTypeName(selectedType)}</strong><br>AI가 필요한 정보를 질문할 거예요. 편하게 답변해주세요!`);
+  showTyping();
+  try {
+    const res = await lkFetch(LK_CONFIG.WEBHOOKS.INTERVIEW, {
+      action: 'start',
+      project_type: selectedType,
+      title,
+    });
+    projectId = res.project_id;
+    hideTyping();
+    addMsg('ai', res.message);
+  } catch {
+    hideTyping();
+    addMsg('ai', '안녕하세요! 새로운 프로젝트를 시작해볼게요. 회사명 또는 서비스명을 알려주세요.');
+  }
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || isTyping) return;
+  input.value = ''; input.style.height = '';
+  document.getElementById('send-btn').disabled = true;
+
+  addMsg('user', text);
+  showTyping();
+  isTyping = true;
+
+  try {
+    const res = await lkFetch(LK_CONFIG.WEBHOOKS.INTERVIEW, {
+      action: 'chat',
+      project_id: projectId,
+      message: text,
+    });
+    hideTyping();
+    addMsg('ai', res.message);
+    if (res.stage === 'confirming') {
+      showConfirmPanel('목차 및 구성안을 확인해주세요');
+      setStep(2, true);
+    }
+    if (res.title) document.getElementById('proj-title').value = res.title;
+  } catch {
+    hideTyping();
+    addMsg('ai', '응답 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
+  isTyping = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+async function confirmYes() {
+  hideConfirmPanel();
+  addMsg('user', '네, 이대로 생성해주세요!');
+  showTyping();
+  setStep(3);
+  try {
+    const res = await lkFetch(LK_CONFIG.WEBHOOKS.GENERATE_IR, { project_id: projectId });
+    hideTyping();
+    addMsg('ai', res.message || 'IR 자료 생성이 완료되었습니다!');
+    if (res.done) {
+      setTimeout(() => location.href = 'result.html?id=' + projectId, 1500);
+    }
+  } catch {
+    hideTyping();
+    addMsg('ai', '생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+  }
+}
+
+function confirmEdit() {
+  hideConfirmPanel();
+  addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
+}
+
+async function loadExistingProject(id) {
+  showTyping();
+  try {
+    const res = await lkFetch(LK_CONFIG.WEBHOOKS.GET_PROJECT, { project_id: id });
+    hideTyping();
+    if (res.project) {
+      document.getElementById('proj-title').value = res.project.title;
+      (res.messages || []).forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
+      if (res.project.status === 'confirming') showConfirmPanel('목차 및 구성안을 확인해주세요');
+    }
+  } catch {
+    hideTyping();
+    addMsg('ai', '프로젝트를 불러오는 중 오류가 발생했습니다.');
+  }
+}
+
+// UI helpers
+function showChat() {
+  document.getElementById('type-select').style.display = 'none';
+  document.getElementById('chat-wrap').style.display = 'flex';
+}
+function addMsg(role, html) {
+  const wrap = document.getElementById('chat-messages');
+  if (role === 'system') {
+    wrap.insertAdjacentHTML('beforeend', `<div class="msg-row"><div class="msg-bubble system">${html}</div></div>`);
+  } else {
+    const avatar = role === 'ai' ? '🤖' : '👤';
+    const cls    = role === 'ai' ? 'ai' : 'user';
+    wrap.insertAdjacentHTML('beforeend', `
+      <div class="msg-row ${cls}">
+        <div class="msg-avatar ${cls}">${avatar}</div>
+        <div class="msg-bubble ${cls}">${html}</div>
+      </div>`);
+  }
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function showTyping() {
+  const wrap = document.getElementById('chat-messages');
+  wrap.insertAdjacentHTML('beforeend', `
+    <div class="msg-row" id="typing-row">
+      <div class="msg-avatar ai">🤖</div>
+      <div class="msg-bubble ai"><div class="typing"><span></span><span></span><span></span></div></div>
+    </div>`);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+function hideTyping() {
+  document.getElementById('typing-row')?.remove();
+}
+function showConfirmPanel(title) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-panel').style.display = 'block';
+}
+function hideConfirmPanel() {
+  document.getElementById('confirm-panel').style.display = 'none';
+}
+function setStep(active, confirm = false) {
+  for (let i = 1; i <= 3; i++) {
+    const dot  = document.getElementById('sd' + i);
+    const line = document.getElementById('sl' + i);
+    dot.className  = 'step-dot' + (i < active ? ' done' : i === active ? ' active' : '');
+    if (line) line.className = 'step-line' + (i < active ? ' done' : '');
+  }
+}
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+function autoResize(el) { el.style.height = ''; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+function getTypeName(t) {
+  return { ir_simple:'간단 IR', ir_detail:'상세 IR', landing_simple:'간단 랜딩', landing_detail:'상세 랜딩', 'ir_detail+landing_detail':'IR + 랜딩 세트' }[t] || t;
+}
+</script>
+</body>
+</html>
