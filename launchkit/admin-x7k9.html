@@ -741,6 +741,7 @@ async function loadPlans() {
           (isEvent ? '<div class="plan-card-event">' + (expired ? '<b style="color:var(--danger)">[만료]</b> ' : '') + fmtDate(p.event_start) + ' ~ ' + fmtDate(p.event_end) + '</div>' : '') +
         '</div>' +
         '<div class="plan-card-foot">' +
+          '<button class="btn btn-sm btn-secondary" onclick=\'copyPlan(' + JSON.stringify(p).replace(/'/g, "&#39;") + ')\'>복사</button>' +
           '<button class="btn btn-sm btn-secondary" onclick=\'openEditPlan(' + JSON.stringify(p).replace(/'/g, "&#39;") + ')\'>수정</button>' +
           '<button class="btn btn-sm btn-danger" onclick="deletePlan(\'' + p.id + '\',\'' + esc(p.name) + '\')">삭제</button>' +
         '</div>' +
@@ -776,6 +777,23 @@ function openEditPlan(p) {
   document.getElementById('plan-id').value = p.id;
   document.getElementById('plan-name').value = p.name;
   document.getElementById('plan-key').value = p.plan_key;
+  document.getElementById('plan-type').value = p.plan_type;
+  document.getElementById('plan-tokens').value = p.tokens || 0;
+  document.getElementById('plan-price-m').value = p.price_monthly || 0;
+  document.getElementById('plan-price-y').value = p.price_yearly || 0;
+  document.getElementById('plan-desc').value = p.description || '';
+  document.getElementById('plan-discount').value = p.discount_rate || 0;
+  document.getElementById('plan-event-start').value = p.event_start ? p.event_start.slice(0,10) : '';
+  document.getElementById('plan-event-end').value = p.event_end ? p.event_end.slice(0,10) : '';
+  document.getElementById('event-fields').style.display = p.plan_type === 'event' ? 'block' : 'none';
+  document.getElementById('plan-modal').classList.add('show');
+}
+
+function copyPlan(p) {
+  document.getElementById('plan-modal-title').textContent = '구독 상품 복사';
+  document.getElementById('plan-id').value = '';
+  document.getElementById('plan-name').value = p.name + ' (복사)';
+  document.getElementById('plan-key').value = p.plan_key + '_copy';
   document.getElementById('plan-type').value = p.plan_type;
   document.getElementById('plan-tokens').value = p.tokens || 0;
   document.getElementById('plan-price-m').value = p.price_monthly || 0;
