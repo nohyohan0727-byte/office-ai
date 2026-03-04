@@ -1,11 +1,13 @@
 // LaunchKit 설정
+// LK_ENV fallback: env.js가 없는 환경(Netlify 배포 등)에서도 동작
+const _ENV = (typeof LK_ENV !== 'undefined') ? LK_ENV : {};
 const LK_CONFIG = {
   // Supabase (garaon-bros 기존 프로젝트 공유 - lk_ 테이블 사용)
-  SUPABASE_URL:  LK_ENV.SUPABASE_URL,
-  SUPABASE_ANON: LK_ENV.SUPABASE_ANON,
+  SUPABASE_URL:  _ENV.SUPABASE_URL  || 'https://mkmxhmoocqnkltjxdfbm.supabase.co',
+  SUPABASE_ANON: _ENV.SUPABASE_ANON || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8',
 
   // n8n 웹훅 엔드포인트
-  WEBHOOK_BASE: LK_ENV.WEBHOOK_BASE,
+  WEBHOOK_BASE: _ENV.WEBHOOK_BASE || 'https://jknetworks.app.n8n.cloud/webhook',
   WEBHOOKS: {
     REGISTER:         '/launchkit-register',
     LOGIN:            '/launchkit-login',
