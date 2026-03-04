@@ -416,59 +416,74 @@ footer .footer-contact{color:rgba(255,255,255,.4);font-size:12px;margin-top:8px}
     <div class="section-title">합리적인 요금제</div>
     <div class="section-sub">복잡한 자료일수록 토큰을 더 소비합니다. 내 용도에 맞는 플랜을 선택하세요.</div>
 
-    <div class="plans">
-      <!-- FREE -->
-      <div class="plan-card">
-        <div class="plan-name">Free</div>
-        <div class="plan-price">0<span>원/월</span></div>
-        <div class="plan-tokens">🔢 월 100 토큰</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li>간단 IR 자료 (80토큰)</li>
-          <li>HTML 다운로드</li>
-          <li>1개 프로젝트 저장</li>
-          <li class="no">랜딩페이지 생성</li>
-          <li class="no">상세 IR 자료</li>
-          <li class="no">PDF 다운로드</li>
-        </ul>
-        <button class="plan-btn free" onclick="location.href='auth.html'">무료로 시작</button>
-      </div>
-
-      <!-- PRO -->
-      <div class="plan-card popular">
-        <div class="popular-badge">가장 인기</div>
-        <div class="plan-name">Pro</div>
-        <div class="plan-price">30,000<span>원/월</span></div>
-        <div class="plan-tokens">🔢 월 500 토큰</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li>상세 IR 자료 (200토큰)</li>
-          <li>간단 랜딩페이지 (120토큰)</li>
-          <li>HTML + PDF 다운로드</li>
-          <li>무제한 프로젝트 저장</li>
-          <li>보통 IR 1개 + 랜딩 1개</li>
-          <li class="no">상세 랜딩페이지</li>
-        </ul>
-        <button class="plan-btn primary" onclick="location.href='auth.html?plan=pro'">프로 시작하기</button>
-      </div>
-
-      <!-- PRO MAX -->
-      <div class="plan-card">
-        <div class="plan-name">Pro Max</div>
-        <div class="plan-price">50,000<span>원/월</span></div>
-        <div class="plan-tokens">🔢 월 2,500 토큰</div>
-        <div class="plan-divider"></div>
-        <ul class="plan-features">
-          <li>상세 IR 자료 (200토큰)</li>
-          <li>상세 랜딩페이지 (300토큰)</li>
-          <li>HTML + PDF 다운로드</li>
-          <li>무제한 프로젝트 저장</li>
-          <li>보통 세트 5개 이상 가능</li>
-          <li>우선 생성 처리</li>
-        </ul>
-        <button class="plan-btn accent" onclick="location.href='auth.html?plan=pro_max'">맥스 시작하기</button>
-      </div>
+    <div class="plans" id="plans-container">
+      <div style="text-align:center;padding:40px;color:var(--text2)">요금제를 불러오는 중...</div>
     </div>
+
+    <script>
+    (async function(){
+      const SB='https://mkmxhmoocqnkltjxdfbm.supabase.co/rest/v1';
+      const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8';
+      const FEATURES={
+        free:[
+          {t:'간단 IR 자료 (80토큰)',ok:true},{t:'HTML 다운로드',ok:true},{t:'1개 프로젝트 저장',ok:true},
+          {t:'랜딩페이지 생성',ok:false},{t:'상세 IR 자료',ok:false},{t:'PDF 다운로드',ok:false}
+        ],
+        pro:[
+          {t:'상세 IR 자료 (200토큰)',ok:true},{t:'간단 랜딩페이지 (120토큰)',ok:true},{t:'HTML + PDF 다운로드',ok:true},
+          {t:'무제한 프로젝트 저장',ok:true},{t:'보통 IR 1개 + 랜딩 1개',ok:true},{t:'상세 랜딩페이지',ok:false}
+        ],
+        pro_max:[
+          {t:'상세 IR 자료 (200토큰)',ok:true},{t:'상세 랜딩페이지 (300토큰)',ok:true},{t:'HTML + PDF 다운로드',ok:true},
+          {t:'무제한 프로젝트 저장',ok:true},{t:'보통 세트 5개 이상 가능',ok:true},{t:'우선 생성 처리',ok:true}
+        ]
+      };
+      const BTN_STYLE={free:'free',pro:'primary',pro_max:'accent'};
+      const BTN_TEXT={free:'무료로 시작',pro:'프로 시작하기',pro_max:'맥스 시작하기'};
+      const POPULAR=['pro'];
+      try{
+        const res=await fetch(SB+'/lk_plans?select=*&is_active=eq.true&order=sort_order.asc',{headers:{apikey:AK}});
+        const plans=await res.json();
+        const box=document.getElementById('plans-container');
+        if(!plans.length){box.innerHTML='<div style="text-align:center;padding:40px">등록된 요금제가 없습니다.</div>';return;}
+        box.innerHTML=plans.map(p=>{
+          const isPop=POPULAR.includes(p.plan_key);
+          const feats=FEATURES[p.plan_key]||[];
+          const pm=p.price_monthly||0;
+          const dm=p.discount_monthly||0;
+          const dy=p.discount_yearly||0;
+          const finalM=dm?Math.round(pm*(100-dm)/100):pm;
+          const btnCls=BTN_STYLE[p.plan_key]||'primary';
+          const btnTxt=BTN_TEXT[p.plan_key]||'시작하기';
+          const param=p.plan_key==='free'?'':'?plan='+p.plan_key;
+          let discountHtml='';
+          if(dm) discountHtml+='<div style="font-size:12px;color:var(--danger);margin-top:4px">월간 '+dm+'% 할인</div>';
+          if(dy) discountHtml+='<div style="font-size:12px;color:var(--danger);margin-top:2px">연간 '+dy+'% 할인</div>';
+          let eventHtml='';
+          if(p.plan_type==='event'&&p.event_start){
+            const s=p.event_start.slice(0,10);const e=p.event_end?p.event_end.slice(0,10):'';
+            eventHtml='<div style="font-size:12px;color:var(--secondary);margin-top:4px">📅 '+s+' ~ '+e+'</div>';
+          }
+          const featHtml=feats.length?
+            '<ul class="plan-features">'+feats.map(f=>'<li'+(f.ok?'':' class="no"')+'>'+f.t+'</li>').join('')+'</ul>':
+            (p.description?'<div style="font-size:14px;color:var(--text2);padding:12px 0">'+p.description+'</div>':'');
+          return '<div class="plan-card'+(isPop?' popular':'')+'">'
+            +(isPop?'<div class="popular-badge">가장 인기</div>':'')
+            +'<div class="plan-name">'+p.name+'</div>'
+            +'<div class="plan-price">'+(dm?'<s style="font-size:16px;color:var(--text3)">'+pm.toLocaleString()+'</s> ':'')
+              +finalM.toLocaleString()+'<span>원/월</span></div>'
+            +'<div class="plan-tokens">🔢 월 '+(p.tokens||0).toLocaleString()+' 토큰</div>'
+            +discountHtml+eventHtml
+            +'<div class="plan-divider"></div>'
+            +featHtml
+            +'<button class="plan-btn '+btnCls+'" onclick="location.href=\'auth.html'+param+'\'">'+btnTxt+'</button>'
+            +'</div>';
+        }).join('');
+      }catch(e){
+        document.getElementById('plans-container').innerHTML='<div style="text-align:center;padding:40px">요금제를 불러올 수 없습니다.</div>';
+      }
+    })();
+    </script>
   </div>
 </section>
 
