@@ -30,14 +30,21 @@ const SB_HDR = {{
 }};
 const PLAN_TOKENS = {{ free: 100, pro: 500, pro_max: 2500 }};
 const ADMIN_KEY = '{ADMIN_KEY}';
+const self = this;
 
 async function sb(method, path, body) {{
-  const url = SB_URL + '/rest/v1/' + path;
-  const opts = {{ method, headers: {{...SB_HDR}} }};
-  if (body) opts.body = JSON.stringify(body);
-  const resp = await fetch(url, opts);
-  const text = await resp.text();
-  try {{ return JSON.parse(text); }} catch {{ return text; }}
+  const opts = {{
+    method,
+    url: SB_URL + '/rest/v1/' + path,
+    headers: {{...SB_HDR}},
+    json: true,
+  }};
+  if (body) opts.body = body;
+  try {{
+    return await self.helpers.httpRequest(opts);
+  }} catch(e) {{
+    return [];
+  }}
 }}
 
 const b = $input.first().json.body || $input.first().json;
