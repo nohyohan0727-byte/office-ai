@@ -734,6 +734,7 @@
     이 서비스는 체험용입니다 · RAG 시스템 답변은 참고용이며 최종 판단은 전문가와 상담하세요
   </div>
 
+<script src="/js/chat-media.js"></script>
 <script>
   const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/rag-category-chat";
 
@@ -978,7 +979,7 @@
     if (w) w.remove();
   }
 
-  function addMessage(text, type, tokensRemaining, sources) {
+  function addMessage(text, type, tokensRemaining, sources, images) {
     removeWelcome();
 
     const div = document.createElement('div');
@@ -991,15 +992,25 @@
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
 
+    // 이미지가 있으면 버블 상단에 렌더링
+    if (images && images.length > 0) {
+      const imgWrap = ChatMedia.renderBubbleImages(images);
+      if (imgWrap) bubble.appendChild(imgWrap);
+    }
+
+    const textDiv = document.createElement('div');
     if (type === 'bot') {
-      bubble.innerHTML = formatBotResponse(text);
+      textDiv.innerHTML = formatBotResponse(text);
+      bubble.appendChild(textDiv);
       if (sources && sources.length > 0) {
         bubble.appendChild(renderSources(sources));
       }
     } else if (type === 'error') {
-      bubble.innerHTML = text.replace(/\n/g, '<br>');
+      textDiv.innerHTML = text.replace(/\n/g, '<br>');
+      bubble.appendChild(textDiv);
     } else {
-      bubble.textContent = text;
+      textDiv.textContent = text;
+      bubble.appendChild(textDiv);
     }
 
     const meta = document.createElement('div');
@@ -1165,28 +1176,33 @@
     const message = inputEl.value.trim();
     const sessionId = document.getElementById('sessionId').value.trim() || 'demo-001';
 
-    if (!message) return;
+    const hasImages = ChatMedia.getAttachedImages().length > 0;
+    if (!message && !hasImages) return;
     if (!API_KEY) {
       window.location.href = '/register.html';
       return;
     }
 
+    const pendingImages = ChatMedia.getAttachedImages();
     inputEl.value = '';
     sendBtn.disabled = true;
 
-    addMessage(message, 'user');
+    addMessage(message, 'user', undefined, undefined, pendingImages);
+    ChatMedia.clearImages();
     showTyping();
 
     try {
+      const payload = {
+        api_key: API_KEY,
+        session_id: sessionId,
+        message: message,
+        category: currentCategory
+      };
+      if (pendingImages.length > 0) payload.images = pendingImages;
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          api_key: API_KEY,
-          session_id: sessionId,
-          message: message,
-          category: currentCategory
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -1228,6 +1244,17 @@
     sendBtn.disabled = false;
     inputEl.focus();
   }
+
+  // ChatMedia 초기화 (이미지 첨부 + 음성인식)
+  ChatMedia.init({
+    inputAreaSelector: '.input-area',
+    textInputSelector: '#messageInput',
+    sendBtnSelector: '#sendBtn',
+    showToast: function(msg) { alert(msg); },
+    maxImageSizeMB: 2,
+    maxImages: 3,
+    lang: 'ko-KR'
+  });
 </script>
 </div><!-- /.chat-wrapper -->
 </body>

@@ -414,6 +414,7 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="/js/chat-media.js"></script>
   <script>
     const N8N = 'https://jknetworks.app.n8n.cloud/webhook';
     let isAuthenticated = false;
@@ -535,7 +536,7 @@
       return [...cbs].map(cb => cb.value);
     }
 
-    function addMessage(content, type = 'bot', sources = []) {
+    function addMessage(content, type = 'bot', sources = [], images = []) {
       const chatArea = document.getElementById('chat-area');
       const empty = document.getElementById('empty-chat');
       if (empty) empty.remove();
@@ -550,9 +551,14 @@
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
 
+      // 이미지가 있으면 버블 상단에 렌더링
+      if (images && images.length > 0) {
+        const imgWrap = ChatMedia.renderBubbleImages(images);
+        if (imgWrap) bubble.appendChild(imgWrap);
+      }
+
       const text = document.createElement('div');
       if (type === 'bot') {
-        // 마크다운 렌더링 (XSS 방지: DOMPurify 적용)
         text.className = 'md-content';
         text.innerHTML = DOMPurify.sanitize(marked.parse(content));
       } else {
@@ -635,7 +641,8 @@
 
       const input = document.getElementById('msg-input');
       const msg = input.value.trim();
-      if (!msg) return;
+      const hasImages = ChatMedia.getAttachedImages().length > 0;
+      if (!msg && !hasImages) return;
 
       const categories = getSelectedCategories();
       if (allCategories.length > 0) {
@@ -647,18 +654,22 @@
       }
 
       const apiKey = document.getElementById('api-key').value.trim();
+      const pendingImages = ChatMedia.getAttachedImages();
       input.value = '';
       input.style.height = 'auto';
-      addMessage(msg, 'user');
+      addMessage(msg, 'user', [], pendingImages);
+      ChatMedia.clearImages();
       addTyping();
       isLoading = true;
       document.getElementById('send-btn').disabled = true;
 
       try {
+        const payload = { api_key: apiKey, session_id: sessionId, message: msg, categories };
+        if (pendingImages.length > 0) payload.images = pendingImages;
         const res = await fetch(`${N8N}/trustrag/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ api_key: apiKey, session_id: sessionId, message: msg, categories })
+          body: JSON.stringify(payload)
         });
         const text = await res.text();
         removeTyping();
@@ -726,6 +737,17 @@
 
     // marked 설정 (GFM + 줄바꿈 처리)
     marked.setOptions({ gfm: true, breaks: true });
+
+    // ChatMedia 초기화 (이미지 첨부 + 음성인식)
+    ChatMedia.init({
+      inputAreaSelector: '.input-row',
+      textInputSelector: '#msg-input',
+      sendBtnSelector: '#send-btn',
+      showToast: showToast,
+      maxImageSizeMB: 2,
+      maxImages: 3,
+      lang: 'ko-KR'
+    });
   </script>
 </body>
 </html>
