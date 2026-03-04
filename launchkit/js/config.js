@@ -17,6 +17,7 @@ const LK_CONFIG = {
     GENERATE_LANDING: '/launchkit-generate-landing',
     GET_PROJECTS:     '/launchkit-get-projects',
     GET_PROJECT:      '/launchkit-get-project',
+    ADMIN:            '/launchkit-admin',
   },
 
   // 플랜별 토큰
@@ -34,11 +35,11 @@ const LK_CONFIG = {
     landing_detail: 300,
   },
 
-  // 플랜 가격
+  // 플랜 가격 (월/연)
   PLAN_PRICE: {
-    free:    0,
-    pro:     30000,
-    pro_max: 50000,
+    free:    { monthly: 0,     yearly: 0 },
+    pro:     { monthly: 30000, yearly: 300000 },
+    pro_max: { monthly: 50000, yearly: 500000 },
   },
 };
 
