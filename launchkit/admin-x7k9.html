@@ -220,6 +220,7 @@ tr:hover td{background:rgba(99,102,241,.02)}
           <option value="pro_max">Pro Max</option>
         </select>
         <button class="btn btn-primary" onclick="loadUsers()">검색</button>
+        <button class="btn btn-success" onclick="openCreateUser()" style="margin-left:auto">+ 유저 생성</button>
       </div>
       <div class="card">
         <div class="card-body" style="padding:0">
@@ -278,26 +279,102 @@ tr:hover td{background:rgba(99,102,241,.02)}
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-uid">
-      <div class="form-group">
-        <label class="form-label">이름</label>
-        <input class="form-input" id="edit-name">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이름</label>
+          <input class="form-input" id="edit-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">이메일</label>
+          <input class="form-input" id="edit-email">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">플랜</label>
+          <select class="form-select" id="edit-plan">
+            <option value="free">Free (100 토큰)</option>
+            <option value="pro">Pro (500 토큰)</option>
+            <option value="pro_max">Pro Max (2,500 토큰)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">결제주기</label>
+          <select class="form-select" id="edit-cycle">
+            <option value="monthly">월간</option>
+            <option value="yearly">연간</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">할인율 (%)</label>
+          <input class="form-input" id="edit-discount" type="number" min="0" max="100" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">구독 종료일</label>
+          <input class="form-input" id="edit-sub-end" type="date">
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">이메일</label>
-        <input class="form-input" id="edit-email">
-      </div>
-      <div class="form-group">
-        <label class="form-label">플랜</label>
-        <select class="form-select" id="edit-plan">
-          <option value="free">Free (100 토큰)</option>
-          <option value="pro">Pro (500 토큰)</option>
-          <option value="pro_max">Pro Max (2,500 토큰)</option>
-        </select>
+        <label class="form-label">비밀번호 변경 (빈칸이면 유지)</label>
+        <input class="form-input" id="edit-password" type="password" placeholder="새 비밀번호 입력">
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('edit-modal')">취소</button>
       <button class="btn btn-primary" onclick="saveEditUser()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE USER MODAL -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>유저 생성</h3>
+      <button class="modal-close" onclick="closeModal('create-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이름 *</label>
+          <input class="form-input" id="create-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">이메일 *</label>
+          <input class="form-input" id="create-email" type="email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호 *</label>
+        <input class="form-input" id="create-password" type="password">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">플랜</label>
+          <select class="form-select" id="create-plan">
+            <option value="free">Free (100 토큰)</option>
+            <option value="pro">Pro (500 토큰)</option>
+            <option value="pro_max">Pro Max (2,500 토큰)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">결제주기</label>
+          <select class="form-select" id="create-cycle">
+            <option value="monthly">월간</option>
+            <option value="yearly">연간</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">할인율 (%)</label>
+        <input class="form-input" id="create-discount" type="number" min="0" max="100" value="0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('create-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveCreateUser()">생성</button>
     </div>
   </div>
 </div>
@@ -446,7 +523,7 @@ async function loadUsers() {
         '<td><span class="badge badge-' + (u.is_active?'active':'inactive') + '">' + (u.is_active?'활성':'비활성') + '</span></td>' +
         '<td>' + fmtDate(u.created_at) + '</td>' +
         '<td style="white-space:nowrap">' +
-          '<button class="btn btn-sm btn-secondary" onclick="openEditUser(\'' + u.id + '\',\'' + esc(u.name) + '\',\'' + esc(u.email) + '\',\'' + u.plan + '\')">수정</button> ' +
+          '<button class="btn btn-sm btn-secondary" onclick="openEditUser(\'' + u.id + '\',\'' + esc(u.name) + '\',\'' + esc(u.email) + '\',\'' + u.plan + '\',\'' + (u.billing_cycle||'monthly') + '\',' + (u.discount_rate||0) + ',\'' + (u.subscription_end||'') + '\')">수정</button> ' +
           '<button class="btn btn-sm btn-' + (u.is_active?'danger':'success') + '" onclick="toggleUser(\'' + u.id + '\')">' + (u.is_active?'비활성화':'활성화') + '</button> ' +
           '<button class="btn btn-sm btn-danger" onclick="deleteUser(\'' + u.id + '\',\'' + esc(u.name) + '\')">삭제</button>' +
         '</td></tr>';
@@ -454,24 +531,65 @@ async function loadUsers() {
   } catch (e) { tbody.innerHTML = '<tr><td colspan="9">로드 실패</td></tr>'; }
 }
 
-function openEditUser(id, name, email, plan) {
+function openEditUser(id, name, email, plan, cycle, discount, subEnd) {
   document.getElementById('edit-uid').value = id;
   document.getElementById('edit-name').value = name;
   document.getElementById('edit-email').value = email;
   document.getElementById('edit-plan').value = plan;
+  document.getElementById('edit-cycle').value = cycle || 'monthly';
+  document.getElementById('edit-discount').value = discount || 0;
+  document.getElementById('edit-sub-end').value = subEnd ? subEnd.slice(0,10) : '';
+  document.getElementById('edit-password').value = '';
   document.getElementById('edit-modal').classList.add('show');
 }
 
 async function saveEditUser() {
   try {
-    const r = await adminCall('edit_user', {
+    const data = {
       user_id: document.getElementById('edit-uid').value,
       name: document.getElementById('edit-name').value,
       email: document.getElementById('edit-email').value,
       plan: document.getElementById('edit-plan').value,
-    });
+      billing_cycle: document.getElementById('edit-cycle').value,
+      discount_rate: document.getElementById('edit-discount').value,
+    };
+    const subEnd = document.getElementById('edit-sub-end').value;
+    if (subEnd) data.subscription_end = subEnd + 'T23:59:59Z';
+    const pw = document.getElementById('edit-password').value;
+    if (pw) data.password = pw;
+    const r = await adminCall('edit_user', data);
     toast(r.message || '저장됨'); closeModal('edit-modal'); loadUsers();
   } catch (e) { toast('저장 실패', 'error'); }
+}
+
+function openCreateUser() {
+  document.getElementById('create-name').value = '';
+  document.getElementById('create-email').value = '';
+  document.getElementById('create-password').value = '';
+  document.getElementById('create-plan').value = 'free';
+  document.getElementById('create-cycle').value = 'monthly';
+  document.getElementById('create-discount').value = 0;
+  document.getElementById('create-modal').classList.add('show');
+}
+
+async function saveCreateUser() {
+  const name = document.getElementById('create-name').value.trim();
+  const email = document.getElementById('create-email').value.trim();
+  const password = document.getElementById('create-password').value;
+  if (!name || !email || !password) { toast('이름, 이메일, 비밀번호를 입력하세요', 'error'); return; }
+  try {
+    const r = await adminCall('create_user', {
+      name, email, password,
+      plan: document.getElementById('create-plan').value,
+      billing_cycle: document.getElementById('create-cycle').value,
+      discount_rate: document.getElementById('create-discount').value,
+    });
+    if (r.success) {
+      toast(r.message || '유저 생성됨'); closeModal('create-modal'); loadUsers();
+    } else {
+      toast(r.message || '생성 실패', 'error');
+    }
+  } catch (e) { toast('생성 실패', 'error'); }
 }
 
 async function toggleUser(id) {

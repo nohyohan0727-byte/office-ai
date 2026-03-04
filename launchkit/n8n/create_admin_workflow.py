@@ -79,14 +79,46 @@ switch (action) {{
     return [{{ json: {{ success: true, users }} }}];
   }}
 
+  case 'create_user': {{
+    const {{ name, email, password, plan, billing_cycle, discount_rate }} = b;
+    if (!name || !email || !password)
+      return [{{ json: {{ success: false, message: 'name, email, password 필수' }} }}];
+    const existing = await sb('GET', 'lk_users?email=eq.' + encodeURIComponent(email) + '&select=id');
+    if (existing.length) return [{{ json: {{ success: false, message: '이미 존재하는 이메일입니다.' }} }}];
+    const crypto = require('crypto');
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+    const password_hash = 'pbkdf2:' + salt + ':' + hash;
+    const userPlan = (plan && ['free','pro','pro_max'].includes(plan)) ? plan : 'free';
+    const newUser = {{
+      name, email, password_hash,
+      plan: userPlan, tokens_total: PLAN_TOKENS[userPlan],
+      tokens_used: 0, is_active: true,
+      billing_cycle: billing_cycle || 'monthly',
+      discount_rate: parseInt(discount_rate) || 0,
+    }};
+    const created = await sb('POST', 'lk_users', newUser);
+    return [{{ json: {{ success: true, user: created[0], message: '유저가 생성되었습니다.' }} }}];
+  }}
+
   case 'edit_user': {{
-    const {{ user_id, name, email, plan }} = b;
+    const {{ user_id, name, email, plan, billing_cycle, discount_rate, subscription_end, password }} = b;
     const update = {{}};
     if (name) update.name = name;
     if (email) update.email = email;
     if (plan && ['free', 'pro', 'pro_max'].includes(plan)) {{
       update.plan = plan;
       update.tokens_total = PLAN_TOKENS[plan];
+    }}
+    if (billing_cycle) update.billing_cycle = billing_cycle;
+    if (discount_rate !== undefined && discount_rate !== null && discount_rate !== '')
+      update.discount_rate = Math.max(0, Math.min(100, parseInt(discount_rate) || 0));
+    if (subscription_end) update.subscription_end = subscription_end;
+    if (password) {{
+      const crypto = require('crypto');
+      const salt = crypto.randomBytes(16).toString('hex');
+      const hash = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+      update.password_hash = 'pbkdf2:' + salt + ':' + hash;
     }}
     await sb('PATCH', 'lk_users?id=eq.' + user_id, update);
     return [{{ json: {{ success: true, message: '유저 정보가 수정되었습니다.' }} }}];
