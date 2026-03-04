@@ -458,9 +458,15 @@ tr:hover td{background:rgba(99,102,241,.02)}
         <label class="form-label">설명</label>
         <input class="form-input" id="plan-desc" placeholder="상품 설명">
       </div>
-      <div class="form-group">
-        <label class="form-label">할인율 (%)</label>
-        <input class="form-input" id="plan-discount" type="number" min="0" max="100" value="0">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">월간 할인율 (%)</label>
+          <input class="form-input" id="plan-discount-m" type="number" min="0" max="100" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">연간 할인율 (%)</label>
+          <input class="form-input" id="plan-discount-y" type="number" min="0" max="100" value="0">
+        </div>
       </div>
       <div id="event-fields" style="display:none">
         <div class="form-row">
@@ -737,7 +743,8 @@ async function loadPlans() {
           '<div class="plan-card-row"><span>토큰</span><b>' + (p.tokens || 0).toLocaleString() + '</b></div>' +
           '<div class="plan-card-row"><span>월간</span><b>' + (p.price_monthly || 0).toLocaleString() + '원</b></div>' +
           '<div class="plan-card-row"><span>연간</span><b>' + (p.price_yearly || 0).toLocaleString() + '원</b></div>' +
-          (p.discount_rate ? '<div class="plan-card-row"><span>할인율</span><b style="color:var(--danger)">' + p.discount_rate + '%</b></div>' : '') +
+          (p.discount_monthly ? '<div class="plan-card-row"><span>월간 할인</span><b style="color:var(--danger)">' + p.discount_monthly + '%</b></div>' : '') +
+          (p.discount_yearly ? '<div class="plan-card-row"><span>연간 할인</span><b style="color:var(--danger)">' + p.discount_yearly + '%</b></div>' : '') +
           (isEvent ? '<div class="plan-card-event">' + (expired ? '<b style="color:var(--danger)">[만료]</b> ' : '') + fmtDate(p.event_start) + ' ~ ' + fmtDate(p.event_end) + '</div>' : '') +
         '</div>' +
         '<div class="plan-card-foot">' +
@@ -765,7 +772,8 @@ function openCreatePlan() {
   document.getElementById('plan-price-m').value = 0;
   document.getElementById('plan-price-y').value = 0;
   document.getElementById('plan-desc').value = '';
-  document.getElementById('plan-discount').value = 0;
+  document.getElementById('plan-discount-m').value = 0;
+  document.getElementById('plan-discount-y').value = 0;
   document.getElementById('plan-event-start').value = '';
   document.getElementById('plan-event-end').value = '';
   document.getElementById('event-fields').style.display = 'none';
@@ -782,7 +790,8 @@ function openEditPlan(p) {
   document.getElementById('plan-price-m').value = p.price_monthly || 0;
   document.getElementById('plan-price-y').value = p.price_yearly || 0;
   document.getElementById('plan-desc').value = p.description || '';
-  document.getElementById('plan-discount').value = p.discount_rate || 0;
+  document.getElementById('plan-discount-m').value = p.discount_monthly || 0;
+  document.getElementById('plan-discount-y').value = p.discount_yearly || 0;
   document.getElementById('plan-event-start').value = p.event_start ? p.event_start.slice(0,10) : '';
   document.getElementById('plan-event-end').value = p.event_end ? p.event_end.slice(0,10) : '';
   document.getElementById('event-fields').style.display = p.plan_type === 'event' ? 'block' : 'none';
@@ -799,7 +808,8 @@ function copyPlan(p) {
   document.getElementById('plan-price-m').value = p.price_monthly || 0;
   document.getElementById('plan-price-y').value = p.price_yearly || 0;
   document.getElementById('plan-desc').value = p.description || '';
-  document.getElementById('plan-discount').value = p.discount_rate || 0;
+  document.getElementById('plan-discount-m').value = p.discount_monthly || 0;
+  document.getElementById('plan-discount-y').value = p.discount_yearly || 0;
   document.getElementById('plan-event-start').value = p.event_start ? p.event_start.slice(0,10) : '';
   document.getElementById('plan-event-end').value = p.event_end ? p.event_end.slice(0,10) : '';
   document.getElementById('event-fields').style.display = p.plan_type === 'event' ? 'block' : 'none';
@@ -818,7 +828,8 @@ async function savePlan() {
     price_monthly: document.getElementById('plan-price-m').value,
     price_yearly: document.getElementById('plan-price-y').value,
     description: document.getElementById('plan-desc').value,
-    discount_rate: document.getElementById('plan-discount').value,
+    discount_monthly: document.getElementById('plan-discount-m').value,
+    discount_yearly: document.getElementById('plan-discount-y').value,
   };
   const evStart = document.getElementById('plan-event-start').value;
   const evEnd = document.getElementById('plan-event-end').value;

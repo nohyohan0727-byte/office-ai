@@ -222,7 +222,7 @@ switch (action) {
   }
 
   case 'create_plan': {
-    const { name, plan_key, plan_type, tokens, price_monthly, price_yearly, discount_rate, event_start, event_end, description } = b;
+    const { name, plan_key, plan_type, tokens, price_monthly, price_yearly, discount_monthly, discount_yearly, event_start, event_end, description } = b;
     if (!name || !plan_key)
       return [{ json: { success: false, message: 'name, plan_key 필수' } }];
     const newPlan = {
@@ -231,7 +231,8 @@ switch (action) {
       tokens: parseInt(tokens) || 0,
       price_monthly: parseInt(price_monthly) || 0,
       price_yearly: parseInt(price_yearly) || 0,
-      discount_rate: parseInt(discount_rate) || 0,
+      discount_monthly: parseInt(discount_monthly) || 0,
+      discount_yearly: parseInt(discount_yearly) || 0,
       is_active: true,
     };
     if (event_start) newPlan.event_start = event_start;
@@ -250,7 +251,8 @@ switch (action) {
     if (b.tokens !== undefined) upd.tokens = parseInt(b.tokens) || 0;
     if (b.price_monthly !== undefined) upd.price_monthly = parseInt(b.price_monthly) || 0;
     if (b.price_yearly !== undefined) upd.price_yearly = parseInt(b.price_yearly) || 0;
-    if (b.discount_rate !== undefined) upd.discount_rate = parseInt(b.discount_rate) || 0;
+    if (b.discount_monthly !== undefined) upd.discount_monthly = parseInt(b.discount_monthly) || 0;
+    if (b.discount_yearly !== undefined) upd.discount_yearly = parseInt(b.discount_yearly) || 0;
     if (b.event_start !== undefined) upd.event_start = b.event_start || null;
     if (b.event_end !== undefined) upd.event_end = b.event_end || null;
     if (b.sort_order !== undefined) upd.sort_order = parseInt(b.sort_order) || 0;
