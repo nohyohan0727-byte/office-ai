@@ -216,6 +216,61 @@ switch (action) {
     return [{ json: { success: true, message: '프로젝트가 삭제되었습니다.' } }];
   }
 
+  case 'list_plans': {
+    const plans = await sb('GET', 'lk_plans?select=*&order=sort_order.asc,created_at.asc');
+    return [{ json: { success: true, plans: plans || [] } }];
+  }
+
+  case 'create_plan': {
+    const { name, plan_key, plan_type, tokens, price_monthly, price_yearly, discount_rate, event_start, event_end, description } = b;
+    if (!name || !plan_key)
+      return [{ json: { success: false, message: 'name, plan_key 필수' } }];
+    const newPlan = {
+      name, plan_key, description: description || '',
+      plan_type: plan_type || 'regular',
+      tokens: parseInt(tokens) || 0,
+      price_monthly: parseInt(price_monthly) || 0,
+      price_yearly: parseInt(price_yearly) || 0,
+      discount_rate: parseInt(discount_rate) || 0,
+      is_active: true,
+    };
+    if (event_start) newPlan.event_start = event_start;
+    if (event_end) newPlan.event_end = event_end;
+    const created = await sb('POST', 'lk_plans', newPlan);
+    return [{ json: { success: true, plan: Array.isArray(created) ? created[0] : created, message: '구독 상품이 생성되었습니다.' } }];
+  }
+
+  case 'update_plan': {
+    const { plan_id } = b;
+    const upd = {};
+    if (b.name) upd.name = b.name;
+    if (b.description !== undefined) upd.description = b.description;
+    if (b.plan_key) upd.plan_key = b.plan_key;
+    if (b.plan_type) upd.plan_type = b.plan_type;
+    if (b.tokens !== undefined) upd.tokens = parseInt(b.tokens) || 0;
+    if (b.price_monthly !== undefined) upd.price_monthly = parseInt(b.price_monthly) || 0;
+    if (b.price_yearly !== undefined) upd.price_yearly = parseInt(b.price_yearly) || 0;
+    if (b.discount_rate !== undefined) upd.discount_rate = parseInt(b.discount_rate) || 0;
+    if (b.event_start !== undefined) upd.event_start = b.event_start || null;
+    if (b.event_end !== undefined) upd.event_end = b.event_end || null;
+    if (b.sort_order !== undefined) upd.sort_order = parseInt(b.sort_order) || 0;
+    await sb('PATCH', 'lk_plans?id=eq.' + plan_id, upd);
+    return [{ json: { success: true, message: '구독 상품이 수정되었습니다.' } }];
+  }
+
+  case 'toggle_plan': {
+    const plans = await sb('GET', 'lk_plans?id=eq.' + b.plan_id + '&select=is_active');
+    if (!plans || !plans.length) return [{ json: { success: false, message: 'Plan not found' } }];
+    const newActive = !plans[0].is_active;
+    await sb('PATCH', 'lk_plans?id=eq.' + b.plan_id, { is_active: newActive });
+    return [{ json: { success: true, is_active: newActive, message: newActive ? '활성화됨' : '비활성화됨' } }];
+  }
+
+  case 'delete_plan': {
+    await sb('DELETE', 'lk_plans?id=eq.' + b.plan_id);
+    return [{ json: { success: true, message: '구독 상품이 삭제되었습니다.' } }];
+  }
+
   default:
     return [{ json: { success: false, message: 'Unknown action: ' + action } }];
 }
