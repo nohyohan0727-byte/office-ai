@@ -363,8 +363,8 @@ a{text-decoration:none;color:inherit}
     <div class="confirm-inner">
       <div class="confirm-title" id="confirm-title">수집된 정보를 확인하고 자료 생성을 시작할까요?</div>
       <div class="confirm-btns">
-        <button type="button" class="btn-confirm yes" id="btn-gen">자료 생성 시작!</button>
-        <button type="button" class="btn-confirm edit" id="btn-edit">수정하고 싶어요</button>
+        <button type="button" class="btn-confirm yes" id="btn-gen" onclick="confirmYes()">자료 생성 시작!</button>
+        <button type="button" class="btn-confirm edit" id="btn-edit" onclick="confirmEdit()">수정하고 싶어요</button>
       </div>
     </div>
   </div>
@@ -700,20 +700,21 @@ async function confirmYes() {
 }
 
 function confirmEdit() {
+  // 동기식 XHR로 DB 상태를 먼저 업데이트 (페이지 리로드보다 빨리)
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH', LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, false);
+    xhr.setRequestHeader('apikey', LK_CONFIG.SUPABASE_ANON);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + LK_CONFIG.SUPABASE_ANON);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Prefer', 'return=minimal');
+    xhr.send(JSON.stringify({ status: 'interview' }));
+  } catch(e) {}
+  // URL 해시로도 표시 (새로고침 시 fallback)
+  history.replaceState(null, '', location.pathname + location.search + '#edit');
   hideConfirmPanel();
   chatStep = 'interview';
   addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
-  // DB 상태를 interview로 되돌려서 새로고침해도 채팅으로 복귀
-  fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
-    method: 'PATCH',
-    headers: {
-      'apikey': LK_CONFIG.SUPABASE_ANON,
-      'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal',
-    },
-    body: JSON.stringify({ status: 'interview' }),
-  }).catch(() => {});
 }
 
 function goResult() {
@@ -752,11 +753,19 @@ async function loadExistingProject(id) {
       messages.forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
 
       // 상태별 처리
-      if (p.status === 'confirming') {
+      const isEditMode = location.hash === '#edit';
+      if (isEditMode) history.replaceState(null, '', location.pathname + location.search);
+
+      if (p.status === 'confirming' && !isEditMode) {
         chatStep = 'confirming';
         completeProgress();
         showConfirmPanel('수집된 정보를 확인하고 자료 생성을 시작할까요?');
         setStep(2, true);
+      } else if (p.status === 'confirming' && isEditMode) {
+        // 수정 모드: 확인 패널 건너뛰고 바로 채팅
+        chatStep = 'interview';
+        setStep(2);
+        addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
       } else if (['ir_done','complete'].includes(p.status)) {
         location.href = 'result.html?id=' + id;
       } else if (p.status === 'interview') {
