@@ -114,6 +114,22 @@ a{text-decoration:none;color:inherit}
   background:rgba(99,102,241,.1);color:var(--primary);
   font-size:12px;font-weight:700;
 }
+.proj-name-wrap{
+  margin-top:24px;text-align:center;
+  animation:fadeIn .3s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.proj-name-label{
+  display:block;font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;
+}
+.proj-name-input{
+  width:100%;max-width:400px;padding:12px 16px;
+  border:1.5px solid var(--border);border-radius:10px;
+  font-size:15px;font-weight:600;font-family:'Pretendard',sans-serif;
+  text-align:center;outline:none;color:var(--text);
+  transition:.2s;
+}
+.proj-name-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
 .type-confirm-btn{
   margin-top:28px;padding:14px 48px;
   background:var(--primary);color:#fff;
@@ -309,6 +325,10 @@ a{text-decoration:none;color:inherit}
         <p>상세 IR 자료 + 상세 랜딩페이지</p>
         <div class="cost">🔢 500 토큰</div>
       </div>
+    </div>
+    <div class="proj-name-wrap" id="proj-name-wrap" style="display:none">
+      <label class="proj-name-label">프로젝트 이름</label>
+      <input class="proj-name-input" id="proj-name" placeholder="예: 우리 서비스 사업계획서" maxlength="40" autofocus>
     </div>
     <button class="type-confirm-btn" id="type-btn" onclick="startInterview()">
       인터뷰 시작하기 →
@@ -514,12 +534,19 @@ function selectType(el) {
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   selectedType = el.dataset.type;
+  // 프로젝트 이름 입력란 표시
+  const wrap = document.getElementById('proj-name-wrap');
+  wrap.style.display = 'block';
+  const nameInput = document.getElementById('proj-name');
+  if (!nameInput.value) nameInput.focus();
   document.getElementById('type-btn').classList.add('ready');
 }
 
 async function startInterview() {
   if (!selectedType) return;
-  const title = document.getElementById('proj-title').value.trim() || '새 프로젝트';
+  const nameInput = document.getElementById('proj-name');
+  const title = (nameInput.value.trim()) || '새 프로젝트';
+  document.getElementById('proj-title').value = title;
   showChat();
   setStep(2);
   initProgressBar(selectedType, 'interview');
@@ -775,6 +802,31 @@ function setStep(active, confirm = false) {
   }
 }
 function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+
+// 상단 프로젝트 이름 변경 시 서버 저장
+let titleSaveTimer = null;
+document.getElementById('proj-title').addEventListener('input', () => {
+  clearTimeout(titleSaveTimer);
+  titleSaveTimer = setTimeout(saveTitleToServer, 800);
+});
+document.getElementById('proj-title').addEventListener('blur', saveTitleToServer);
+async function saveTitleToServer() {
+  clearTimeout(titleSaveTimer);
+  if (!projectId) return;
+  const newTitle = document.getElementById('proj-title').value.trim();
+  if (!newTitle) return;
+  try {
+    await fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': LK_CONFIG.SUPABASE_ANON,
+        'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: newTitle }),
+    });
+  } catch {}
+}
 function autoResize(el) { el.style.height = ''; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 function getTypeName(t) {
   return {
