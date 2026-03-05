@@ -88,6 +88,10 @@ a{text-decoration:none;color:inherit}
   flex:1;overflow-y:auto;padding:24px;
   display:flex;flex-direction:column;gap:16px;
 }
+.chat-messages-inner{
+  max-width:720px;width:100%;margin:0 auto;
+  display:flex;flex-direction:column;gap:16px;
+}
 .chat-messages::-webkit-scrollbar{width:4px}
 .chat-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
@@ -100,8 +104,9 @@ a{text-decoration:none;color:inherit}
 .msg-avatar.ai{background:var(--primary-light)}
 .msg-avatar.user{background:var(--bg)}
 .msg-bubble{
-  max-width:70%;padding:12px 16px;border-radius:12px;
-  font-size:14px;line-height:1.6;
+  max-width:75%;padding:14px 18px;border-radius:14px;
+  font-size:14px;line-height:1.7;word-break:break-word;
+  text-align:left;white-space:pre-wrap;
 }
 .msg-bubble.ai{
   background:#fff;border:1px solid var(--border);color:var(--text);
@@ -109,11 +114,11 @@ a{text-decoration:none;color:inherit}
 }
 .msg-bubble.user{
   background:var(--primary);color:#fff;
-  border-top-right-radius:4px;
+  border-top-right-radius:4px;text-align:left;
 }
 .msg-bubble.system{
   background:#fef3c7;border:1px solid #fde68a;color:#92400e;
-  max-width:100%;border-radius:10px;font-size:13px;
+  max-width:100%;border-radius:10px;font-size:13px;text-align:center;
 }
 .typing{display:flex;gap:4px;align-items:center;padding:4px 0}
 .typing span{width:7px;height:7px;border-radius:50%;background:var(--primary);opacity:.4;animation:blink 1.2s infinite}
@@ -126,6 +131,7 @@ a{text-decoration:none;color:inherit}
   background:#fff;border-top:1px solid var(--border);
   padding:20px 24px;display:none;
 }
+.confirm-inner{max-width:720px;width:100%;margin:0 auto}
 .confirm-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:12px}
 .confirm-btns{display:flex;gap:10px}
 .btn-confirm{
@@ -140,7 +146,11 @@ a{text-decoration:none;color:inherit}
 /* INPUT */
 .chat-input-wrap{
   background:#fff;border-top:1px solid var(--border);
-  padding:16px 24px;display:flex;gap:12px;align-items:flex-end;
+  padding:16px 24px;
+}
+.chat-input-inner{
+  max-width:720px;width:100%;margin:0 auto;
+  display:flex;gap:12px;align-items:flex-end;
 }
 .chat-input{
   flex:1;padding:12px 16px;border:1.5px solid var(--border);
@@ -224,18 +234,24 @@ a{text-decoration:none;color:inherit}
 
 <!-- CHAT -->
 <div class="chat-wrap" id="chat-wrap">
-  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-messages" id="chat-messages">
+    <div class="chat-messages-inner" id="chat-inner"></div>
+  </div>
   <div class="confirm-panel" id="confirm-panel">
-    <div class="confirm-title" id="confirm-title">목차 및 구성안이 맞으신가요?</div>
-    <div class="confirm-btns">
-      <button class="btn-confirm yes" onclick="confirmYes()">확인, 생성 시작!</button>
-      <button class="btn-confirm edit" onclick="confirmEdit()">수정 요청하기</button>
+    <div class="confirm-inner">
+      <div class="confirm-title" id="confirm-title">목차 및 구성안이 맞으신가요?</div>
+      <div class="confirm-btns">
+        <button class="btn-confirm yes" onclick="confirmYes()">확인, 생성 시작!</button>
+        <button class="btn-confirm edit" onclick="confirmEdit()">수정 요청하기</button>
+      </div>
     </div>
   </div>
   <div class="chat-input-wrap">
-    <textarea class="chat-input" id="chat-input" placeholder="메시지를 입력하세요..." rows="1"
-      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-    <button class="send-btn" id="send-btn" onclick="sendMsg()">↑</button>
+    <div class="chat-input-inner">
+      <textarea class="chat-input" id="chat-input" placeholder="메시지를 입력하세요..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMsg()">↑</button>
+    </div>
   </div>
 </div>
 
@@ -388,28 +404,30 @@ function showChat() {
   document.getElementById('chat-wrap').style.display = 'flex';
 }
 function addMsg(role, html) {
-  const wrap = document.getElementById('chat-messages');
+  const inner = document.getElementById('chat-inner');
+  const scroll = document.getElementById('chat-messages');
   if (role === 'system') {
-    wrap.insertAdjacentHTML('beforeend', `<div class="msg-row"><div class="msg-bubble system">${html}</div></div>`);
+    inner.insertAdjacentHTML('beforeend', `<div class="msg-row"><div class="msg-bubble system">${html}</div></div>`);
   } else {
     const avatar = role === 'ai' ? '🤖' : '👤';
     const cls    = role === 'ai' ? 'ai' : 'user';
-    wrap.insertAdjacentHTML('beforeend', `
+    inner.insertAdjacentHTML('beforeend', `
       <div class="msg-row ${cls}">
         <div class="msg-avatar ${cls}">${avatar}</div>
         <div class="msg-bubble ${cls}">${html}</div>
       </div>`);
   }
-  wrap.scrollTop = wrap.scrollHeight;
+  scroll.scrollTop = scroll.scrollHeight;
 }
 function showTyping() {
-  const wrap = document.getElementById('chat-messages');
-  wrap.insertAdjacentHTML('beforeend', `
+  const inner = document.getElementById('chat-inner');
+  const scroll = document.getElementById('chat-messages');
+  inner.insertAdjacentHTML('beforeend', `
     <div class="msg-row" id="typing-row">
       <div class="msg-avatar ai">🤖</div>
       <div class="msg-bubble ai"><div class="typing"><span></span><span></span><span></span></div></div>
     </div>`);
-  wrap.scrollTop = wrap.scrollHeight;
+  scroll.scrollTop = scroll.scrollHeight;
 }
 function hideTyping() {
   document.getElementById('typing-row')?.remove();
