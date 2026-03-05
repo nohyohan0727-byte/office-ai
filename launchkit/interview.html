@@ -98,7 +98,7 @@ a{text-decoration:none;color:inherit}
 .type-inner{max-width:700px;width:100%;text-align:center}
 .type-inner h2{font-size:28px;font-weight:900;margin-bottom:10px}
 .type-inner p{font-size:15px;color:var(--text2);margin-bottom:36px}
-.type-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.type-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .type-card{
   background:#fff;border:2px solid var(--border);border-radius:16px;
   padding:28px 20px;text-align:center;cursor:pointer;transition:.3s;
@@ -297,9 +297,15 @@ a{text-decoration:none;color:inherit}
         <p>풍부한 섹션의 완성도 높은 홈페이지</p>
         <div class="cost">🔢 300 토큰</div>
       </div>
+      <div class="type-card" data-type="ir_simple+landing_simple" onclick="selectType(this)">
+        <div class="type-card-icon">📦</div>
+        <h3>간단 IR + 간단 랜딩</h3>
+        <p>기본 사업계획서 + 심플 홈페이지</p>
+        <div class="cost">🔢 200 토큰</div>
+      </div>
       <div class="type-card" data-type="ir_detail+landing_detail" onclick="selectType(this)">
         <div class="type-card-icon">🚀</div>
-        <h3>IR + 랜딩 세트</h3>
+        <h3>상세 IR + 상세 랜딩</h3>
         <p>상세 IR 자료 + 상세 랜딩페이지</p>
         <div class="cost">🔢 500 토큰</div>
       </div>
@@ -617,10 +623,12 @@ function goResult() {
 
 function deriveProjectType(p) {
   // ir_type + landing_type → selectedType 변환
-  const ir = p.ir_type || 'simple';
+  const ir = p.ir_type || '';
   const ld = p.landing_type || '';
-  if (ld) return 'ir_' + ir + '+landing_' + ld;
-  return 'ir_' + ir;
+  if (ir && ld) return 'ir_' + ir + '+landing_' + ld;
+  if (ir) return 'ir_' + ir;
+  if (ld) return 'landing_' + ld;
+  return 'ir_simple'; // fallback
 }
 
 async function loadExistingProject(id) {
@@ -655,7 +663,18 @@ async function loadExistingProject(id) {
       } else if (p.status === 'interview') {
         setStep(2);
         if (msgCount > 0) {
-          addMsg('system', '이전 인터뷰를 이어서 진행합니다. 아래에 답변을 입력해주세요.');
+          // 진행상황 요약 표시
+          const fields = getFieldList();
+          const total = fields.length;
+          const collected = Math.min(userMsgCount, total);
+          const nextField = collected < total ? fields[collected] : '마무리';
+          addMsg('system',
+            `📋 <strong>이전 진행상황</strong>: ${total}개 항목 중 <strong>${collected}개 수집 완료</strong><br>` +
+            `다음 항목: <strong>${nextField}</strong> — 아래에 답변을 이어서 입력해주세요.`
+          );
+          // 프로그레스 디테일 자동 펼침
+          document.getElementById('pb-detail').classList.add('open');
+          document.getElementById('pb-arrow').classList.add('open');
         } else {
           addMsg('ai', getFirstMessage(selectedType));
         }
@@ -719,7 +738,14 @@ function setStep(active, confirm = false) {
 function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
 function autoResize(el) { el.style.height = ''; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 function getTypeName(t) {
-  return { ir_simple:'간단 IR', ir_detail:'상세 IR', landing_simple:'간단 랜딩', landing_detail:'상세 랜딩', 'ir_detail+landing_detail':'IR + 랜딩 세트' }[t] || t;
+  return {
+    ir_simple:'간단 IR', ir_detail:'상세 IR',
+    landing_simple:'간단 랜딩', landing_detail:'상세 랜딩',
+    'ir_simple+landing_simple':'간단 IR + 간단 랜딩',
+    'ir_simple+landing_detail':'간단 IR + 상세 랜딩',
+    'ir_detail+landing_simple':'상세 IR + 간단 랜딩',
+    'ir_detail+landing_detail':'상세 IR + 상세 랜딩',
+  }[t] || t;
 }
 </script>
 </body>
