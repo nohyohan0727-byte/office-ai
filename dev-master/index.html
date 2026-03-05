@@ -642,7 +642,7 @@
               월 1회 1:1 온라인 코칭
             </li>
           </ul>
-          <a href="#start" class="block w-full py-3.5 rounded-xl border-2 border-gray-200 text-center text-sm font-bold text-gray-600 hover:border-brand-300 hover:text-brand-600 transition">
+          <a href="#start" onclick="selectPlan('basic')" class="block w-full py-3.5 rounded-xl border-2 border-gray-200 text-center text-sm font-bold text-gray-600 hover:border-brand-300 hover:text-brand-600 transition">
             Basic 시작하기
           </a>
         </div>
@@ -683,7 +683,7 @@
                 자동화 교육 자료 자동 배포
               </li>
             </ul>
-            <a href="#start" class="block w-full py-3.5 rounded-xl btn-primary text-center text-sm font-bold shadow-lg shadow-brand-200/50">
+            <a href="#start" onclick="selectPlan('premium')" class="block w-full py-3.5 rounded-xl btn-primary text-center text-sm font-bold shadow-lg shadow-brand-200/50">
               Premium 시작하기
             </a>
           </div>
@@ -725,7 +725,7 @@
                 <span class="text-violet-600 font-bold">1인당 ₩25,000</span> · 75% 할인
               </li>
             </ul>
-            <a href="#start" class="block w-full py-3.5 rounded-xl bg-violet-500 text-white text-center text-sm font-bold shadow-lg shadow-violet-200/50 hover:bg-violet-600 transition">
+            <a href="#start" onclick="selectPlan('family')" class="block w-full py-3.5 rounded-xl bg-violet-500 text-white text-center text-sm font-bold shadow-lg shadow-violet-200/50 hover:bg-violet-600 transition">
               Family 시작하기
             </a>
           </div>
@@ -776,29 +776,28 @@
             </a>
           </div>
 
-          <!-- Contact Form -->
+          <!-- 구독 신청 Form -->
           <div class="max-w-md mx-auto bg-white/80 backdrop-blur rounded-2xl p-8 border border-gray-100 shadow-lg">
-            <h3 class="text-lg font-bold mb-5 text-gray-800">상담 문의</h3>
-            <form class="space-y-3" onsubmit="event.preventDefault(); alert('문의가 접수되었습니다. 빠르게 연락드리겠습니다!');">
-              <input type="text" placeholder="이름" required
+            <h3 class="text-lg font-bold mb-5 text-gray-800">구독 신청</h3>
+            <form id="subscribe-form" class="space-y-3" onsubmit="return handleSubscribe(event)">
+              <input type="text" id="sub-name" placeholder="이름" required
                 class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition">
-              <input type="email" placeholder="이메일" required
+              <input type="email" id="sub-email" placeholder="이메일" required
                 class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition">
-              <input type="tel" placeholder="연락처 (선택)"
+              <input type="tel" id="sub-phone" placeholder="연락처 (선택)"
                 class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition">
-              <select class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-400 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition">
-                <option value="">관심 단계 선택</option>
-                <option>초급 (Beginner)</option>
-                <option>중급 (Intermediate)</option>
-                <option>고급 (Advanced)</option>
-                <option>전체 (Premium)</option>
+              <select id="sub-plan" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition">
+                <option value="basic">Basic — ₩50,000/월 (STEP 1~2)</option>
+                <option value="premium">Premium — ₩100,000/월 (STEP 1~3)</option>
+                <option value="family">Family — ₩100,000/월 (4인 가족)</option>
               </select>
-              <textarea placeholder="궁금한 점을 남겨주세요" rows="3"
+              <textarea id="sub-memo" placeholder="궁금한 점을 남겨주세요 (선택)" rows="3"
                 class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition resize-none"></textarea>
-              <button type="submit"
+              <button type="submit" id="sub-btn"
                 class="w-full py-3.5 rounded-xl btn-primary font-bold text-sm shadow-lg shadow-brand-200/30">
-                상담 신청하기
+                구독 신청하기
               </button>
+              <p id="sub-result" class="text-center text-sm font-bold hidden"></p>
             </form>
           </div>
         </div>
@@ -920,6 +919,59 @@
         nav.style.backgroundColor = '';
       }
     });
+
+    // === 구독 신청 (Supabase 연동) ===
+    const SUPABASE_URL = 'https://mkmxhmoocqnkltjxdfbm.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8';
+
+    function selectPlan(plan) {
+      document.getElementById('sub-plan').value = plan;
+    }
+
+    async function handleSubscribe(e) {
+      e.preventDefault();
+      const btn = document.getElementById('sub-btn');
+      const result = document.getElementById('sub-result');
+      const name = document.getElementById('sub-name').value.trim();
+      const email = document.getElementById('sub-email').value.trim();
+      const phone = document.getElementById('sub-phone').value.trim();
+      const plan = document.getElementById('sub-plan').value;
+
+      btn.disabled = true;
+      btn.textContent = '신청 중...';
+      result.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/dm_users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ name, email, phone: phone || null, plan, status: 'pending' })
+        });
+
+        if (res.ok) {
+          result.textContent = '신청이 완료되었습니다! 빠르게 연락드리겠습니다.';
+          result.className = 'text-center text-sm font-bold text-mint-500';
+          document.getElementById('subscribe-form').reset();
+          document.getElementById('sub-plan').value = plan;
+        } else if (res.status === 409) {
+          result.textContent = '이미 신청된 이메일입니다. 문의사항은 아래 연락처로 연락주세요.';
+          result.className = 'text-center text-sm font-bold text-warm-500';
+        } else {
+          throw new Error(res.statusText);
+        }
+      } catch (err) {
+        result.textContent = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        result.className = 'text-center text-sm font-bold text-rose-500';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '구독 신청하기';
+      }
+    }
   </script>
 </body>
 </html>
