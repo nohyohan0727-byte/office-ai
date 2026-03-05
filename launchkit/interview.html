@@ -48,6 +48,48 @@ a{text-decoration:none;color:inherit}
 .step-line{width:24px;height:2px;background:var(--border)}
 .step-line.done{background:var(--success)}
 
+/* PROGRESS TRACKER */
+.progress-bar{
+  background:#fff;border-bottom:1px solid var(--border);
+  flex-shrink:0;display:none;
+}
+.progress-bar.visible{display:block}
+.pb-compact{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 24px;cursor:pointer;user-select:none;
+}
+.pb-left{display:flex;align-items:center;gap:10px}
+.pb-badge{
+  padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;
+  background:var(--primary-light);color:var(--primary);
+}
+.pb-badge.event{background:#fef3c7;color:#92400e}
+.pb-status{font-size:13px;font-weight:700;color:var(--text)}
+.pb-right{display:flex;align-items:center;gap:12px}
+.pb-count{font-size:12px;font-weight:700;color:var(--text2)}
+.pb-meter{width:120px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:3px;transition:width .4s}
+.pb-toggle{font-size:12px;color:var(--text3);transition:.2s}
+.pb-toggle.open{transform:rotate(180deg)}
+.pb-detail{
+  display:none;padding:0 24px 14px;
+}
+.pb-detail.open{display:block}
+.pb-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:6px 16px;max-width:720px;margin:0 auto;
+}
+.pb-item{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--text3);
+  padding:4px 0;
+}
+.pb-item.done{color:var(--success)}
+.pb-item.active{color:var(--primary)}
+.pb-check{width:16px;height:16px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.pb-item.done .pb-check{background:var(--success);border-color:var(--success);color:#fff}
+.pb-item.active .pb-check{border-color:var(--primary);background:var(--primary-light)}
+
 /* TYPE SELECT (step 0) */
 .type-select{
   flex:1;display:flex;align-items:center;justify-content:center;
@@ -268,6 +310,24 @@ a{text-decoration:none;color:inherit}
   </div>
 </div>
 
+<!-- PROGRESS TRACKER -->
+<div class="progress-bar" id="progress-bar">
+  <div class="pb-compact" onclick="toggleProgress()">
+    <div class="pb-left">
+      <span class="pb-badge" id="pb-type">-</span>
+      <span class="pb-status" id="pb-status">인터뷰 진행 중</span>
+    </div>
+    <div class="pb-right">
+      <span class="pb-count" id="pb-count">0 / 14 수집</span>
+      <div class="pb-meter"><div class="pb-fill" id="pb-fill" style="width:0%"></div></div>
+      <span class="pb-toggle" id="pb-arrow">▼</span>
+    </div>
+  </div>
+  <div class="pb-detail" id="pb-detail">
+    <div class="pb-grid" id="pb-grid"></div>
+  </div>
+</div>
+
 <!-- CHAT -->
 <div class="chat-wrap" id="chat-wrap">
   <div class="chat-messages" id="chat-messages">
@@ -322,6 +382,76 @@ let projectId = null;
 let selectedType = null;
 let chatStep = 'interview'; // interview | confirming | generating
 let isTyping = false;
+let userTurnCount = 0;
+
+// ── 진행 상태 트래커 ──
+const FIELDS_BASE = [
+  '회사/서비스명','한 줄 소개','핵심 기능','타겟 고객',
+  '해결 문제','수익 모델','경쟁 차별점','팀 구성',
+  '사업 단계','시장 규모','GTM 전략','핵심 성과','비전/미션','투자 계획'
+];
+const FIELDS_LANDING = [
+  '브랜드 색상','서브 색상','디자인 스타일','분위기/톤','핵심 CTA','참고 사이트','슬로건'
+];
+
+function getFieldList() {
+  const needsLanding = (selectedType || '').includes('landing');
+  return needsLanding ? [...FIELDS_BASE, ...FIELDS_LANDING] : [...FIELDS_BASE];
+}
+
+function initProgressBar(type, status) {
+  selectedType = type;
+  const bar = document.getElementById('progress-bar');
+  bar.classList.add('visible');
+  document.getElementById('pb-type').textContent = getTypeName(type);
+  updateProgressStatus(status || 'interview');
+  renderProgressGrid();
+  updateProgressCount();
+}
+
+function updateProgressStatus(status) {
+  const map = {interview:'인터뷰 진행 중', confirming:'정보 수집 완료', generating:'자료 생성 중', ir_done:'완료', complete:'완료'};
+  document.getElementById('pb-status').textContent = map[status] || status;
+}
+
+function renderProgressGrid() {
+  const fields = getFieldList();
+  const grid = document.getElementById('pb-grid');
+  grid.innerHTML = fields.map((f, i) => {
+    const cls = i < userTurnCount ? 'done' : (i === userTurnCount ? 'active' : '');
+    const icon = i < userTurnCount ? '✓' : '';
+    return `<div class="pb-item ${cls}"><div class="pb-check">${icon}</div>${f}</div>`;
+  }).join('');
+}
+
+function updateProgressCount() {
+  const fields = getFieldList();
+  const total = fields.length;
+  const done = Math.min(userTurnCount, total);
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('pb-count').textContent = `${done} / ${total} 수집`;
+  document.getElementById('pb-fill').style.width = pct + '%';
+  renderProgressGrid();
+}
+
+function bumpProgress() {
+  userTurnCount++;
+  updateProgressCount();
+}
+
+function completeProgress() {
+  const fields = getFieldList();
+  userTurnCount = fields.length;
+  updateProgressCount();
+  updateProgressStatus('confirming');
+}
+
+function toggleProgress() {
+  const detail = document.getElementById('pb-detail');
+  const arrow = document.getElementById('pb-arrow');
+  const isOpen = detail.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
+}
 
 // URL 파라미터로 기존 프로젝트 불러오기
 const urlId = new URLSearchParams(location.search).get('id');
@@ -349,6 +479,7 @@ async function startInterview() {
   const title = document.getElementById('proj-title').value.trim() || '새 프로젝트';
   showChat();
   setStep(2);
+  initProgressBar(selectedType, 'interview');
   addMsg('system', `선택하신 유형: <strong>${getTypeName(selectedType)}</strong><br>AI가 필요한 정보를 질문할 거예요. 편하게 답변해주세요!`);
   showTyping();
   try {
@@ -403,10 +534,12 @@ async function sendMsg() {
     });
     hideTyping();
     addMsg('ai', res.message);
+    bumpProgress();
 
     // 인터뷰 완료 감지
     if (res.stage === 'confirming') {
       chatStep = 'confirming';
+      completeProgress();
       showConfirmPanel('수집된 정보를 확인하고 자료 생성을 시작할까요?');
       setStep(2, true);
     }
@@ -482,6 +615,14 @@ function goResult() {
   location.href = 'result.html?id=' + projectId;
 }
 
+function deriveProjectType(p) {
+  // ir_type + landing_type → selectedType 변환
+  const ir = p.ir_type || 'simple';
+  const ld = p.landing_type || '';
+  if (ld) return 'ir_' + ir + '+landing_' + ld;
+  return 'ir_' + ir;
+}
+
 async function loadExistingProject(id) {
   showTyping();
   try {
@@ -490,28 +631,15 @@ async function loadExistingProject(id) {
     if (res.project) {
       const p = res.project;
       document.getElementById('proj-title').value = p.title;
-      selectedType = p.project_type;
+      selectedType = deriveProjectType(p);
 
       const messages = res.messages || [];
       const msgCount = messages.length;
       const userMsgCount = messages.filter(m => m.role === 'user').length;
 
-      // 프로젝트 정보 상태 배너
-      const typeName = getTypeName(p.project_type);
-      const statusMap = {
-        interview: '인터뷰 진행 중',
-        confirming: '정보 수집 완료 — 자료 생성 대기',
-        generating: '자료 생성 중',
-        ir_done: 'IR 자료 완료',
-        complete: '모든 자료 완료'
-      };
-      const statusText = statusMap[p.status] || p.status;
-
-      addMsg('system',
-        `<strong>${typeName}</strong> · ${statusText}<br>` +
-        (p.company_name ? `회사/서비스: <strong>${p.company_name}</strong> · ` : '') +
-        `대화 ${msgCount}건 · 생성일: ${new Date(p.created_at).toLocaleDateString('ko-KR')}`
-      );
+      // 진행 트래커 초기화
+      userTurnCount = userMsgCount;
+      initProgressBar(selectedType, p.status);
 
       // 이전 대화 표시
       messages.forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
@@ -519,18 +647,17 @@ async function loadExistingProject(id) {
       // 상태별 처리
       if (p.status === 'confirming') {
         chatStep = 'confirming';
+        completeProgress();
         showConfirmPanel('수집된 정보를 확인하고 자료 생성을 시작할까요?');
         setStep(2, true);
       } else if (['ir_done','complete'].includes(p.status)) {
         location.href = 'result.html?id=' + id;
       } else if (p.status === 'interview') {
         setStep(2);
-        // 대화 내역이 있으면 이어서 진행하라는 안내
         if (msgCount > 0) {
           addMsg('system', '이전 인터뷰를 이어서 진행합니다. 아래에 답변을 입력해주세요.');
         } else {
-          // 대화가 없으면 첫 질문 표시
-          addMsg('ai', getFirstMessage(p.project_type));
+          addMsg('ai', getFirstMessage(selectedType));
         }
       }
     }

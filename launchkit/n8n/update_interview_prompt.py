@@ -136,12 +136,16 @@ try {
   if (!project_id) return [{json:{_error:true,success:false,message:'project_id가 필요합니다.'}}];
   if (!message) return [{json:{_error:true,success:false,message:'메시지를 입력해주세요.'}}];
 
-  const projects = await sb('GET', 'lk_projects?select=id,project_type,title,company_name,status&id=eq.' + project_id + '&user_id=eq.' + user.id + '&limit=1');
+  const projects = await sb('GET', 'lk_projects?select=id,ir_type,landing_type,title,company_name,status&id=eq.' + project_id + '&user_id=eq.' + user.id + '&limit=1');
   const project = Array.isArray(projects) ? projects[0] : projects;
   if (!project) return [{json:{_error:true,success:false,message:'프로젝트를 찾을 수 없습니다.'}}];
 
-  const ptype = project.project_type || 'ir_simple';
-  const needsLanding = ptype.includes('landing');
+  // ir_type + landing_type → project_type 변환
+  const irT = project.ir_type || 'simple';
+  const ldT = project.landing_type || '';
+  let ptype = 'ir_' + irT;
+  if (ldT) ptype = 'ir_' + irT + '+landing_' + ldT;
+  const needsLanding = !!ldT;
 
   const msgs = await sb('GET', 'lk_messages?select=role,content&project_id=eq.' + project_id + '&order=created_at.asc&limit=50');
   const history = Array.isArray(msgs) ? msgs : [];
@@ -162,7 +166,11 @@ try {
     openai_body: {model: 'gpt-4o-mini', messages: openaiMsgs, temperature: 0.7, max_tokens: 2000}
   }}];
 } catch(e) {
-  return [{json:{_error:true,success:false,message:'서버 오류: ' + e.message}}];
+  // 에러 시에도 CallOpenAI가 valid JSON을 받도록 dummy body 포함
+  return [{json:{
+    _error: true, success: false, message: '서버 오류: ' + e.message,
+    openai_body: {model:'gpt-4o-mini',messages:[{role:'user',content:'error'}],max_tokens:1}
+  }}];
 }
 """
 
