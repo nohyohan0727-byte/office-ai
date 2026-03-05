@@ -56,6 +56,39 @@
     .hero-blob-1 { position: absolute; width: 500px; height: 500px; background: linear-gradient(135deg, #FDE68A 0%, #FDBA74 50%, #FDA4AF 100%); opacity: 0.3; filter: blur(80px); }
     .hero-blob-2 { position: absolute; width: 400px; height: 400px; background: linear-gradient(135deg, #BAE6FD 0%, #C4B5FD 50%, #DDD6FE 100%); opacity: 0.3; filter: blur(80px); }
 
+    /* 비교 카드 애니메이션 */
+    .compare-left {
+      transition: all 1.2s ease;
+    }
+    .compare-left.grayscale-active {
+      filter: grayscale(100%) brightness(0.95);
+      opacity: 0.7;
+    }
+    .compare-arrow {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.6s ease 0.8s;
+    }
+    .compare-arrow.arrow-active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    @keyframes arrow-pulse {
+      0%, 100% { transform: translateX(0); opacity: 1; }
+      50% { transform: translateX(8px); opacity: 0.6; }
+    }
+    .compare-arrow.arrow-active svg {
+      animation: arrow-pulse 1.5s ease-in-out infinite;
+    }
+    .compare-right {
+      transition: all 0.8s ease 1s;
+      transform: scale(0.98);
+    }
+    .compare-right.glow-active {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.4), 0 0 80px rgba(139, 92, 246, 0.2);
+    }
+
     .btn-primary { background: linear-gradient(135deg, #F97316, #F43F5E); color: white; transition: all 0.3s; }
     .btn-primary:hover { background: linear-gradient(135deg, #EA580C, #E11D48); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(249,115,22,0.3); }
 
@@ -149,8 +182,8 @@
       </div>
 
       <!-- 비교: 비싼 강의 vs OFFICE AI -->
-      <div class="fade-up grid md:grid-cols-2 gap-8 max-w-3xl mx-auto mb-12">
-        <div class="p-8 sm:p-10 rounded-3xl bg-gray-100/80 border border-gray-200/60 relative">
+      <div class="fade-up compare-section grid md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 max-w-4xl mx-auto mb-12 items-center">
+        <div class="compare-left p-8 sm:p-10 rounded-3xl bg-gray-100/80 border border-gray-200/60 relative">
           <div class="absolute -top-3 left-6 px-4 py-1 rounded-full bg-rose-500 text-white text-xs font-bold">돈만 날리는 방식</div>
           <div class="flex items-center gap-3 mb-6 mt-2">
             <div class="w-12 h-12 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
@@ -180,7 +213,12 @@
             <p class="text-sm text-rose-500 font-bold text-center">작심삼일, 올해만 몇 번째인가요?</p>
           </div>
         </div>
-        <div class="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-sky-600 to-violet-600 relative shadow-2xl shadow-sky-300/40">
+        <!-- 화살표 -->
+        <div class="compare-arrow hidden md:flex flex-col items-center justify-center">
+          <svg class="w-12 h-12 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+          <span class="text-xs font-bold text-violet-500 mt-1 whitespace-nowrap">여기로</span>
+        </div>
+        <div class="compare-right p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-sky-600 to-violet-600 relative shadow-2xl shadow-sky-300/40">
           <div class="absolute -top-3 left-6 px-4 py-1 rounded-full bg-white text-sky-600 text-xs font-black">여기서 끝냅니다</div>
           <div class="flex items-center gap-3 mb-6 mt-2">
             <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -284,26 +322,33 @@
               </div>
               <h3 class="text-2xl font-black mb-1 text-gray-800">첫 뒤집기와 옹알이</h3>
               <p class="text-warm-500 font-bold text-sm mb-3 md:text-right">AI 학습에서는 =</p>
-              <div class="flex flex-wrap gap-2 md:justify-end mb-5">
+              <div class="flex flex-wrap gap-2 md:justify-end">
                 <span class="px-4 py-2 rounded-xl bg-warm-100 text-warm-700 text-sm font-bold">AI 첫 대화</span>
                 <span class="px-4 py-2 rounded-xl bg-warm-100 text-warm-700 text-sm font-bold">캐릭터 만들기</span>
                 <span class="px-4 py-2 rounded-xl bg-warm-100 text-warm-700 text-sm font-bold">이미지 생성</span>
               </div>
-              <p class="text-gray-400 text-xs leading-relaxed md:text-right border-t border-warm-100 pt-4">
-                세상의 빛과 소리에 반응하며 처음으로 자신의 의지를 표현하는 시기.
-                AI와 대화하며 <strong class="text-warm-500">"내 말이 먹힌다"</strong>는 희열을 느낍니다.
-              </p>
             </div>
           </div>
           <div class="hidden md:flex w-14 h-14 rounded-full bg-gradient-to-br from-warm-300 to-warm-500 border-4 border-white absolute left-1/2 -translate-x-1/2 items-center justify-center z-10 shadow-lg shadow-warm-200">
             <span class="text-white font-black text-sm">1</span>
           </div>
-          <div class="md:w-1/2 md:pl-16"></div>
+          <div class="md:w-1/2 md:pl-16 flex items-center">
+            <p class="text-gray-400 text-sm leading-relaxed px-4">
+              세상의 빛과 소리에 반응하며 처음으로 자신의 의지를 표현하는 시기.
+              AI와 대화하며 <strong class="text-warm-500">"내 말이 먹힌다"</strong>는 희열을 느낍니다.
+            </p>
+          </div>
         </div>
 
         <!-- Stage 2: TEENS -->
         <div class="fade-up relative md:flex items-center mb-16 md:mb-24">
-          <div class="md:w-1/2 md:pr-16"></div>
+          <div class="md:w-1/2 md:pr-16 flex items-center md:justify-end">
+            <p class="text-gray-400 text-sm leading-relaxed px-4 md:text-right">
+              AI의 도움을 받아 아이디어를 직접 만들어봅니다.
+              막히고 넘어지는 과정 자체가 <strong class="text-rose-500">성장의 일부</strong>임을 배우며,
+              스스로 결과물을 완성하는 '첫 걸음마'를 뗍니다.
+            </p>
+          </div>
           <div class="hidden md:flex w-14 h-14 rounded-full bg-gradient-to-br from-rose-300 to-rose-500 border-4 border-white absolute left-1/2 -translate-x-1/2 items-center justify-center z-10 shadow-lg shadow-rose-200">
             <span class="text-white font-black text-sm">2</span>
           </div>
@@ -316,16 +361,11 @@
               </div>
               <h3 class="text-2xl font-black mb-1 text-gray-800">비틀거리며 떼는 첫 걸음마</h3>
               <p class="text-rose-500 font-bold text-sm mb-3">AI 학습에서는 =</p>
-              <div class="flex flex-wrap gap-2 mb-5">
+              <div class="flex flex-wrap gap-2">
                 <span class="px-4 py-2 rounded-xl bg-rose-100 text-rose-700 text-sm font-bold">AI와 함께 만들기</span>
                 <span class="px-4 py-2 rounded-xl bg-rose-100 text-rose-700 text-sm font-bold">나만의 결과물 완성</span>
                 <span class="px-4 py-2 rounded-xl bg-rose-100 text-rose-700 text-sm font-bold">문제 스스로 해결</span>
               </div>
-              <p class="text-gray-400 text-xs leading-relaxed border-t border-rose-100 pt-4">
-                AI의 도움을 받아 아이디어를 직접 만들어봅니다.
-                막히고 넘어지는 과정 자체가 <strong class="text-rose-500">성장의 일부</strong>임을 배우며,
-                스스로 결과물을 완성하는 '첫 걸음마'를 뗍니다.
-              </p>
             </div>
           </div>
         </div>
@@ -341,27 +381,34 @@
               </div>
               <h3 class="text-2xl font-black mb-1 text-gray-800">넓은 세상을 향한 질주</h3>
               <p class="text-violet-500 font-bold text-sm mb-3 md:text-right">AI 학습에서는 =</p>
-              <div class="flex flex-wrap gap-2 md:justify-end mb-5">
+              <div class="flex flex-wrap gap-2 md:justify-end">
                 <span class="px-4 py-2 rounded-xl bg-violet-100 text-violet-700 text-sm font-bold">반복 업무 자동화</span>
                 <span class="px-4 py-2 rounded-xl bg-violet-100 text-violet-700 text-sm font-bold">데이터 정리·분석</span>
                 <span class="px-4 py-2 rounded-xl bg-violet-100 text-violet-700 text-sm font-bold">나만의 AI 비서 구축</span>
               </div>
-              <p class="text-gray-400 text-xs leading-relaxed md:text-right border-t border-violet-100 pt-4">
-                더 이상 AI를 배우는 단계가 아닙니다.
-                <strong class="text-violet-500">AI를 도구로 부려</strong> 반복 업무를 자동화하고,
-                나만의 시스템으로 실전에서 성과를 만들어냅니다.
-              </p>
             </div>
           </div>
           <div class="hidden md:flex w-14 h-14 rounded-full bg-gradient-to-br from-violet-300 to-violet-500 border-4 border-white absolute left-1/2 -translate-x-1/2 items-center justify-center z-10 shadow-lg shadow-violet-200">
             <span class="text-white font-black text-sm">3</span>
           </div>
-          <div class="md:w-1/2 md:pl-16"></div>
+          <div class="md:w-1/2 md:pl-16 flex items-center">
+            <p class="text-gray-400 text-sm leading-relaxed px-4">
+              더 이상 AI를 배우는 단계가 아닙니다.
+              <strong class="text-violet-500">AI를 도구로 부려</strong> 반복 업무를 자동화하고,
+              나만의 시스템으로 실전에서 성과를 만들어냅니다.
+            </p>
+          </div>
         </div>
 
         <!-- Stage 4: MASTER -->
         <div class="fade-up relative md:flex items-center">
-          <div class="md:w-1/2 md:pr-16"></div>
+          <div class="md:w-1/2 md:pr-16 flex items-center md:justify-end">
+            <p class="text-gray-400 text-sm leading-relaxed px-4 md:text-right">
+              플랫폼을 떠나 나만의 개발 환경을 구축합니다.
+              <strong class="text-sky-500">개인 개발환경 구축 지원</strong>과 당사가 개발한
+              <strong class="text-sky-500">프리미엄 전문 AI 개발 시스템</strong>을 제공받아 독립합니다.
+            </p>
+          </div>
           <div class="hidden md:flex w-14 h-14 rounded-full bg-gradient-to-br from-sky-300 to-sky-500 border-4 border-white absolute left-1/2 -translate-x-1/2 items-center justify-center z-10 shadow-lg shadow-sky-200">
             <span class="text-white font-black text-sm">4</span>
           </div>
@@ -374,16 +421,11 @@
               </div>
               <h3 class="text-2xl font-black mb-1 text-gray-800">졸업 — 완전한 독립</h3>
               <p class="text-sky-500 font-bold text-sm mb-3">졸업 후 지원 =</p>
-              <div class="flex flex-wrap gap-2 mb-5">
+              <div class="flex flex-wrap gap-2">
                 <span class="px-4 py-2 rounded-xl bg-sky-100 text-sky-700 text-sm font-bold">개인 개발환경 구축</span>
                 <span class="px-4 py-2 rounded-xl bg-sky-100 text-sky-700 text-sm font-bold">전문 AI 시스템 제공</span>
                 <span class="px-4 py-2 rounded-xl bg-sky-100 text-sky-700 text-sm font-bold">완전 독립</span>
               </div>
-              <p class="text-gray-400 text-xs leading-relaxed border-t border-sky-100 pt-4">
-                플랫폼을 떠나 나만의 개발 환경을 구축합니다.
-                <strong class="text-sky-500">개인 개발환경 구축 지원</strong>과 당사가 개발한
-                <strong class="text-sky-500">프리미엄 전문 AI 개발 시스템</strong>을 제공받아 독립합니다.
-              </p>
             </div>
           </div>
         </div>
@@ -832,6 +874,29 @@
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // 비교 섹션 흑백 + 화살표 + 글로우 애니메이션
+    const compareObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const section = entry.target;
+          const left = section.querySelector('.compare-left');
+          const arrow = section.querySelector('.compare-arrow');
+          const right = section.querySelector('.compare-right');
+
+          // 0.5초 뒤 왼쪽 흑백 처리
+          setTimeout(() => { if (left) left.classList.add('grayscale-active'); }, 500);
+          // 1.2초 뒤 화살표 등장
+          setTimeout(() => { if (arrow) arrow.classList.add('arrow-active'); }, 1200);
+          // 1.6초 뒤 오른쪽 글로우
+          setTimeout(() => { if (right) right.classList.add('glow-active'); }, 1600);
+
+          compareObserver.unobserve(section);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    document.querySelectorAll('.compare-section').forEach(el => compareObserver.observe(el));
 
     // Smooth scroll for nav links
     document.querySelectorAll('a[href^="#"]').forEach(link => {
