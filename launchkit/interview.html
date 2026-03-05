@@ -488,17 +488,50 @@ async function loadExistingProject(id) {
     const res = await lkFetch(LK_CONFIG.WEBHOOKS.GET_PROJECT, { project_id: id });
     hideTyping();
     if (res.project) {
-      document.getElementById('proj-title').value = res.project.title;
-      selectedType = res.project.project_type;
-      (res.messages || []).forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
-      if (res.project.status === 'confirming') {
+      const p = res.project;
+      document.getElementById('proj-title').value = p.title;
+      selectedType = p.project_type;
+
+      const messages = res.messages || [];
+      const msgCount = messages.length;
+      const userMsgCount = messages.filter(m => m.role === 'user').length;
+
+      // 프로젝트 정보 상태 배너
+      const typeName = getTypeName(p.project_type);
+      const statusMap = {
+        interview: '인터뷰 진행 중',
+        confirming: '정보 수집 완료 — 자료 생성 대기',
+        generating: '자료 생성 중',
+        ir_done: 'IR 자료 완료',
+        complete: '모든 자료 완료'
+      };
+      const statusText = statusMap[p.status] || p.status;
+
+      addMsg('system',
+        `<strong>${typeName}</strong> · ${statusText}<br>` +
+        (p.company_name ? `회사/서비스: <strong>${p.company_name}</strong> · ` : '') +
+        `대화 ${msgCount}건 · 생성일: ${new Date(p.created_at).toLocaleDateString('ko-KR')}`
+      );
+
+      // 이전 대화 표시
+      messages.forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
+
+      // 상태별 처리
+      if (p.status === 'confirming') {
         chatStep = 'confirming';
         showConfirmPanel('수집된 정보를 확인하고 자료 생성을 시작할까요?');
         setStep(2, true);
-      }
-      if (['ir_done','complete'].includes(res.project.status)) {
-        // 이미 완료된 프로젝트는 결과 페이지로
+      } else if (['ir_done','complete'].includes(p.status)) {
         location.href = 'result.html?id=' + id;
+      } else if (p.status === 'interview') {
+        setStep(2);
+        // 대화 내역이 있으면 이어서 진행하라는 안내
+        if (msgCount > 0) {
+          addMsg('system', '이전 인터뷰를 이어서 진행합니다. 아래에 답변을 입력해주세요.');
+        } else {
+          // 대화가 없으면 첫 질문 표시
+          addMsg('ai', getFirstMessage(p.project_type));
+        }
       }
     }
   } catch {
