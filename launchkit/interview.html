@@ -390,19 +390,56 @@ let chatStep = 'interview'; // interview | confirming | generating
 let isTyping = false;
 let userTurnCount = 0;
 
-// ── 진행 상태 트래커 ──
-const FIELDS_BASE = [
+// ── Supabase 직접 저장 (초기 메시지용) ──
+async function saveMessageToDB(pid, role, content) {
+  try {
+    await fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_messages', {
+      method: 'POST',
+      headers: {
+        'apikey': LK_CONFIG.SUPABASE_ANON,
+        'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ project_id: pid, role, content }),
+    });
+  } catch {}
+}
+
+// ── 카테고리별 필수 수집 항목 ──
+const FIELDS_IR_SIMPLE = [
+  '회사/서비스명','한 줄 소개','핵심 기능','타겟 고객',
+  '해결 문제','수익 모델','팀 구성','브랜드 색상','디자인 톤'
+];
+const FIELDS_IR_DETAIL = [
   '회사/서비스명','한 줄 소개','핵심 기능','타겟 고객',
   '해결 문제','수익 모델','경쟁 차별점','팀 구성',
-  '사업 단계','시장 규모','GTM 전략','핵심 성과','비전/미션','투자 계획'
+  '사업 단계','시장 규모','GTM 전략','핵심 성과','비전/미션','투자 계획',
+  '브랜드 색상','디자인 스타일','분위기/톤'
 ];
-const FIELDS_LANDING = [
-  '브랜드 색상','서브 색상','디자인 스타일','분위기/톤','핵심 CTA','참고 사이트','슬로건'
+const FIELDS_LANDING_SIMPLE = [
+  '회사/서비스명','한 줄 소개','핵심 기능','타겟 고객',
+  '브랜드 색상','디자인 스타일','분위기/톤','핵심 CTA','슬로건'
+];
+const FIELDS_LANDING_DETAIL = [
+  '회사/서비스명','한 줄 소개','핵심 기능','타겟 고객',
+  '해결 문제','수익 모델','경쟁 차별점','팀 구성',
+  '브랜드 색상','서브 색상','디자인 스타일','분위기/톤',
+  '핵심 CTA','참고 사이트','슬로건'
 ];
 
 function getFieldList() {
-  const needsLanding = (selectedType || '').includes('landing');
-  return needsLanding ? [...FIELDS_BASE, ...FIELDS_LANDING] : [...FIELDS_BASE];
+  const t = selectedType || 'ir_simple';
+  if (t.includes('+')) {
+    // 번들: 상세 IR 필드 + 랜딩 추가 필드
+    const base = t.includes('ir_detail') ? [...FIELDS_IR_DETAIL] : [...FIELDS_IR_SIMPLE];
+    const landingExtra = ['핵심 CTA','참고 사이트','슬로건'].filter(f => !base.includes(f));
+    return [...base, ...landingExtra];
+  }
+  if (t === 'ir_simple') return [...FIELDS_IR_SIMPLE];
+  if (t === 'ir_detail') return [...FIELDS_IR_DETAIL];
+  if (t === 'landing_simple') return [...FIELDS_LANDING_SIMPLE];
+  if (t === 'landing_detail') return [...FIELDS_LANDING_DETAIL];
+  return [...FIELDS_IR_SIMPLE];
 }
 
 function initProgressBar(type, status) {
@@ -501,8 +538,10 @@ async function startInterview() {
     history.replaceState(null, '', '?id=' + projectId);
 
     hideTyping();
-    // 3. 유형별 첫 AI 안내 메시지
-    addMsg('ai', getFirstMessage(selectedType));
+    // 3. 유형별 첫 AI 안내 메시지 (DB에도 저장하여 대화 맥락 유지)
+    const firstMsg = getFirstMessage(selectedType);
+    addMsg('ai', firstMsg);
+    saveMessageToDB(projectId, 'assistant', firstMsg);
   } catch (err) {
     hideTyping();
     addMsg('ai', '프로젝트 생성 중 오류가 발생했습니다. 새로고침 후 다시 시도해주세요.');
@@ -510,15 +549,15 @@ async function startInterview() {
 }
 
 function getFirstMessage(type) {
-  const greet = {
-    ir_simple:               '안녕하세요! 간단 IR 자료 작성을 도와드릴게요.',
-    ir_detail:               '안녕하세요! 상세 IR 자료 작성을 도와드릴게요.',
-    landing_simple:          '안녕하세요! 간단 랜딩페이지 제작을 도와드릴게요.',
-    landing_detail:          '안녕하세요! 상세 랜딩페이지 제작을 도와드릴게요.',
-    'ir_detail+landing_detail': '안녕하세요! IR 자료와 랜딩페이지를 함께 제작해드릴게요.',
-  };
-  return (greet[type] || '안녕하세요! 새 프로젝트를 시작해볼게요.') +
-    '\n먼저 회사명 또는 서비스명을 알려주세요.';
+  const typeName = getTypeName(type);
+  const fields = getFieldList();
+  const fieldList = fields.map((f, i) => `${i+1}. ${f}`).join('\n');
+
+  return `안녕하세요! ${typeName} 작성을 도와드릴게요.\n\n` +
+    `아래 ${fields.length}개 항목의 정보가 필요합니다.\n` +
+    `대화식으로 편하게 말씀해주시면 제가 인식하여 기록하겠습니다.\n\n` +
+    fieldList + '\n\n' +
+    '먼저 회사명 또는 서비스명부터 알려주세요!';
 }
 
 async function sendMsg() {
