@@ -565,26 +565,48 @@ async function startInterview() {
     history.replaceState(null, '', '?id=' + projectId);
 
     hideTyping();
-    // 3. 유형별 첫 AI 안내 메시지 (DB에도 저장하여 대화 맥락 유지)
-    const firstMsg = getFirstMessage(selectedType);
-    addMsg('ai', firstMsg);
-    saveMessageToDB(projectId, 'assistant', firstMsg);
+    // 3. 유형별 첫 AI 안내 메시지 (화면=HTML, DB=플레인텍스트)
+    addMsg('ai', getFirstMessage(selectedType));
+    saveMessageToDB(projectId, 'assistant', getFirstMessagePlain(selectedType));
   } catch (err) {
     hideTyping();
     addMsg('ai', '프로젝트 생성 중 오류가 발생했습니다. 새로고침 후 다시 시도해주세요.');
   }
 }
 
+// 필드 리스트 HTML 생성 (체크/미체크 시각화)
+function buildFieldListHTML(collected) {
+  const fields = getFieldList();
+  return fields.map((f, i) => {
+    if (i < collected) {
+      return `<span style="color:#10b981;font-weight:600">✓ ${f}</span>`;
+    } else if (i === collected) {
+      return `<span style="color:#6366f1;font-weight:700">→ ${i+1}. ${f}</span>`;
+    } else {
+      return `<span style="color:#94a3b8">${i+1}. ${f}</span>`;
+    }
+  }).join('\n');
+}
+
 function getFirstMessage(type) {
   const typeName = getTypeName(type);
   const fields = getFieldList();
-  const fieldList = fields.map((f, i) => `${i+1}. ${f}`).join('\n');
-
   return `안녕하세요! ${typeName} 작성을 도와드릴게요.\n\n` +
     `아래 ${fields.length}개 항목의 정보가 필요합니다.\n` +
     `대화식으로 편하게 말씀해주시면 제가 인식하여 기록하겠습니다.\n\n` +
-    fieldList + '\n\n' +
+    buildFieldListHTML(0) + '\n\n' +
     '먼저 회사명 또는 서비스명부터 알려주세요!';
+}
+
+// DB 저장용 플레인텍스트 버전
+function getFirstMessagePlain(type) {
+  const typeName = getTypeName(type);
+  const fields = getFieldList();
+  const fieldList = fields.map((f, i) => `${i+1}. ${f}`).join('\n');
+  return `안녕하세요! ${typeName} 작성을 도와드릴게요.\n\n` +
+    `아래 ${fields.length}개 항목의 정보가 필요합니다.\n` +
+    `대화식으로 편하게 말씀해주시면 제가 인식하여 기록하겠습니다.\n\n` +
+    fieldList + '\n\n먼저 회사명 또는 서비스명부터 알려주세요!';
 }
 
 async function sendMsg() {
@@ -729,14 +751,14 @@ async function loadExistingProject(id) {
       } else if (p.status === 'interview') {
         setStep(2);
         if (msgCount > 0) {
-          // 진행상황 요약 표시
+          // 진행상황 체크리스트 시각화
           const fields = getFieldList();
           const total = fields.length;
           const collected = Math.min(userMsgCount, total);
-          const nextField = collected < total ? fields[collected] : '마무리';
           addMsg('system',
-            `📋 <strong>이전 진행상황</strong>: ${total}개 항목 중 <strong>${collected}개 수집 완료</strong><br>` +
-            `다음 항목: <strong>${nextField}</strong> — 아래에 답변을 이어서 입력해주세요.`
+            `📋 <strong>진행상황</strong>: ${total}개 항목 중 <strong style="color:#10b981">${collected}개 수집 완료</strong>\n\n` +
+            buildFieldListHTML(collected) + '\n\n' +
+            `아래에 답변을 이어서 입력해주세요.`
           );
           // 프로그레스 디테일 자동 펼침
           document.getElementById('pb-detail').classList.add('open');
