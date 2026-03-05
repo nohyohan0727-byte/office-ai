@@ -670,7 +670,20 @@ async function confirmYes() {
   }, 4000);
 
   try {
-    const res = await lkFetch(LK_CONFIG.WEBHOOKS.GENERATE_IR, { project_id: projectId });
+    // 타입별 생성 API 분기
+    const t = selectedType || 'ir_simple';
+    const hasIR = t.startsWith('ir_') || t.includes('+');
+    const hasLanding = t.startsWith('landing_') || t.includes('+');
+    const irType = t.includes('ir_detail') ? 'detail' : 'simple';
+    const landingType = t.includes('landing_detail') ? 'detail' : 'simple';
+
+    if (hasIR) {
+      await lkFetch(LK_CONFIG.WEBHOOKS.GENERATE_IR, { project_id: projectId, ir_type: irType });
+    }
+    if (hasLanding) {
+      await lkFetch(LK_CONFIG.WEBHOOKS.GENERATE_LANDING, { project_id: projectId, landing_type: landingType });
+    }
+
     clearInterval(stepTimer);
 
     // 모든 단계 완료 표시

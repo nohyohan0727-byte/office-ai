@@ -217,6 +217,8 @@ function renderProject(p) {
     document.getElementById('btn-dl-landing').style.display = '';
     document.getElementById('tab-landing').style.color = '';
     renderLanding(p.landing_html);
+    // 랜딩만 있고 IR 없으면 랜딩 탭 기본
+    if (!p.ir_html) switchTab('landing');
   }
 }
 
