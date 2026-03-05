@@ -363,8 +363,8 @@ a{text-decoration:none;color:inherit}
     <div class="confirm-inner">
       <div class="confirm-title" id="confirm-title">수집된 정보를 확인하고 자료 생성을 시작할까요?</div>
       <div class="confirm-btns">
-        <button type="button" class="btn-confirm yes" onclick="confirmYes()">자료 생성 시작!</button>
-        <button type="button" class="btn-confirm edit" onclick="confirmEdit()">수정하고 싶어요</button>
+        <button type="button" class="btn-confirm yes" id="btn-gen">자료 생성 시작!</button>
+        <button type="button" class="btn-confirm edit" id="btn-edit">수정하고 싶어요</button>
       </div>
     </div>
   </div>
@@ -835,6 +835,10 @@ function setStep(active, confirm = false) {
   }
 }
 function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+
+// 확인 패널 버튼 이벤트 (addEventListener으로 확실하게 방지)
+document.getElementById('btn-gen').addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); confirmYes(); });
+document.getElementById('btn-edit').addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); confirmEdit(); });
 
 // 상단 프로젝트 이름 변경 시 서버 저장
 let titleSaveTimer = null;
