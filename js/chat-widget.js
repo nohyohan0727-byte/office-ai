@@ -92,6 +92,19 @@
 .cw-quick-btn{flex:1;padding:8px 6px;border:1px solid rgba(99,102,241,.3);border-radius:8px;background:rgba(99,102,241,.08);color:#a5b4fc;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s,border-color .2s}
 .cw-quick-btn:hover{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.5)}
 
+/* Quick Input Overlay */
+.cw-quick-input{display:none;padding:10px 12px;border-top:1px solid rgba(255,255,255,.06);background:rgba(99,102,241,.06);flex-shrink:0}
+.cw-quick-input.cw-active{display:block}
+.cw-quick-input-label{color:#a5b4fc;font-size:.78rem;font-weight:600;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.cw-quick-input-label button{background:none;border:none;color:rgba(255,255,255,.4);font-size:.85rem;cursor:pointer;padding:2px 6px}
+.cw-quick-input-label button:hover{color:rgba(255,255,255,.7)}
+.cw-quick-input-row{display:flex;gap:6px}
+.cw-quick-textarea{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:.85rem;font-family:inherit;resize:none;outline:none;min-height:36px;max-height:60px}
+.cw-quick-textarea:focus{border-color:rgba(99,102,241,.5)}
+.cw-quick-textarea::placeholder{color:rgba(255,255,255,.25)}
+.cw-quick-send{padding:8px 14px;border:none;border-radius:8px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.cw-quick-send:disabled{opacity:.4;cursor:default}
+
 /* Input */
 .cw-input-area{padding:10px 12px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:8px;flex-shrink:0;background:rgba(0,0,0,.15)}
 .cw-input{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;color:#e2e8f0;font-size:.88rem;font-family:inherit;resize:none;outline:none;max-height:80px;transition:border-color .2s}
@@ -184,6 +197,16 @@
           <button class="cw-quick-btn" data-action="call">📞 유선 연락 요청</button>
           <button class="cw-quick-btn" data-action="consult">💼 도입 상담 신청</button>
         </div>
+        <div class="cw-quick-input" id="cw-quick-input">
+          <div class="cw-quick-input-label">
+            <span>💼 상담 내용을 간략히 적어주세요</span>
+            <button id="cw-quick-cancel" title="취소">✕</button>
+          </div>
+          <div class="cw-quick-input-row">
+            <textarea class="cw-quick-textarea" id="cw-quick-text" placeholder="예: 견적서 자동화 도입 문의" rows="1"></textarea>
+            <button class="cw-quick-send" id="cw-quick-submit" disabled>전송</button>
+          </div>
+        </div>
         <div class="cw-input-area">
           <textarea class="cw-input" placeholder="메시지를 입력하세요..." rows="1"></textarea>
           <button class="cw-send" disabled aria-label="전송">
@@ -225,15 +248,42 @@
     });
 
     // Quick action buttons
+    var quickInputPanel = _panel.querySelector('#cw-quick-input');
+    var quickText = _panel.querySelector('#cw-quick-text');
+    var quickSubmit = _panel.querySelector('#cw-quick-submit');
+    var quickCancel = _panel.querySelector('#cw-quick-cancel');
+
     _panel.querySelectorAll('.cw-quick-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var action = btn.dataset.action;
         if (action === 'call') {
           quickAction('상담원에게 유선 연락을 요청합니다.', '📞 ' + _visitorName + '님이 유선 연락을 요청했습니다.\n연락처: ' + (_visitorPhone || '미입력'));
         } else if (action === 'consult') {
-          quickAction('도입 상담을 신청합니다.', '💼 ' + _visitorName + '님이 도입 상담을 신청했습니다.\n연락처: ' + (_visitorPhone || '미입력'));
+          quickInputPanel.classList.add('cw-active');
+          quickText.value = '';
+          quickSubmit.disabled = true;
+          quickText.focus();
         }
       });
+    });
+
+    quickText.addEventListener('input', function () {
+      quickSubmit.disabled = !quickText.value.trim();
+    });
+    quickText.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); quickSubmit.click(); }
+    });
+    quickCancel.addEventListener('click', function () {
+      quickInputPanel.classList.remove('cw-active');
+    });
+    quickSubmit.addEventListener('click', function () {
+      var desc = quickText.value.trim();
+      if (!desc) return;
+      quickInputPanel.classList.remove('cw-active');
+      quickAction(
+        '도입 상담 신청: ' + desc,
+        '💼 ' + _visitorName + '님이 도입 상담을 신청했습니다.\n내용: ' + desc + '\n연락처: ' + (_visitorPhone || '미입력')
+      );
     });
 
     // Chat events
