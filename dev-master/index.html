@@ -612,10 +612,13 @@
                 ${check} ${f.name}
               </li>`).join('')}
             </ul>
-            ${quotaFeatures.length ? `<div class="rounded-xl bg-${s.color}-50 border border-${s.color}-200/50 p-3 mb-8">
-              ${quotaFeatures.map(f => `<div class="flex items-center gap-2 text-sm font-bold text-${s.color}-700 py-1">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                ${f.name} <span class="ml-auto text-xs bg-${s.color}-200/60 px-2 py-0.5 rounded-full">${f.quota}회/월</span>
+            ${quotaFeatures.length ? `<div class="rounded-xl bg-${s.color}-50 border border-${s.color}-200/50 px-3 py-2 mb-8">
+              ${quotaFeatures.map(f => `<div class="flex items-center justify-between gap-1 text-xs font-bold text-${s.color}-700 py-1">
+                <span class="flex items-center gap-1 whitespace-nowrap">
+                  <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                  ${f.name}
+                </span>
+                <span class="shrink-0 bg-${s.color}-200/60 px-2 py-0.5 rounded-full whitespace-nowrap">${f.quota}회/월</span>
               </div>`).join('')}
             </div>` : '<div class="mb-8"></div>'}
             <a href="#start" onclick="selectPlan('${p.plan_key}')" class="block w-full py-3.5 rounded-xl ${s.btn} text-center text-sm font-bold transition">
