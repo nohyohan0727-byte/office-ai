@@ -652,6 +652,18 @@ async function confirmYes() {
   hideConfirmPanel();
   chatStep = 'generating';
 
+  // DB 상태를 generating으로 즉시 변경 (이탈 방지)
+  fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
+    method: 'PATCH',
+    headers: {
+      'apikey': LK_CONFIG.SUPABASE_ANON,
+      'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ status: 'generating' }),
+  }).catch(() => {});
+
   // 채팅 영역 숨기고 생성 진행 화면 표시
   document.getElementById('chat-wrap').style.display = 'none';
   document.getElementById('gen-progress').classList.add('active');
@@ -711,6 +723,17 @@ async function confirmYes() {
     addMsg('ai', '생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     chatStep = 'confirming';
     showConfirmPanel('다시 시도하시겠습니까?');
+    // 에러 시 상태 복원
+    fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
+      method: 'PATCH',
+      headers: {
+        'apikey': LK_CONFIG.SUPABASE_ANON,
+        'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ status: 'confirming' }),
+    }).catch(() => {});
   }
 }
 
@@ -802,6 +825,14 @@ async function loadExistingProject(id, editFromResult = false) {
         completeProgress();
         showConfirmPanel('수집된 정보를 확인하고 자료 생성을 시작할까요?');
         setStep(2, true);
+      } else if (p.status === 'generating') {
+        // 생성 진행 중 (이탈 후 재진입)
+        chatStep = 'generating';
+        document.getElementById('chat-wrap').style.display = 'none';
+        document.getElementById('gen-progress').classList.add('active');
+        setStep(3);
+        document.getElementById('gen-sub').textContent = 'AI가 자료를 생성 중입니다. 완료되면 자동으로 이동합니다...';
+        pollForCompletion(id);
       } else if (['ir_done','complete'].includes(p.status)) {
         location.href = 'result.html?id=' + id;
       } else if (p.status === 'interview') {
@@ -826,6 +857,43 @@ async function loadExistingProject(id, editFromResult = false) {
     hideTyping();
     addMsg('ai', '프로젝트를 불러오는 중 오류가 발생했습니다.');
   }
+}
+
+// 생성 완료 폴링 (이탈 후 재진입 시)
+function pollForCompletion(id) {
+  let attempts = 0;
+  const maxAttempts = 60; // 최대 5분 (5초 간격)
+  const timer = setInterval(async () => {
+    attempts++;
+    try {
+      const res = await fetch(
+        LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + id + '&select=status',
+        { headers: { 'apikey': LK_CONFIG.SUPABASE_ANON } }
+      );
+      const data = await res.json();
+      const status = data[0]?.status;
+      if (['ir_done','complete'].includes(status)) {
+        clearInterval(timer);
+        location.href = 'result.html?id=' + id;
+      } else if (status !== 'generating') {
+        // generating이 아닌 다른 상태 (에러 등)
+        clearInterval(timer);
+        document.getElementById('gen-progress').classList.remove('active');
+        document.getElementById('chat-wrap').style.display = 'flex';
+        addMsg('system', '생성이 중단되었습니다. 다시 시도해주세요.');
+        chatStep = 'confirming';
+        showConfirmPanel('다시 시도하시겠습니까?');
+      }
+    } catch {}
+    if (attempts >= maxAttempts) {
+      clearInterval(timer);
+      document.getElementById('gen-progress').classList.remove('active');
+      document.getElementById('chat-wrap').style.display = 'flex';
+      addMsg('system', '생성 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+      chatStep = 'confirming';
+      showConfirmPanel('다시 시도하시겠습니까?');
+    }
+  }, 5000);
 }
 
 // UI helpers
