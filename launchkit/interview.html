@@ -713,9 +713,12 @@ async function confirmYes() {
 }
 
 async function confirmEdit() {
+  // 수정 모드 로컬 저장 (리로드 시에도 유지)
+  sessionStorage.setItem('lk_edit_' + projectId, '1');
   hideConfirmPanel();
   chatStep = 'interview';
   addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
+  document.getElementById('chat-input').focus();
   // DB 상태 비동기 업데이트
   try {
     await fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
@@ -767,8 +770,8 @@ async function loadExistingProject(id) {
       messages.forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
 
       // 상태별 처리
-      const isEditMode = location.hash === '#edit';
-      if (isEditMode) history.replaceState(null, '', location.pathname + location.search);
+      const isEditMode = sessionStorage.getItem('lk_edit_' + id);
+      if (isEditMode) sessionStorage.removeItem('lk_edit_' + id);
 
       if (p.status === 'confirming' && !isEditMode) {
         chatStep = 'confirming';
