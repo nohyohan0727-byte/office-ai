@@ -420,10 +420,10 @@ footer .footer-contact{color:rgba(255,255,255,.4);font-size:12px;margin-top:8px}
       <div style="text-align:center;padding:40px;color:var(--text2)">요금제를 불러오는 중...</div>
     </div>
 
+    <script src="js/env.js"></script>
+    <script src="js/config.js"></script>
     <script>
     (async function(){
-      const SB='https://mkmxhmoocqnkltjxdfbm.supabase.co/rest/v1';
-      const AK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXhobW9vY3Fua2x0anhkZmJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5MDE0ODIsImV4cCI6MjA4NzQ3NzQ4Mn0.tYPVpoEs_9Qbw3kcUzkImDv0d6lQ69wAZ5YKz2GqqM8';
       const FEATURES={
         free:[
           {t:'간단 IR 자료 (80토큰)',ok:true},{t:'HTML 다운로드',ok:true},{t:'1개 프로젝트 저장',ok:true},
@@ -442,8 +442,7 @@ footer .footer-contact{color:rgba(255,255,255,.4);font-size:12px;margin-top:8px}
       const BTN_TEXT={free:'무료로 시작',pro:'프로 시작하기',pro_max:'맥스 시작하기'};
       const POPULAR=['pro'];
       try{
-        const res=await fetch(SB+'/lk_plans?select=*&is_active=eq.true&order=sort_order.asc',{headers:{apikey:AK}});
-        const plans=await res.json();
+        const plans = await lkFetchPlans();
         const box=document.getElementById('plans-container');
         if(!plans.length){box.innerHTML='<div style="text-align:center;padding:40px">등록된 요금제가 없습니다.</div>';return;}
         box.innerHTML=plans.map(p=>{

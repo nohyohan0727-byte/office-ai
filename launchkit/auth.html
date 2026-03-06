@@ -173,16 +173,8 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)
 
         <div class="plan-select">
           <label>시작 플랜 선택</label>
-          <div class="plan-chips">
-            <div class="plan-chip selected" data-plan="free" onclick="selectPlan(this)">
-              무료 <span class="token-badge">100토큰</span>
-            </div>
-            <div class="plan-chip" data-plan="pro" onclick="selectPlan(this)">
-              Pro <span class="token-badge">500토큰 · 3만원</span>
-            </div>
-            <div class="plan-chip" data-plan="pro_max" onclick="selectPlan(this)">
-              Pro Max <span class="token-badge">2,500토큰 · 5만원</span>
-            </div>
+          <div class="plan-chips" id="plan-chips-wrap">
+            <div class="plan-chip selected" data-plan="free" onclick="selectPlan(this)">무료</div>
           </div>
           <input type="hidden" id="signup-plan" value="free">
         </div>
@@ -199,7 +191,25 @@ input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)
 <script src="js/env.js"></script>
 <script src="js/config.js"></script>
 <script>
-// URL 파라미터로 플랜 자동 선택
+// 플랜 칩 동적 로드
+(async function(){
+  try {
+    const plans = await lkFetchPlans();
+    if (plans.length) {
+      const wrap = document.getElementById('plan-chips-wrap');
+      const urlP = new URLSearchParams(location.search).get('plan');
+      const selected = urlP || 'free';
+      wrap.innerHTML = plans.map(p => {
+        const label = p.price_monthly ? `${p.name} <span class="token-badge">${p.tokens.toLocaleString()}토큰 · ${(p.price_monthly/10000).toFixed(0)}만원</span>` : `${p.name} <span class="token-badge">${p.tokens.toLocaleString()}토큰</span>`;
+        return `<div class="plan-chip ${p.plan_key === selected ? 'selected' : ''}" data-plan="${p.plan_key}" onclick="selectPlan(this)">${label}</div>`;
+      }).join('');
+      document.getElementById('signup-plan').value = selected;
+      if (urlP) switchTab('signup');
+    }
+  } catch(e) {}
+})();
+
+// URL 파라미터로 플랜 자동 선택 (fallback)
 const urlPlan = new URLSearchParams(location.search).get('plan');
 if (urlPlan) {
   document.querySelectorAll('.plan-chip').forEach(c => {

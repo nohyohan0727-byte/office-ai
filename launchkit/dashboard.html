@@ -219,10 +219,12 @@ if (user) {
   document.getElementById('user-greeting').textContent = user.name + '님';
   updatePlanBox(user);
 }
+// SM에서 최신 플랜 데이터 로드 → PLAN_TOKENS 갱신 → UI 재갱신
+lkFetchPlans().then(() => { if (user) updatePlanBox(user); }).catch(() => {});
 
 function updatePlanBox(u) {
   const planNames = { free: 'Free', pro: 'Pro', pro_max: 'Pro Max' };
-  const total = LK_CONFIG.PLAN_TOKENS[u.plan] || 100;
+  const total = u.tokens_total || LK_CONFIG.PLAN_TOKENS[u.plan] || 100;
   const used  = u.tokens_used || 0;
   const remain = total - used;
   const pct    = Math.max(0, Math.min(100, (remain / total) * 100));
