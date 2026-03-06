@@ -247,7 +247,7 @@ function switchTab(tab) {
   document.getElementById('btn-dl-landing').style.display = (!isIR && projectData?.landing_html) ? '' : 'none';
 }
 
-function goEdit() { location.href = 'interview.html?id=' + urlId; }
+function goEdit() { location.href = 'interview.html?id=' + urlId + '&edit=1'; }
 
 function downloadHtml() {
   if (!projectData?.ir_html) return;

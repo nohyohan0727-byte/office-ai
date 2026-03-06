@@ -267,7 +267,7 @@ a{text-decoration:none;color:inherit}
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="topbar-left">
-    <a href="https://office-ai.app" class="topbar-logo">Launch<span>Kit</span></a>
+    <a href="/launchkit/" class="topbar-logo">Launch<span>Kit</span></a>
     <span class="topbar-sep">|</span>
     <input class="proj-title-input" id="proj-title" value="새 프로젝트" maxlength="40">
   </div>
@@ -517,11 +517,13 @@ function toggleProgress() {
 }
 
 // URL 파라미터로 기존 프로젝트 불러오기
-const urlId = new URLSearchParams(location.search).get('id');
+const urlParams = new URLSearchParams(location.search);
+const urlId = urlParams.get('id');
+const urlEdit = urlParams.get('edit') === '1';
 if (urlId) {
   projectId = parseInt(urlId);
   showChat();
-  loadExistingProject(projectId);
+  loadExistingProject(projectId, urlEdit);
 }
 
 // 토큰 표시
@@ -712,26 +714,22 @@ async function confirmYes() {
   }
 }
 
-async function confirmEdit() {
-  // 수정 모드 로컬 저장 (리로드 시에도 유지)
-  sessionStorage.setItem('lk_edit_' + projectId, '1');
+function confirmEdit() {
   hideConfirmPanel();
   chatStep = 'interview';
   addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
   document.getElementById('chat-input').focus();
-  // DB 상태 비동기 업데이트
-  try {
-    await fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
-      method: 'PATCH',
-      headers: {
-        'apikey': LK_CONFIG.SUPABASE_ANON,
-        'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify({ status: 'interview' }),
-    });
-  } catch(e) {}
+  // DB 상태 변경
+  fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + projectId, {
+    method: 'PATCH',
+    headers: {
+      'apikey': LK_CONFIG.SUPABASE_ANON,
+      'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ status: 'interview' }),
+  }).catch(() => {});
 }
 
 function goResult() {
@@ -748,7 +746,7 @@ function deriveProjectType(p) {
   return 'ir_simple'; // fallback
 }
 
-async function loadExistingProject(id) {
+async function loadExistingProject(id, editFromResult = false) {
   showTyping();
   try {
     const res = await lkFetch(LK_CONFIG.WEBHOOKS.GET_PROJECT, { project_id: id });
@@ -769,26 +767,46 @@ async function loadExistingProject(id) {
       // 이전 대화 표시
       messages.forEach(m => addMsg(m.role === 'user' ? 'user' : 'ai', m.content));
 
-      // 상태별 처리
-      const isEditMode = sessionStorage.getItem('lk_edit_' + id);
-      if (isEditMode) sessionStorage.removeItem('lk_edit_' + id);
+      // 수정 모드 판별: URL edit=1 또는 sessionStorage
+      const isEditMode = editFromResult || sessionStorage.getItem('lk_edit_' + id);
+      if (isEditMode) {
+        sessionStorage.removeItem('lk_edit_' + id);
+        // URL에서 edit 파라미터 제거 (뒤로가기 시 루프 방지)
+        history.replaceState(null, '', location.pathname + '?id=' + id);
+      }
 
-      if (p.status === 'confirming' && !isEditMode) {
+      // 수정 모드: 어떤 상태든 채팅으로 진입
+      if (isEditMode) {
+        chatStep = 'interview';
+        setStep(2);
+        completeProgress();
+        addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
+        document.getElementById('chat-input').focus();
+        // DB 상태를 interview로 변경
+        fetch(LK_CONFIG.SUPABASE_URL + '/rest/v1/lk_projects?id=eq.' + id, {
+          method: 'PATCH',
+          headers: {
+            'apikey': LK_CONFIG.SUPABASE_ANON,
+            'Authorization': 'Bearer ' + LK_CONFIG.SUPABASE_ANON,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({ status: 'interview' }),
+        }).catch(() => {});
+        return;
+      }
+
+      // 일반 모드: 상태별 처리
+      if (p.status === 'confirming') {
         chatStep = 'confirming';
         completeProgress();
         showConfirmPanel('수집된 정보를 확인하고 자료 생성을 시작할까요?');
         setStep(2, true);
-      } else if (p.status === 'confirming' && isEditMode) {
-        // 수정 모드: 확인 패널 건너뛰고 바로 채팅
-        chatStep = 'interview';
-        setStep(2);
-        addMsg('system', '어떤 부분을 수정하고 싶으신가요? 말씀해주세요.');
       } else if (['ir_done','complete'].includes(p.status)) {
         location.href = 'result.html?id=' + id;
       } else if (p.status === 'interview') {
         setStep(2);
         if (msgCount > 0) {
-          // 진행상황 체크리스트 시각화
           const fields = getFieldList();
           const total = fields.length;
           const collected = Math.min(userMsgCount, total);
@@ -797,7 +815,6 @@ async function loadExistingProject(id) {
             buildFieldListHTML(collected) + '\n\n' +
             `아래에 답변을 이어서 입력해주세요.`
           );
-          // 프로그레스 디테일 자동 펼침
           document.getElementById('pb-detail').classList.add('open');
           document.getElementById('pb-arrow').classList.add('open');
         } else {
