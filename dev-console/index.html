@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dev Console</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dc: { dark: '#0f172a', card: '#1e293b', border: '#334155' },
+          },
+          fontFamily: { sans: ['Pretendard', 'system-ui', 'sans-serif'] },
+        }
+      }
+    };
+  </script>
+  <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Pretendard', system-ui, sans-serif; overscroll-behavior: none; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .toast-enter { animation: slideIn 0.3s ease; }
+    .toast-exit { animation: slideOut 0.3s ease forwards; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+    .typing-dot { animation: blink 1.4s infinite both; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
+    pre[class*="language-"] { margin: 0; border-radius: 0.5rem; font-size: 0.8rem; }
+    code[class*="language-"] { font-size: 0.8rem; }
+    .file-tree details > summary { list-style: none; cursor: pointer; }
+    .file-tree details > summary::-webkit-details-marker { display: none; }
+    .msg-content pre { overflow-x: auto; max-width: 100%; }
+    .msg-content code { font-size: 0.8rem; }
+    .msg-content p { margin-bottom: 0.5rem; }
+    .msg-content ul, .msg-content ol { padding-left: 1.2rem; margin-bottom: 0.5rem; }
+    .pull-indicator { transition: transform 0.2s; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+  </style>
+</head>
+<body class="bg-dc-dark text-slate-100 min-h-screen">
+
+  <!-- ========== AUTH GATE ========== -->
+  <div id="auth-gate" class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 mb-4">
+          <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        </div>
+        <h1 class="text-xl font-bold">Dev Console</h1>
+        <p class="text-slate-400 text-sm mt-1">Mobile Development Manager</p>
+      </div>
+      <div class="bg-dc-card border border-dc-border rounded-xl p-5">
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Registration Code</label>
+        <p class="text-slate-500 text-xs mb-3">물리 서버(PC)에서 생성한 6자리 등록 코드를 입력하세요</p>
+        <input id="auth-code" type="text" placeholder="ABCDEF" maxlength="6"
+          class="w-full bg-dc-dark border border-dc-border rounded-lg px-4 py-3 text-sm text-center tracking-widest font-mono text-lg uppercase focus:outline-none focus:border-blue-500 transition-colors" autocomplete="off">
+        <div id="auth-error" class="text-red-400 text-xs mt-2 hidden"></div>
+        <button id="auth-btn" onclick="doAuth()"
+          class="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition-colors active:scale-95">
+          Register Device
+        </button>
+      </div>
+      <p class="text-center text-slate-500 text-xs mt-4">Trusted Device Authentication</p>
+    </div>
+  </div>
+
+  <!-- ========== MAIN APP ========== -->
+  <div id="main-app" class="hidden min-h-screen pb-16">
+
+    <!-- Top Bar -->
+    <header class="sticky top-0 z-50 bg-dc-dark/95 backdrop-blur-md border-b border-dc-border px-4 h-12 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div id="status-dot" class="w-2 h-2 rounded-full bg-emerald-400"></div>
+        <span class="text-sm font-semibold">Dev Console</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <select id="project-select" onchange="switchProject(this.value)"
+          class="bg-dc-card border border-dc-border rounded-md px-2 py-1 text-xs">
+          <option value="office-ai">office-ai</option>
+          <option value="claude-manager">claude-manager</option>
+        </select>
+        <button onclick="doLogout()" class="text-slate-400 hover:text-red-400 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Pull to Refresh Indicator -->
+    <div id="pull-indicator" class="pull-indicator fixed top-12 left-0 right-0 flex justify-center -translate-y-full z-40">
+      <div class="bg-dc-card border border-dc-border rounded-full px-4 py-2 text-xs text-slate-400 shadow-lg mt-2">
+        Pull to refresh
+      </div>
+    </div>
+
+    <!-- Section: Chat -->
+    <div id="section-chat" class="section active">
+      <div id="chat-messages" class="p-4 space-y-4 overflow-y-auto" style="height: calc(100vh - 12rem);">
+        <div class="flex flex-col items-center justify-center h-full text-center">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          </div>
+          <p class="text-slate-400 text-sm">Code Assistant</p>
+          <p class="text-slate-500 text-xs mt-1">Ask questions about your codebase</p>
+        </div>
+      </div>
+      <div class="fixed bottom-16 left-0 right-0 p-3 bg-dc-dark/95 backdrop-blur-md border-t border-dc-border">
+        <div class="flex gap-2 max-w-2xl mx-auto">
+          <textarea id="chat-input" rows="1" placeholder="Ask about your code..."
+            class="flex-1 bg-dc-card border border-dc-border rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:border-blue-500 transition-colors"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+          <button onclick="sendChat()" class="bg-blue-600 hover:bg-blue-500 rounded-xl px-4 transition-colors active:scale-95">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Files -->
+    <div id="section-files" class="section">
+      <div class="p-4">
+        <div id="file-breadcrumb" class="flex items-center gap-1 text-xs text-slate-400 mb-3 overflow-x-auto whitespace-nowrap"></div>
+        <div id="file-tree" class="file-tree space-y-0.5"></div>
+        <div id="file-viewer" class="hidden">
+          <div class="flex items-center justify-between mb-2">
+            <button onclick="closeFileViewer()" class="text-blue-400 text-sm flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              Back
+            </button>
+            <div class="flex gap-2">
+              <button onclick="copyFilePath()" class="text-slate-400 hover:text-white text-xs px-2 py-1 border border-dc-border rounded">Path</button>
+              <button onclick="copyFileContent()" class="text-slate-400 hover:text-white text-xs px-2 py-1 border border-dc-border rounded">Copy</button>
+            </div>
+          </div>
+          <div id="file-content" class="overflow-auto rounded-lg" style="max-height: calc(100vh - 14rem);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Logs -->
+    <div id="section-logs" class="section">
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold">Server Logs</h2>
+          <div class="flex items-center gap-2">
+            <label class="flex items-center gap-1 text-xs text-slate-400">
+              <input type="checkbox" id="log-autoscroll" checked class="rounded"> Auto-scroll
+            </label>
+            <button onclick="clearLogs()" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-dc-border rounded">Clear</button>
+          </div>
+        </div>
+        <div id="log-container" class="bg-dc-card border border-dc-border rounded-lg p-3 overflow-y-auto font-mono text-xs space-y-1" style="height: calc(100vh - 12rem);"></div>
+      </div>
+    </div>
+
+    <!-- Section: Commands -->
+    <div id="section-commands" class="section">
+      <div class="p-4">
+        <h2 class="text-sm font-semibold mb-3">Commands</h2>
+        <div id="cmd-grid" class="grid grid-cols-2 gap-2 mb-4"></div>
+        <div id="cmd-output" class="hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span id="cmd-output-label" class="text-xs text-slate-400"></span>
+            <button onclick="copyCmdOutput()" class="text-xs text-slate-400 hover:text-white px-2 py-1 border border-dc-border rounded">Copy</button>
+          </div>
+          <pre id="cmd-output-pre" class="bg-dc-card border border-dc-border rounded-lg p-3 overflow-auto font-mono text-xs text-slate-300 whitespace-pre-wrap" style="max-height: 50vh;"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Manager -->
+    <div id="section-manager" class="section">
+      <div class="p-4 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-dc-card border border-dc-border rounded-xl p-4 text-center">
+            <div id="mgr-prompt-count" class="text-2xl font-bold text-blue-400">-</div>
+            <div class="text-xs text-slate-400 mt-1">Prompts</div>
+          </div>
+          <div class="bg-dc-card border border-dc-border rounded-xl p-4 text-center">
+            <div id="mgr-memory-count" class="text-2xl font-bold text-emerald-400">-</div>
+            <div class="text-xs text-slate-400 mt-1">Memory Files</div>
+          </div>
+        </div>
+        <button onclick="doSync()" class="w-full bg-blue-600/20 border border-blue-500/30 text-blue-400 font-semibold py-3 rounded-xl hover:bg-blue-600/30 transition-colors active:scale-95">
+          Sync CLAUDE.md
+        </button>
+        <div>
+          <h3 class="text-sm font-semibold mb-2">Memory Files</h3>
+          <div id="mgr-memory-list" class="space-y-2"></div>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold mb-2">Recent Prompts</h3>
+          <div id="mgr-prompt-list" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 inset-x-0 bg-dc-dark/95 backdrop-blur-md border-t border-dc-border z-50 safe-area-pb">
+      <div class="flex justify-around py-2">
+        <button onclick="switchTab('chat')" data-tab="chat" class="tab-btn flex flex-col items-center gap-0.5 px-3 py-1 text-blue-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          <span class="text-[10px]">Chat</span>
+        </button>
+        <button onclick="switchTab('files')" data-tab="files" class="tab-btn flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+          <span class="text-[10px]">Files</span>
+        </button>
+        <button onclick="switchTab('logs')" data-tab="logs" class="tab-btn flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <span class="text-[10px]">Logs</span>
+        </button>
+        <button onclick="switchTab('commands')" data-tab="commands" class="tab-btn flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span class="text-[10px]">Cmds</span>
+        </button>
+        <button onclick="switchTab('manager')" data-tab="manager" class="tab-btn flex flex-col items-center gap-0.5 px-3 py-1 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span class="text-[10px]">Mgr</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-14 right-3 z-[999] space-y-2"></div>
+
+  <!-- Scripts -->
+  <script src="js/env.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/files.js"></script>
+  <script src="js/logs.js"></script>
+  <script src="js/commands.js"></script>
+  <script src="js/manager.js"></script>
+
+  <script>
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
