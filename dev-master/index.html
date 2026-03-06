@@ -370,7 +370,7 @@
         <p class="text-gray-500">성장에는 시간이 필요합니다. 우리는 그 시간을 함께 합니다.</p>
       </div>
 
-      <div id="dm-pricing-grid" class="grid md:grid-cols-3 gap-6 fade-up">
+      <div id="dm-pricing-grid" class="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto fade-up">
         <!-- JS로 동적 렌더링 -->
       </div>
 
@@ -551,9 +551,29 @@
 
     // === 가격 동적 렌더링 ===
     const PLAN_STYLES = {
-      basic:   { color: 'mint',   badge: 'warm',   bg: 'bg-gray-50 border border-gray-100', btn: 'border-2 border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600' },
-      premium: { color: 'brand',  badge: 'brand',  bg: 'bg-gradient-to-br from-brand-50 to-warm-50', btn: 'btn-primary shadow-lg shadow-brand-200/50', featured: true, tag: '추천' },
-      family:  { color: 'violet', badge: 'violet', bg: 'bg-gradient-to-br from-violet-50 to-rose-50 border-2 border-violet-300', btn: 'bg-violet-500 text-white hover:bg-violet-600', tag: '4인 가족' },
+      basic: {
+        color: 'mint', badge: 'warm',
+        bg: 'bg-gray-50 border border-gray-100',
+        btn: 'border-2 border-gray-200 text-gray-600 hover:border-brand-300 hover:text-brand-600',
+        desc: 'AI 첫 눈맞춤부터 실전 체계화까지. 성장의 첫 발을 내딛는 분에게.',
+        staticFeatures: ['1~2단계 커리큘럼 전체 열람', '주 단위 기본 과제', '커뮤니티 접근']
+      },
+      premium: {
+        color: 'brand', badge: 'brand',
+        bg: 'bg-gradient-to-br from-brand-50 to-warm-50',
+        btn: 'btn-primary shadow-lg shadow-brand-200/50',
+        featured: true, tag: '추천',
+        desc: '뒤집기부터 달리기까지 전 과정 + 1:1 코칭. 진지한 성장을 위한 선택.',
+        staticFeatures: ['전 단계(1~3) 커리큘럼 무제한', '고급 프로젝트 템플릿 제공', '주 단위 피드백 & 코드 리뷰', '자동화 교육 자료 자동 배포']
+      },
+      family: {
+        color: 'violet', badge: 'violet',
+        bg: 'bg-gradient-to-br from-violet-50 to-rose-50 border-2 border-violet-300',
+        btn: 'bg-violet-500 text-white hover:bg-violet-600',
+        tag: '4인 가족',
+        desc: '온 가족이 함께! Premium 서비스를 4인 가족이 각자 계정으로 이용합니다.',
+        staticFeatures: ['가족 4인 각자 개별 계정', 'Premium 전체 혜택 동일 적용', '각자 수준에 맞는 단계 선택', '1인당 ₩25,000 · 75% 할인']
+      },
     };
 
     function dmFormatPrice(price) { return '₩' + (price || 0).toLocaleString(); }
@@ -574,7 +594,7 @@
         const discM = p.discount_monthly || 0;
         const realPrice = dmDiscountedPrice(p.price_monthly, discM);
         const hasDiscount = discM > 0;
-        const features = p.features || [];
+        const quotaFeatures = (p.features || []).filter(f => f.type === 'quota');
         const check = `<svg class="w-5 h-5 ${checkColor} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
 
         return `
@@ -585,20 +605,21 @@
               <div class="text-sm text-${s.color}-600 font-semibold">${p.name}</div>
               ${s.tag ? `<div class="px-3 py-1 rounded-full bg-${s.color}-500 text-white text-xs font-bold shadow-lg shadow-${s.color}-200">${s.tag}</div>` : ''}
             </div>
-            <div class="flex items-end gap-2 mb-2">
-              ${hasDiscount ? `<span class="text-xl text-gray-400 line-through">${dmFormatPrice(p.price_monthly)}</span>` : ''}
-              <span class="text-4xl font-black text-gray-800">${dmFormatPrice(realPrice)}</span>
+            <div class="flex items-end gap-2 mb-2 flex-wrap">
+              ${hasDiscount ? `<span class="text-lg text-gray-400 line-through">${dmFormatPrice(p.price_monthly)}</span>` : ''}
+              <span class="text-3xl font-black text-gray-800">${dmFormatPrice(realPrice)}</span>
               <span class="text-gray-400 text-sm mb-1">/ 월</span>
-              ${hasDiscount ? `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 text-xs font-bold">-${discM}%</span>` : ''}
+              ${hasDiscount ? `<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 text-xs font-bold whitespace-nowrap">-${discM}%</span>` : ''}
             </div>
             <div class="inline-block px-3 py-1 rounded-full bg-${s.badge}-100 text-${s.badge}-600 text-xs font-bold mb-6">${p.description || ''}</div>
+            <p class="text-gray-500 text-sm mb-8">${s.desc || ''}</p>
             <ul class="space-y-3 mb-4">
-              ${features.filter(f => f.type !== 'quota').map(f => `<li class="flex items-center gap-3 text-sm text-gray-600">
-                ${check} ${f.name}
+              ${(s.staticFeatures || []).map(f => `<li class="flex items-center gap-3 text-sm text-gray-600">
+                ${check} ${f}
               </li>`).join('')}
             </ul>
-            ${features.filter(f => f.type === 'quota').length ? `<div class="rounded-xl bg-${s.color}-50 border border-${s.color}-200/50 p-3 mb-8">
-              ${features.filter(f => f.type === 'quota').map(f => `<div class="flex items-center gap-2 text-sm font-bold text-${s.color}-700 py-1">
+            ${quotaFeatures.length ? `<div class="rounded-xl bg-${s.color}-50 border border-${s.color}-200/50 p-3 mb-8">
+              ${quotaFeatures.map(f => `<div class="flex items-center gap-2 text-sm font-bold text-${s.color}-700 py-1">
                 <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                 ${f.name} <span class="ml-auto text-xs bg-${s.color}-200/60 px-2 py-0.5 rounded-full">${f.quota}회/월</span>
               </div>`).join('')}
