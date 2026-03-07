@@ -663,7 +663,13 @@
   };
 
   const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/rag-chat";
-  const API_KEY = new URLSearchParams(location.search).get('key') || sessionStorage.getItem('rag_key') || '';
+  // URL 파라미터로 키가 오면 sessionStorage로 이전 후 URL에서 제거
+  const _urlKey = new URLSearchParams(location.search).get('key');
+  if (_urlKey) {
+    sessionStorage.setItem('rag_key', _urlKey);
+    history.replaceState(null, '', location.pathname);
+  }
+  const API_KEY = sessionStorage.getItem('rag_key') || '';
 
   let currentCategory = 'ks_cert';
   const messagesEl = document.getElementById('messages');

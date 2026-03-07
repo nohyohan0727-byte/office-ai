@@ -41,5 +41,8 @@ npm-debug.log*
 !**/js/env.example.js
 !**/env.example.js
 
-# 스크립트 내 시크릿
+# 스크립트 내 시크릿 (service_role/admin 키 포함)
 launchkit/n8n/create_workflows.py
+launchkit/n8n/create_admin_workflow.py
+launchkit/n8n/update_admin_workflow.py
+launchkit/n8n/update_interview_prompt.py

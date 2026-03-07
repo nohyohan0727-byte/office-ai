@@ -493,6 +493,9 @@
 </div>
 
 <script>
+  // XSS 방지: HTML 이스케이프
+  function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
   // ── 설정 ──────────────────────────────────────────
   const WEBHOOK_URL = "https://jknetworks.app.n8n.cloud/webhook/admin-upload";
   let ADMIN_KEY = '';  // 서버에서 검증 - HTML에 키 없음
@@ -716,7 +719,7 @@
       <div class="file-item">
         <span class="file-icon">${getFileIcon(f.name)}</span>
         <div class="file-info">
-          <div class="file-name">${f.name}</div>
+          <div class="file-name">${escHtml(f.name)}</div>
           <div class="file-size">${formatSize(f.size)}</div>
         </div>
         <button class="file-remove" onclick="removeFile(${i})" title="제거">✕</button>
@@ -776,7 +779,7 @@
       const el = document.createElement('div');
       el.className = 'log-item pending';
       el.id = `log-${i}`;
-      el.innerHTML = `<span class="log-icon">⏳</span><div class="log-content"><div class="log-name">${f.name}</div><div class="log-detail">대기 중...</div></div>`;
+      el.innerHTML = `<span class="log-icon">⏳</span><div class="log-content"><div class="log-name">${escHtml(f.name)}</div><div class="log-detail">대기 중...</div></div>`;
       document.getElementById('resultLog').appendChild(el);
       return el;
     });
@@ -790,14 +793,14 @@
       if (file.name.toLowerCase().endsWith('.hwp')) {
         errorCount++;
         logEl.className = 'log-item error';
-        logEl.innerHTML = `<span class="log-icon">⚠️</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">HWP 형식은 지원하지 않습니다. 한글에서 <strong>PDF로 저장</strong> 후 다시 업로드해주세요. (파일 → 다른 이름으로 저장 → PDF)</div></div>`;
+        logEl.innerHTML = `<span class="log-icon">⚠️</span><div class="log-content"><div class="log-name">${escHtml(file.name)}</div><div class="log-detail">HWP 형식은 지원하지 않습니다. 한글에서 <strong>PDF로 저장</strong> 후 다시 업로드해주세요. (파일 → 다른 이름으로 저장 → PDF)</div></div>`;
         updateSummary(files.length, successCount, errorCount);
         continue;
       }
 
       // 업로드 중 상태
       logEl.className = 'log-item uploading';
-      logEl.innerHTML = `<div class="spinner"></div><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 중...</div></div>`;
+      logEl.innerHTML = `<div class="spinner"></div><div class="log-content"><div class="log-name">${escHtml(file.name)}</div><div class="log-detail">업로드 중...</div></div>`;
 
       try {
         const base64 = await fileToBase64(file);
@@ -839,7 +842,7 @@
         if (res.ok && data.success) {
           successCount++;
           logEl.className = 'log-item success';
-          logEl.innerHTML = `<span class="log-icon">✅</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">업로드 완료 · ${formatSize(data.fileSize || file.size)} · 카테고리: ${projectName}</div></div>`;
+          logEl.innerHTML = `<span class="log-icon">✅</span><div class="log-content"><div class="log-name">${escHtml(file.name)}</div><div class="log-detail">업로드 완료 · ${formatSize(data.fileSize || file.size)} · 카테고리: ${projectName}</div></div>`;
           // 커스텀 카테고리 첫 성공 시 드롭다운 갱신
           if (isCustomCat && customLabel && successCount === 1) {
             loadCategoriesFromSheets();
@@ -850,7 +853,7 @@
       } catch (err) {
         errorCount++;
         logEl.className = 'log-item error';
-        logEl.innerHTML = `<span class="log-icon">❌</span><div class="log-content"><div class="log-name">${file.name}</div><div class="log-detail">실패: ${err.message}</div></div>`;
+        logEl.innerHTML = `<span class="log-icon">❌</span><div class="log-content"><div class="log-name">${escHtml(file.name)}</div><div class="log-detail">실패: ${err.message}</div></div>`;
       }
 
       updateSummary(files.length, successCount, errorCount);
