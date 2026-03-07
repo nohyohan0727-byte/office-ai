@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>설정 — Discovery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+    <a href="index.html" class="text-gray-400 hover:text-gray-600">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <h1 class="text-lg font-bold text-gray-900">설정</h1>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto px-4 py-6 space-y-5">
+  <div id="settingsForm" class="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100"></div>
+  <button onclick="saveSettings()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700">
+    설정 저장
+  </button>
+  <div id="saveStatus" class="text-center text-sm text-green-600 hidden">저장됨!</div>
+</main>
+
+<script src="js/env.js"></script>
+<script src="js/discovery-api.js"></script>
+<script>
+const FIELDS = [
+  { key: 'recommendation_count', label: '일일 추천 개수', type: 'number', hint: '매일 추천할 주제 수 (기본: 10)', min: 1, max: 20 },
+  { key: 'opportunity_min_cutoff', label: '최소 기회 점수', type: 'number', hint: '이 점수 이상만 추천에 포함 (기본: 40)', min: 0, max: 100 },
+  { key: 'analysis_deep_top_n', label: '심층 분석 대상 수', type: 'number', hint: 'basic 분석 중 deep 분석할 상위 N개 (기본: 20)', min: 5, max: 50 },
+  { key: 'calendar_bonus_max', label: '캘린더 보너스 최대치', type: 'number', hint: '캘린더 이벤트 연관 시 추가 점수 최대값 (기본: 15)', min: 0, max: 30 },
+  { key: 'collection_regions', label: '수집 지역', type: 'json', hint: 'JSON 배열 형태: ["east_asia", "north_america", "global"]' },
+];
+
+let settings = {};
+
+async function loadSettings() {
+  try {
+    settings = await API.getSettings();
+    renderForm();
+  } catch(e) {
+    document.getElementById('settingsForm').innerHTML = `<p class="text-red-500 text-sm p-5">${e.message}</p>`;
+  }
+}
+
+function renderForm() {
+  document.getElementById('settingsForm').innerHTML = FIELDS.map(f => `
+    <div class="p-5">
+      <label class="block text-sm font-medium text-gray-900 mb-1">${f.label}</label>
+      <p class="text-xs text-gray-400 mb-2">${f.hint}</p>
+      <input
+        type="${f.type === 'json' ? 'text' : 'number'}"
+        id="setting_${f.key}"
+        value="${f.type === 'json' ? (settings[f.key] || '[]') : (settings[f.key] || '')}"
+        ${f.min !== undefined ? `min="${f.min}"` : ''}
+        ${f.max !== undefined ? `max="${f.max}"` : ''}
+        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+      >
+    </div>
+  `).join('');
+}
+
+async function saveSettings() {
+  const btn = document.querySelector('button[onclick="saveSettings()"]');
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+
+  try {
+    for (const f of FIELDS) {
+      const val = document.getElementById(`setting_${f.key}`)?.value?.trim();
+      if (val !== undefined && val !== '') {
+        await API.updateSetting(f.key, val);
+      }
+    }
+    document.getElementById('saveStatus').classList.remove('hidden');
+    setTimeout(() => document.getElementById('saveStatus').classList.add('hidden'), 3000);
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '설정 저장';
+  }
+}
+
+loadSettings();
+</script>
+</body>
+</html>

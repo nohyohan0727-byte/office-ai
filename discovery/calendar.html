@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>캘린더 이벤트 — Discovery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <h1 class="text-lg font-bold text-gray-900">캘린더 이벤트</h1>
+    </div>
+    <button onclick="openAddModal()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
+      + 이벤트 추가
+    </button>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-6">
+  <!-- 필터 -->
+  <div class="flex gap-2 mb-5 flex-wrap">
+    <select id="regionFilter" onchange="loadEvents()" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <option value="">모든 지역</option>
+      <option value="east_asia">동아시아</option>
+      <option value="north_america">북미</option>
+      <option value="europe">유럽</option>
+      <option value="global">글로벌</option>
+    </select>
+    <select id="monthFilter" onchange="loadEvents()" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    </select>
+  </div>
+
+  <div id="eventsList" class="grid gap-3"></div>
+</main>
+
+<!-- 추가 모달 -->
+<div id="addModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+      <h2 id="modalTitle" class="font-bold text-gray-900">이벤트 추가</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-5 space-y-3">
+      <input type="hidden" id="editId">
+      <input type="text" id="evTitle" placeholder="이벤트명 *" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">시작일 *</label>
+          <input type="date" id="evDate" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 mb-1 block">종료일</label>
+          <input type="date" id="evEndDate" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+      </div>
+      <select id="evCategory" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <option value="">카테고리 선택 *</option>
+        <option value="holiday">공휴일</option>
+        <option value="politics">정치</option>
+        <option value="economy">경제</option>
+        <option value="education">교육</option>
+        <option value="tech">테크</option>
+        <option value="sports">스포츠</option>
+        <option value="shopping">쇼핑</option>
+        <option value="culture">문화</option>
+        <option value="emergency">긴급</option>
+      </select>
+      <div class="flex gap-2">
+        <select id="evRegion" class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="global">글로벌</option>
+          <option value="east_asia">동아시아</option>
+          <option value="north_america">북미</option>
+          <option value="europe">유럽</option>
+        </select>
+        <select id="evPriority" class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="normal">보통</option>
+          <option value="urgent">긴급</option>
+        </select>
+      </div>
+      <input type="text" id="evKeywords" placeholder="관련 키워드 (쉼표로 구분)" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <textarea id="evDescription" rows="2" placeholder="설명 (선택)" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+    </div>
+    <div class="p-5 border-t border-gray-100 flex gap-2">
+      <button onclick="closeModal()" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50">취소</button>
+      <button onclick="saveEvent()" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl text-sm hover:bg-indigo-700">저장</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/env.js"></script>
+<script src="js/discovery-api.js"></script>
+<script>
+let editingEvent = null;
+
+// 월 필터 초기화
+const monthSelect = document.getElementById('monthFilter');
+const now = new Date();
+for (let i = 0; i < 6; i++) {
+  const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+  const opt = document.createElement('option');
+  opt.value = `${d.getFullYear()}-${d.getMonth() + 1}`;
+  opt.textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+  if (i === 0) opt.selected = true;
+  monthSelect.appendChild(opt);
+}
+
+async function loadEvents() {
+  const [year, month] = document.getElementById('monthFilter').value.split('-').map(Number);
+  const regionFilter = document.getElementById('regionFilter').value;
+  try {
+    const events = await API.getCalendarEvents(year, month);
+    const filtered = regionFilter ? events.filter(e => e.region?.includes(regionFilter)) : events;
+    renderEvents(filtered);
+  } catch(e) {
+    document.getElementById('eventsList').innerHTML = `<p class="text-red-500 text-sm">${e.message}</p>`;
+  }
+}
+
+function renderEvents(events) {
+  const list = document.getElementById('eventsList');
+  if (!events.length) {
+    list.innerHTML = '<p class="text-center text-gray-400 py-10">이벤트가 없습니다</p>';
+    return;
+  }
+  const catColors = { holiday: 'bg-blue-100 text-blue-700', politics: 'bg-red-100 text-red-700', economy: 'bg-green-100 text-green-700', education: 'bg-purple-100 text-purple-700', tech: 'bg-cyan-100 text-cyan-700', sports: 'bg-orange-100 text-orange-700', shopping: 'bg-pink-100 text-pink-700', culture: 'bg-amber-100 text-amber-700', emergency: 'bg-red-200 text-red-800' };
+  const catLabels = { holiday: '공휴일', politics: '정치', economy: '경제', education: '교육', tech: '테크', sports: '스포츠', shopping: '쇼핑', culture: '문화', emergency: '긴급' };
+  list.innerHTML = events.map(e => {
+    const today = new Date().toISOString().split('T')[0];
+    const diff = Math.ceil((new Date(e.event_date) - new Date(today)) / 86400000);
+    const dBadge = diff <= 7 ? `<span class="text-xs font-bold text-red-600">D-${diff}</span>` : diff <= 14 ? `<span class="text-xs font-bold text-amber-600">D-${diff}</span>` : `<span class="text-xs text-gray-400">D-${diff}</span>`;
+    return `
+    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-start justify-between">
+      <div class="flex items-start gap-3">
+        <div class="text-center min-w-12">
+          <div class="text-xs text-gray-400">${e.event_date.slice(0,7)}</div>
+          <div class="text-lg font-bold text-gray-800">${e.event_date.slice(8)}</div>
+          ${dBadge}
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-semibold text-gray-900">${e.title}</span>
+            ${e.priority === 'urgent' ? '<span class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">긴급</span>' : ''}
+          </div>
+          <div class="flex gap-1.5 flex-wrap">
+            <span class="text-xs px-2 py-0.5 rounded-full ${catColors[e.category] || 'bg-gray-100 text-gray-500'}">${catLabels[e.category] || e.category}</span>
+            ${(e.region || []).map(r => `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${r}</span>`).join('')}
+          </div>
+          ${e.related_keywords?.length ? `<p class="text-xs text-gray-400 mt-1">${e.related_keywords.join(', ')}</p>` : ''}
+        </div>
+      </div>
+      <button onclick="editEvent(${JSON.stringify(e).replace(/"/g,'&quot;')})" class="text-xs text-gray-400 hover:text-indigo-600 ml-2">수정</button>
+    </div>`;
+  }).join('');
+}
+
+function openAddModal() {
+  editingEvent = null;
+  document.getElementById('modalTitle').textContent = '이벤트 추가';
+  document.getElementById('editId').value = '';
+  ['evTitle', 'evDate', 'evEndDate', 'evKeywords', 'evDescription'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('evCategory').value = '';
+  document.getElementById('evRegion').value = 'global';
+  document.getElementById('evPriority').value = 'normal';
+  document.getElementById('addModal').classList.remove('hidden');
+}
+
+function editEvent(e) {
+  editingEvent = e;
+  document.getElementById('modalTitle').textContent = '이벤트 수정';
+  document.getElementById('editId').value = e.id;
+  document.getElementById('evTitle').value = e.title;
+  document.getElementById('evDate').value = e.event_date;
+  document.getElementById('evEndDate').value = e.end_date || '';
+  document.getElementById('evCategory').value = e.category;
+  document.getElementById('evRegion').value = (e.region || ['global'])[0];
+  document.getElementById('evPriority').value = e.priority || 'normal';
+  document.getElementById('evKeywords').value = (e.related_keywords || []).join(', ');
+  document.getElementById('evDescription').value = e.description || '';
+  document.getElementById('addModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('addModal').classList.add('hidden');
+}
+
+async function saveEvent() {
+  const title = document.getElementById('evTitle').value.trim();
+  const event_date = document.getElementById('evDate').value;
+  const category = document.getElementById('evCategory').value;
+  if (!title || !event_date || !category) { alert('이름, 날짜, 카테고리는 필수입니다'); return; }
+
+  const data = {
+    id: document.getElementById('editId').value || undefined,
+    title, event_date,
+    end_date: document.getElementById('evEndDate').value || null,
+    category,
+    region: [document.getElementById('evRegion').value],
+    priority: document.getElementById('evPriority').value,
+    related_keywords: document.getElementById('evKeywords').value.split(',').map(k => k.trim()).filter(Boolean),
+    description: document.getElementById('evDescription').value || null,
+    event_type: 'manual'
+  };
+
+  try {
+    await API.upsertCalendarEvent(data);
+    closeModal();
+    loadEvents();
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  }
+}
+
+loadEvents();
+</script>
+</body>
+</html>

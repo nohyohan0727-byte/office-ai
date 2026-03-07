@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 콘텐츠 발굴 — Discovery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: '#6366f1' } } }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+    .score-ring { stroke-dasharray: 283; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .card.selected { border-color: #6366f1; box-shadow: 0 0 0 2px #6366f1; }
+    .panel { transition: opacity 0.3s, transform 0.3s; }
+    .badge-evergreen { background: #d1fae5; color: #065f46; }
+    .badge-longtail { background: #dbeafe; color: #1e40af; }
+    .badge-seasonal { background: #fef3c7; color: #92400e; }
+    .badge-volatile { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #ede9fe; color: #5b21b6; }
+    .badge-storytelling { background: #fce7f3; color: #9d174d; }
+    .badge-character { background: #e0f2fe; color: #0c4a6e; }
+    .badge-review { background: #ecfdf5; color: #064e3b; }
+    .badge-tutorial { background: #fff7ed; color: #9a3412; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #6366f1; border-radius: 50%; cursor: pointer; }
+    .event-banner { animation: scroll 20s linear infinite; }
+    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .event-banner:hover { animation-play-state: paused; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- 헤더 -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.75 3.75 0 01-5.373 0l-.347-.347z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-gray-900">AI 콘텐츠 발굴</h1>
+        <p class="text-xs text-gray-500">오늘의 트렌드 추천</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <input type="date" id="datePicker" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <button onclick="refreshData()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        새로고침
+      </button>
+      <a href="calendar.html" class="text-sm text-gray-600 hover:text-indigo-600">캘린더</a>
+      <a href="queue.html" class="text-sm text-gray-600 hover:text-indigo-600">승인 큐</a>
+      <a href="settings.html" class="text-sm text-gray-600 hover:text-indigo-600">설정</a>
+    </div>
+  </div>
+</header>
+
+<!-- 이벤트 배너 -->
+<div id="eventBannerWrap" class="bg-indigo-700 text-white py-2 overflow-hidden hidden">
+  <div class="flex gap-8 whitespace-nowrap event-banner" id="eventBanner"></div>
+</div>
+
+<!-- 메인 -->
+<main class="max-w-7xl mx-auto px-4 py-6">
+  <!-- 상태 바 -->
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <span id="statusText" class="text-sm text-gray-500">데이터 로딩 중...</span>
+      <span id="recCount" class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full hidden"></span>
+    </div>
+    <button onclick="runPipeline()" id="runBtn" class="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      추천 재실행
+    </button>
+  </div>
+
+  <!-- 카드 그리드 + 상세 패널 -->
+  <div class="flex gap-6">
+    <!-- 카드 그리드 -->
+    <div class="flex-1">
+      <div id="cardsGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      <div id="emptyState" class="hidden text-center py-20 text-gray-400">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p class="font-medium">오늘 추천이 없습니다</p>
+        <p class="text-sm mt-1">파이프라인을 실행하거나 날짜를 변경해보세요</p>
+      </div>
+    </div>
+    <!-- 상세 패널 -->
+    <div id="detailPanel" class="w-96 hidden panel">
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm sticky top-20 overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex items-start justify-between">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span id="panelRank" class="text-xs font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full"></span>
+              <span id="panelLongevity" class="text-xs px-2 py-0.5 rounded-full font-medium"></span>
+            </div>
+            <h2 id="panelTitle" class="font-bold text-gray-900 text-base leading-tight"></h2>
+            <p id="panelFormat" class="text-xs text-gray-500 mt-1"></p>
+          </div>
+          <button onclick="closePanel()" class="ml-2 text-gray-400 hover:text-gray-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div class="p-5 space-y-5 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <!-- 레이더 차트 -->
+          <div>
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">기회 점수 분석</h3>
+            <div class="relative h-48">
+              <canvas id="radarChart"></canvas>
+            </div>
+          </div>
+
+          <!-- 추천 각도 -->
+          <div id="panelAngle" class="bg-indigo-50 rounded-xl p-3">
+            <h3 class="text-xs font-semibold text-indigo-700 mb-1">추천 각도</h3>
+            <p id="panelAngleText" class="text-sm text-indigo-900"></p>
+          </div>
+
+          <!-- 타겟/톤/길이 -->
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="bg-gray-50 rounded-lg p-2">
+              <div class="text-gray-400 mb-0.5">타겟</div>
+              <div id="panelTarget" class="font-medium text-gray-700 text-xs leading-tight"></div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-2">
+              <div class="text-gray-400 mb-0.5">톤</div>
+              <div id="panelTone" class="font-medium text-gray-700 text-xs leading-tight"></div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-2">
+              <div class="text-gray-400 mb-0.5">길이</div>
+              <div id="panelDuration" class="font-medium text-gray-700 text-xs leading-tight"></div>
+            </div>
+          </div>
+
+          <!-- 댓글 갭 -->
+          <div id="commentGapSection">
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">시청자 정보 갭</h3>
+            <ul id="commentGapList" class="space-y-1.5"></ul>
+          </div>
+
+          <!-- 기존 영상 -->
+          <div id="videosSection">
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">기존 상위 영상</h3>
+            <div id="videosList" class="space-y-2"></div>
+          </div>
+
+          <!-- 형식 근거 -->
+          <div id="panelFormatReason" class="text-xs text-gray-500 bg-gray-50 rounded-lg p-3"></div>
+
+          <!-- 리뷰 입력 -->
+          <div class="border-t border-gray-100 pt-4">
+            <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">검토 의견</h3>
+
+            <!-- Quality-5 -->
+            <div class="space-y-2 mb-3">
+              <div class="text-xs text-gray-500 mb-1 font-medium">Quality-5 평가 (선택)</div>
+              <div id="quality5Inputs" class="space-y-1.5"></div>
+            </div>
+
+            <div class="space-y-2 mb-3">
+              <select id="reviewPriority" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="normal">우선순위: 보통</option>
+                <option value="high">우선순위: 높음</option>
+                <option value="low">우선순위: 낮음</option>
+              </select>
+              <input type="text" id="reviewStyleHint" placeholder="제작 스타일 힌트 (예: 유머 섞어서)" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <textarea id="reviewNote" rows="2" placeholder="메모..." class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+            </div>
+
+            <div class="flex gap-2">
+              <button onclick="submitReview('approved')" class="flex-1 bg-emerald-600 text-white text-sm py-2 rounded-xl font-medium hover:bg-emerald-700">승인</button>
+              <button onclick="submitReview('rejected')" class="flex-1 bg-red-100 text-red-700 text-sm py-2 rounded-xl font-medium hover:bg-red-200">거부</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/env.js"></script>
+<script src="js/discovery-api.js"></script>
+<script>
+let recommendations = [];
+let selectedRec = null;
+let radarChartInstance = null;
+
+// 날짜 초기화
+const datePicker = document.getElementById('datePicker');
+datePicker.value = new Date().toISOString().split('T')[0];
+datePicker.addEventListener('change', () => loadData(datePicker.value));
+
+async function loadData(date) {
+  document.getElementById('statusText').textContent = '데이터 로딩 중...';
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('cardsGrid').innerHTML = '';
+
+  try {
+    const [recs, events] = await Promise.all([
+      API.getRecommendations(date),
+      API.getUpcomingEvents(14)
+    ]);
+
+    recommendations = recs || [];
+    renderEventBanner(events || []);
+    renderCards(recommendations);
+
+    const count = recommendations.length;
+    document.getElementById('statusText').textContent = `${date} 기준 추천 ${count}건`;
+    document.getElementById('recCount').textContent = `${count}건`;
+    document.getElementById('recCount').classList.remove('hidden');
+  } catch(e) {
+    document.getElementById('statusText').textContent = '로딩 실패: ' + e.message;
+  }
+}
+
+function renderEventBanner(events) {
+  const wrap = document.getElementById('eventBannerWrap');
+  const banner = document.getElementById('eventBanner');
+  if (!events.length) { wrap.classList.add('hidden'); return; }
+
+  const items = events.map(e => {
+    const d = new Date(e.event_date);
+    const today = new Date();
+    const diff = Math.ceil((d - today) / 86400000);
+    return `<span class="flex items-center gap-2 px-4"><span class="text-indigo-300 font-bold">D-${diff}</span><span>${e.title}</span><span class="text-indigo-300 text-xs">${e.event_date}</span></span>`;
+  }).join('');
+
+  banner.innerHTML = items + items; // 루프를 위해 2번 반복
+  wrap.classList.remove('hidden');
+}
+
+function renderCards(recs) {
+  const grid = document.getElementById('cardsGrid');
+  const empty = document.getElementById('emptyState');
+
+  if (!recs.length) {
+    empty.classList.remove('hidden');
+    return;
+  }
+
+  grid.innerHTML = recs.map(rec => {
+    const a = rec.sc_analysis || {};
+    const t = a.sc_trends || {};
+    const score = a.opportunity_score || 0;
+    const scoreColor = score >= 60 ? '#10b981' : score >= 45 ? '#f59e0b' : '#6b7280';
+    const offset = Math.round(283 - (score / 100) * 283);
+    const statusColors = { pending: 'bg-gray-100 text-gray-600', approved: 'bg-emerald-100 text-emerald-700', rejected: 'bg-red-100 text-red-600' };
+    const statusLabels = { pending: '대기', approved: '승인', rejected: '거부' };
+
+    return `
+    <div class="card bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer ${selectedRec?.id === rec.id ? 'selected' : ''}" onclick="selectCard('${rec.id}')">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold bg-indigo-600 text-white w-6 h-6 flex items-center justify-center rounded-full">${rec.rank}</span>
+          <span class="text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[rec.status] || statusColors.pending}">${statusLabels[rec.status] || '대기'}</span>
+          ${a.longevity_type ? `<span class="text-xs px-1.5 py-0.5 rounded-full font-medium badge-${a.longevity_type}">${longevityLabel(a.longevity_type)}</span>` : ''}
+        </div>
+        <!-- 점수 링 -->
+        <div class="relative w-12 h-12 flex-shrink-0">
+          <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#f3f4f6" stroke-width="10"/>
+            <circle cx="50" cy="50" r="45" fill="none" stroke="${scoreColor}" stroke-width="10"
+              class="score-ring" style="stroke-dashoffset:${offset}"/>
+          </svg>
+          <span class="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-800">${score}</span>
+        </div>
+      </div>
+
+      <h3 class="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">${t.title || '—'}</h3>
+
+      <div class="flex flex-wrap gap-1 mt-auto">
+        ${t.source ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${sourceIcon(t.source)} ${t.source}</span>` : ''}
+        ${a.suggested_format ? `<span class="text-xs px-2 py-0.5 rounded-full font-medium badge-${a.suggested_format}">${formatLabel(a.suggested_format)}</span>` : ''}
+        ${a.calendar_bonus > 0 ? `<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">+${a.calendar_bonus} 캘린더</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectCard(id) {
+  selectedRec = recommendations.find(r => r.id === id);
+  if (!selectedRec) return;
+
+  // 카드 선택 표시
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+
+  openPanel(selectedRec);
+}
+
+function openPanel(rec) {
+  const a = rec.sc_analysis || {};
+  const t = a.sc_trends || {};
+  const panel = document.getElementById('detailPanel');
+
+  document.getElementById('panelRank').textContent = `#${rec.rank}`;
+  document.getElementById('panelTitle').textContent = t.title || '—';
+  document.getElementById('panelFormat').textContent = `${formatLabel(a.suggested_format)} | ${longevityLabel(a.longevity_type)}`;
+
+  const longevityEl = document.getElementById('panelLongevity');
+  longevityEl.textContent = longevityLabel(a.longevity_type);
+  longevityEl.className = `text-xs px-2 py-0.5 rounded-full font-medium badge-${a.longevity_type || 'volatile'}`;
+
+  document.getElementById('panelAngleText').textContent = a.suggested_angle || '—';
+  document.getElementById('panelTarget').textContent = a.target_audience || '—';
+  document.getElementById('panelTone').textContent = a.recommended_tone || '—';
+  document.getElementById('panelDuration').textContent = a.recommended_duration ? `${a.recommended_duration}초` : '—';
+  document.getElementById('panelFormatReason').textContent = a.format_reasoning ? `형식 이유: ${a.format_reasoning}` : '';
+
+  // 댓글 갭
+  const gaps = Array.isArray(a.comment_gap_analysis) ? a.comment_gap_analysis : [];
+  const gapList = document.getElementById('commentGapList');
+  if (gaps.length) {
+    gapList.innerHTML = gaps.map(g => `<li class="text-xs text-gray-600 flex items-start gap-1.5"><span class="text-indigo-400 mt-0.5">•</span>${g}</li>`).join('');
+    document.getElementById('commentGapSection').classList.remove('hidden');
+  } else {
+    document.getElementById('commentGapSection').classList.add('hidden');
+  }
+
+  // 기존 영상
+  const videos = Array.isArray(a.existing_video_analysis) ? a.existing_video_analysis : [];
+  const videosList = document.getElementById('videosList');
+  if (videos.length) {
+    videosList.innerHTML = videos.map(v => `
+      <div class="text-xs bg-gray-50 rounded-lg p-2">
+        <p class="font-medium text-gray-700 truncate">${v.title || v.videoId || '—'}</p>
+        <p class="text-gray-400 mt-0.5">${v.channelTitle || ''}</p>
+      </div>`).join('');
+    document.getElementById('videosSection').classList.remove('hidden');
+  } else {
+    document.getElementById('videosSection').classList.add('hidden');
+  }
+
+  // Quality-5 슬라이더
+  const q5 = ['hook', 'density', 'angle', 'arc', 'cta'];
+  const q5Labels = { hook: '훅', density: '정보밀도', angle: '각도', arc: '스토리', cta: 'CTA' };
+  document.getElementById('quality5Inputs').innerHTML = q5.map(k => `
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-500 w-12">${q5Labels[k]}</span>
+      <input type="range" min="1" max="5" value="3" id="q5_${k}" class="slider flex-1 h-1.5 rounded-full bg-gray-200 accent-indigo-600 cursor-pointer">
+      <span class="text-xs font-medium text-gray-700 w-4" id="q5val_${k}">3</span>
+    </div>`).join('');
+
+  q5.forEach(k => {
+    const slider = document.getElementById(`q5_${k}`);
+    slider.addEventListener('input', () => document.getElementById(`q5val_${k}`).textContent = slider.value);
+  });
+
+  // 레이더 차트
+  updateRadarChart(a);
+
+  panel.classList.remove('hidden');
+}
+
+function closePanel() {
+  document.getElementById('detailPanel').classList.add('hidden');
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  selectedRec = null;
+}
+
+function updateRadarChart(a) {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if (radarChartInstance) radarChartInstance.destroy();
+
+  radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['수요', '공급부족', '성장세', '차별화', '지속성', '진입장벽'],
+      datasets: [{
+        data: [
+          a.demand_score || 0,
+          a.supply_gap_score || 0,
+          a.growth_score || 0,
+          a.differentiation_score || 0,
+          a.longevity_score || 0,
+          a.entry_barrier_score || 0
+        ],
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.15)',
+        borderWidth: 2,
+        pointBackgroundColor: '#6366f1'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { r: { beginAtZero: true, max: 100, ticks: { display: false }, pointLabels: { font: { size: 10 } } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+async function submitReview(decision) {
+  if (!selectedRec) return;
+
+  const q5 = {};
+  ['hook', 'density', 'angle', 'arc', 'cta'].forEach(k => {
+    q5[k] = parseInt(document.getElementById(`q5_${k}`)?.value || '3');
+  });
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+
+  try {
+    const result = await API.submitReview({
+      recommendation_id: selectedRec.id,
+      decision,
+      reviewer_note: document.getElementById('reviewNote').value || null,
+      priority: document.getElementById('reviewPriority').value,
+      style_hint: document.getElementById('reviewStyleHint').value || null,
+      quality5: q5
+    });
+
+    if (result.success) {
+      // 카드 상태 업데이트
+      const rec = recommendations.find(r => r.id === selectedRec.id);
+      if (rec) rec.status = decision;
+      renderCards(recommendations);
+      closePanel();
+      alert(`${decision === 'approved' ? '승인' : '거부'} 완료!`);
+    } else {
+      alert('오류: ' + (result.error || '알 수 없음'));
+    }
+  } catch(e) {
+    alert('요청 실패: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = decision === 'approved' ? '승인' : '거부';
+  }
+}
+
+async function runPipeline() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> 실행 중...`;
+  try {
+    await API.runRecommend();
+    setTimeout(() => { loadData(datePicker.value); btn.disabled = false; btn.textContent = '추천 재실행'; }, 2000);
+  } catch(e) {
+    alert('실행 실패: ' + e.message);
+    btn.disabled = false;
+  }
+}
+
+async function refreshData() {
+  await loadData(datePicker.value);
+}
+
+// 헬퍼
+function longevityLabel(t) {
+  const m = { evergreen: '🌲 상록', longtail: '📈 롱테일', seasonal: '🌸 시즌', volatile: '⚡ 단기' };
+  return m[t] || t || '—';
+}
+function formatLabel(f) {
+  const m = { info: '정보형', storytelling: '스토리텔링', character: '캐릭터', review: '리뷰', tutorial: '튜토리얼' };
+  return m[f] || f || '—';
+}
+function sourceIcon(s) {
+  const m = { google_trends: 'G', youtube: 'YT', naver: 'N', reddit: 'R' };
+  return m[s] || '?';
+}
+
+// 초기 로드
+loadData(datePicker.value);
+</script>
+</body>
+</html>
