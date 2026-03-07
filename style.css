@@ -951,6 +951,17 @@ h1, h2, h3 {
     color: var(--text-dim);
     font-size: 0.9rem;
 }
+.price-annual {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+.price-annual em {
+    color: #22c55e;
+    font-style: normal;
+    font-weight: 600;
+}
 
 .service-features {
     list-style: none;
