@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>캐릭터 관리 — 썰툰 스튜디오</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: '#f59e0b', 'brand-dark': '#d97706' } } }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+    .char-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .char-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .char-card.selected { border-color: #10b981; box-shadow: 0 0 0 2px #10b981; }
+  </style>
+  <script src="js/env.js"></script>
+  <script src="js/auth-guard.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- 헤더 -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center hover:bg-emerald-600 transition-colors">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-lg font-bold text-gray-900">캐릭터 관리</h1>
+        <p class="text-xs text-gray-500">썰툰 등장인물 설정 · LoRA · TTS 보이스</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="showAddForm()" class="text-sm bg-emerald-500 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-600 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        캐릭터 추가
+      </button>
+      <a href="index.html" class="text-sm text-gray-600 hover:text-amber-600">소재</a>
+      <a href="scripts.html" class="text-sm text-gray-600 hover:text-amber-600">대본</a>
+      <a href="production.html" class="text-sm text-gray-600 hover:text-amber-600">생산</a>
+      <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500" title="로그아웃">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 메인 -->
+<main class="max-w-7xl mx-auto px-4 py-6 pb-8">
+  <div class="flex gap-6">
+    <!-- 캐릭터 그리드 -->
+    <div id="charGrid" class="w-1/3 space-y-3">
+      <div class="text-center text-gray-400 py-12">캐릭터를 불러오는 중...</div>
+    </div>
+
+    <!-- 캐릭터 상세/편집 -->
+    <div id="charDetail" class="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm min-h-[600px]">
+      <div class="text-center text-gray-400 py-24">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        <p>왼쪽에서 캐릭터를 선택하거나<br>"캐릭터 추가"를 눌러주세요</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/ssultoon-api.js"></script>
+<script>
+const ROLE_LABEL = { protagonist: '주인공', colleague: '동료', boss: '상사/팀장', sub: '조연', narrator: '나레이터' };
+const ROLE_COLOR = { protagonist: 'bg-amber-100 text-amber-700', colleague: 'bg-blue-100 text-blue-700', boss: 'bg-red-100 text-red-700', sub: 'bg-gray-100 text-gray-700', narrator: 'bg-purple-100 text-purple-700' };
+
+let allChars = [];
+let selectedCharId = null;
+let isEditing = false;
+
+function logout() {
+  sessionStorage.removeItem('st_auth');
+  location.href = 'login.html';
+}
+
+// ─── 목록 ───
+async function loadCharacters() {
+  try {
+    allChars = await API.getCharacters();
+    renderCharGrid();
+  } catch (e) {
+    document.getElementById('charGrid').innerHTML = `<div class="text-center text-red-400 py-12">오류: ${e.message}</div>`;
+  }
+}
+
+function renderCharGrid() {
+  const el = document.getElementById('charGrid');
+  if (!allChars.length) {
+    el.innerHTML = '<div class="text-center text-gray-400 py-12">등록된 캐릭터가 없습니다</div>';
+    return;
+  }
+  el.innerHTML = allChars.map(c => {
+    const sel = c.id === selectedCharId ? 'selected' : '';
+    const inactive = !c.is_active ? 'opacity-50' : '';
+    return `
+    <div class="char-card bg-white rounded-xl border border-gray-200 p-4 ${sel} ${inactive}" onclick="selectChar('${c.id}')">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-100 to-amber-100 flex items-center justify-center text-lg font-bold text-gray-700 flex-shrink-0 overflow-hidden">
+          ${c.reference_image_url ? `<img src="${c.reference_image_url}" class="w-full h-full object-cover">` : c.display_name[0]}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5">
+            <h3 class="font-medium text-sm text-gray-900">${c.display_name}</h3>
+            ${!c.is_active ? '<span class="text-[10px] text-gray-400">비활성</span>' : ''}
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs px-1.5 py-0.5 rounded ${ROLE_COLOR[c.role] || 'bg-gray-100'}">${ROLE_LABEL[c.role] || c.role || '-'}</span>
+            <span class="text-xs text-gray-400">${c.id}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── 상세 보기 ───
+function selectChar(id) {
+  selectedCharId = id;
+  isEditing = false;
+  renderCharGrid();
+  const c = allChars.find(x => x.id === id);
+  if (!c) return;
+
+  const el = document.getElementById('charDetail');
+  el.innerHTML = `
+  <div class="space-y-6">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-amber-100 flex items-center justify-center text-3xl font-bold text-gray-700 overflow-hidden">
+          ${c.reference_image_url ? `<img src="${c.reference_image_url}" class="w-full h-full object-cover">` : c.display_name[0]}
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">${c.display_name}</h2>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs px-2 py-0.5 rounded-full ${ROLE_COLOR[c.role] || 'bg-gray-100'}">${ROLE_LABEL[c.role] || c.role || '-'}</span>
+            <span class="text-xs text-gray-400">ID: ${c.id}</span>
+            ${c.is_active ? '<span class="text-xs text-emerald-500">활성</span>' : '<span class="text-xs text-gray-400">비활성</span>'}
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="editChar('${c.id}')" class="text-sm border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50">편집</button>
+        <button onclick="toggleActive('${c.id}', ${!c.is_active})" class="text-sm ${c.is_active ? 'text-red-500 hover:bg-red-50' : 'text-emerald-500 hover:bg-emerald-50'} border border-gray-200 px-3 py-1.5 rounded-lg">
+          ${c.is_active ? '비활성화' : '활성화'}
+        </button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h4 class="text-xs font-medium text-gray-500 mb-2">성격</h4>
+        <p class="text-sm text-gray-800">${c.personality || '-'}</p>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h4 class="text-xs font-medium text-gray-500 mb-2">외형</h4>
+        <p class="text-sm text-gray-800">${c.appearance || '-'}</p>
+      </div>
+    </div>
+
+    ${c.description ? `
+    <div class="bg-gray-50 rounded-xl p-4">
+      <h4 class="text-xs font-medium text-gray-500 mb-2">설명</h4>
+      <p class="text-sm text-gray-800">${c.description}</p>
+    </div>
+    ` : ''}
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-blue-50 rounded-xl p-4">
+        <h4 class="text-xs font-medium text-blue-500 mb-2">이미지 생성 (LoRA)</h4>
+        <p class="text-sm text-blue-800">${c.lora_id || '미설정'}</p>
+        ${c.expression_sheet_url ? `<a href="${c.expression_sheet_url}" target="_blank" class="text-xs text-blue-500 underline mt-1 block">표정 시트 보기</a>` : ''}
+      </div>
+      <div class="bg-indigo-50 rounded-xl p-4">
+        <h4 class="text-xs font-medium text-indigo-500 mb-2">TTS 보이스</h4>
+        <p class="text-sm text-indigo-800">${c.tts_voice_id || '미설정'}</p>
+        <p class="text-xs text-indigo-400 mt-1">서비스: ${c.tts_service || 'clova'}</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── 편집 폼 ───
+function editChar(id) {
+  const c = id ? allChars.find(x => x.id === id) : null;
+  showForm(c);
+}
+
+function showAddForm() {
+  selectedCharId = null;
+  renderCharGrid();
+  showForm(null);
+}
+
+function showForm(c) {
+  isEditing = true;
+  const isNew = !c;
+
+  const el = document.getElementById('charDetail');
+  el.innerHTML = `
+  <form onsubmit="saveChar(event)" class="space-y-5">
+    <h3 class="text-lg font-bold text-gray-900">${isNew ? '새 캐릭터 등록' : c.display_name + ' 편집'}</h3>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">ID (영문, 변경 불가)</label>
+        <input name="id" type="text" value="${c?.id || ''}" ${isNew ? '' : 'readonly'} required
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm ${isNew ? '' : 'bg-gray-100'}" placeholder="예: char1, boss1">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">표시 이름</label>
+        <input name="display_name" type="text" value="${c?.display_name || ''}" required
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="예: 김대리">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">역할</label>
+        <select name="role" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <option value="">선택</option>
+          ${Object.entries(ROLE_LABEL).map(([k,v]) => `<option value="${k}" ${c?.role === k ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">활성 상태</label>
+        <select name="is_active" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <option value="true" ${c?.is_active !== false ? 'selected' : ''}>활성</option>
+          <option value="false" ${c?.is_active === false ? 'selected' : ''}>비활성</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-medium text-gray-600 mb-1">설명</label>
+      <textarea name="description" rows="2" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="캐릭터 배경 설명">${c?.description || ''}</textarea>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">성격</label>
+        <textarea name="personality" rows="2" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="성격 특성">${c?.personality || ''}</textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">외형</label>
+        <textarea name="appearance" rows="2" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="외모 특징 (이미지 생성 참고)">${c?.appearance || ''}</textarea>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">참조 이미지 URL</label>
+        <input name="reference_image_url" type="url" value="${c?.reference_image_url || ''}"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="https://...">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">표정 시트 URL</label>
+        <input name="expression_sheet_url" type="url" value="${c?.expression_sheet_url || ''}"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="https://...">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">LoRA ID</label>
+        <input name="lora_id" type="text" value="${c?.lora_id || ''}"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="LoRA 모델 ID">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">TTS Voice ID</label>
+        <input name="tts_voice_id" type="text" value="${c?.tts_voice_id || ''}"
+          class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="TTS 보이스 ID">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">TTS 서비스</label>
+        <select name="tts_service" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <option value="clova" ${c?.tts_service === 'clova' || !c?.tts_service ? 'selected' : ''}>Clova</option>
+          <option value="elevenlabs" ${c?.tts_service === 'elevenlabs' ? 'selected' : ''}>ElevenLabs</option>
+          <option value="google" ${c?.tts_service === 'google' ? 'selected' : ''}>Google</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <button type="submit" class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-600">저장</button>
+      <button type="button" onclick="${c ? `selectChar('${c.id}')` : 'loadCharacters()'}" class="border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">취소</button>
+    </div>
+  </form>`;
+}
+
+async function saveChar(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    id: form.id.value.trim(),
+    display_name: form.display_name.value.trim(),
+    role: form.role.value || null,
+    is_active: form.is_active.value === 'true',
+    description: form.description.value.trim() || null,
+    personality: form.personality.value.trim() || null,
+    appearance: form.appearance.value.trim() || null,
+    reference_image_url: form.reference_image_url.value.trim() || null,
+    expression_sheet_url: form.expression_sheet_url.value.trim() || null,
+    lora_id: form.lora_id.value.trim() || null,
+    tts_voice_id: form.tts_voice_id.value.trim() || null,
+    tts_service: form.tts_service.value
+  };
+
+  try {
+    await API.upsertCharacter(data);
+    await loadCharacters();
+    selectChar(data.id);
+  } catch (e) {
+    alert('저장 실패: ' + e.message);
+  }
+}
+
+async function toggleActive(id, active) {
+  try {
+    await API.patch('/rest/v1/st_characters?id=eq.' + id, { is_active: active });
+    await loadCharacters();
+    selectChar(id);
+  } catch (e) { alert('실패: ' + e.message); }
+}
+
+// 초기 로드
+loadCharacters();
+</script>
+</body>
+</html>

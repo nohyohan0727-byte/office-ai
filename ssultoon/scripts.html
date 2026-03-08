@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대본 관리 — 썰툰 스튜디오</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: '#f59e0b', 'brand-dark': '#d97706' } } }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .card.selected { border-color: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
+    .panel-card { background: #fafafa; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; }
+  </style>
+  <script src="js/env.js"></script>
+  <script src="js/auth-guard.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- 헤더 -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center hover:bg-amber-600 transition-colors">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-lg font-bold text-gray-900">대본 관리</h1>
+        <p class="text-xs text-gray-500">썰툰 대본 생성 · 편집 · 승인</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="showApprovedTopics()" class="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        대본 생성
+      </button>
+      <button onclick="loadScripts()" class="text-sm border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50">새로고침</button>
+      <a href="index.html" class="text-sm text-gray-600 hover:text-amber-600">소재</a>
+      <a href="production.html" class="text-sm text-gray-600 hover:text-amber-600">생산</a>
+      <a href="characters.html" class="text-sm text-gray-600 hover:text-amber-600">캐릭터</a>
+      <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500 transition-colors" title="로그아웃">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 필터 -->
+<div class="max-w-7xl mx-auto px-4 py-3">
+  <div class="flex gap-2">
+    <button onclick="filterStatus(null)" class="filter-btn active text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="all">전체</button>
+    <button onclick="filterStatus('draft')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="draft">초안</button>
+    <button onclick="filterStatus('review')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="review">검토중</button>
+    <button onclick="filterStatus('approved')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="approved">승인</button>
+    <button onclick="filterStatus('revision_requested')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="revision_requested">수정요청</button>
+  </div>
+</div>
+
+<!-- 메인 레이아웃 -->
+<main class="max-w-7xl mx-auto px-4 pb-8">
+  <div class="flex gap-6">
+    <!-- 대본 목록 -->
+    <div id="scriptList" class="w-1/3 space-y-3">
+      <div class="text-center text-gray-400 py-12">대본을 불러오는 중...</div>
+    </div>
+
+    <!-- 대본 상세 -->
+    <div id="scriptDetail" class="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm min-h-[600px]">
+      <div class="text-center text-gray-400 py-24">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>왼쪽에서 대본을 선택하세요</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 승인된 소재 목록 모달 -->
+<div id="topicModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+      <h3 class="font-bold text-gray-900">대본 생성할 소재 선택</h3>
+      <button onclick="closeTopicModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+    </div>
+    <div id="topicList" class="p-4 overflow-y-auto flex-1 space-y-2">
+      <div class="text-center text-gray-400 py-8">승인된 소재를 불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/ssultoon-api.js"></script>
+<script>
+const STATUS_LABEL = { draft: '초안', review: '검토중', approved: '승인', revision_requested: '수정요청', discarded: '폐기' };
+const STATUS_COLOR = { draft: 'bg-gray-100 text-gray-700', review: 'bg-blue-100 text-blue-700', approved: 'bg-green-100 text-green-700', revision_requested: 'bg-orange-100 text-orange-700', discarded: 'bg-red-100 text-red-700' };
+
+let allScripts = [];
+let currentFilter = null;
+let selectedScriptId = null;
+
+function logout() {
+  sessionStorage.removeItem('st_auth');
+  location.href = 'login.html';
+}
+
+// ─── 대본 목록 ───
+async function loadScripts() {
+  try {
+    allScripts = await API.getScripts(currentFilter);
+    renderScriptList();
+  } catch (e) {
+    document.getElementById('scriptList').innerHTML = `<div class="text-center text-red-400 py-12">오류: ${e.message}</div>`;
+  }
+}
+
+function renderScriptList() {
+  const el = document.getElementById('scriptList');
+  if (!allScripts.length) {
+    el.innerHTML = '<div class="text-center text-gray-400 py-12">대본이 없습니다</div>';
+    return;
+  }
+  el.innerHTML = allScripts.map(s => {
+    const topic = s.st_topics || {};
+    const cat = API.CATEGORY_MAP[topic.category] || topic.category || '';
+    const sel = s.id === selectedScriptId ? 'selected' : '';
+    return `
+    <div class="card bg-white rounded-xl border border-gray-200 p-4 ${sel}" onclick="selectScript('${s.id}')">
+      <div class="flex items-start justify-between mb-2">
+        <span class="text-xs px-2 py-0.5 rounded-full ${STATUS_COLOR[s.status] || 'bg-gray-100'}">${STATUS_LABEL[s.status] || s.status}</span>
+        <span class="text-xs text-gray-400">v${s.version}</span>
+      </div>
+      <h3 class="font-medium text-sm text-gray-900 line-clamp-2 mb-1">${s.youtube_title || topic.title || '제목 없음'}</h3>
+      <div class="flex items-center gap-2 text-xs text-gray-400">
+        ${cat ? `<span class="bg-gray-100 px-1.5 py-0.5 rounded">${cat}</span>` : ''}
+        <span>${s.total_panels || 0}컷</span>
+        <span>${s.target_duration ? s.target_duration + '초' : ''}</span>
+      </div>
+      <div class="text-xs text-gray-400 mt-1">${new Date(s.created_at).toLocaleDateString('ko')}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterStatus(status) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    const isActive = status === null ? b.dataset.status === 'all' : b.dataset.status === status;
+    b.classList.toggle('bg-amber-500', isActive);
+    b.classList.toggle('text-white', isActive);
+    b.classList.toggle('border-amber-500', isActive);
+    b.classList.toggle('bg-white', !isActive);
+    b.classList.toggle('text-gray-700', !isActive);
+  });
+  loadScripts();
+}
+
+// ─── 대본 상세 ───
+async function selectScript(id) {
+  selectedScriptId = id;
+  renderScriptList();
+  const s = allScripts.find(x => x.id === id);
+  if (!s) return;
+
+  const topic = s.st_topics || {};
+  const sd = s.script_data || {};
+  const panels = sd.panels || [];
+  const cat = API.CATEGORY_MAP[topic.category] || topic.category || '';
+
+  const el = document.getElementById('scriptDetail');
+  el.innerHTML = `
+  <div class="space-y-6">
+    <!-- 헤더 -->
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs px-2 py-0.5 rounded-full ${STATUS_COLOR[s.status]}">${STATUS_LABEL[s.status]}</span>
+          ${cat ? `<span class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">${cat}</span>` : ''}
+          <span class="text-xs text-gray-400">v${s.version} · ${s.ai_model || ''}</span>
+        </div>
+        <h2 class="text-lg font-bold text-gray-900">${s.youtube_title || '제목 없음'}</h2>
+        <p class="text-sm text-gray-500 mt-0.5">원본 소재: ${topic.title || '-'}</p>
+      </div>
+      <div class="flex gap-2">
+        ${s.status === 'draft' || s.status === 'revision_requested' ? `
+          <button onclick="submitForReview('${s.id}')" class="text-sm bg-blue-500 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600">검토 요청</button>
+        ` : ''}
+        ${s.status === 'review' ? `
+          <button onclick="approveScript('${s.id}')" class="text-sm bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600">승인</button>
+          <button onclick="requestRevision('${s.id}')" class="text-sm bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600">수정요청</button>
+        ` : ''}
+        ${s.status === 'approved' ? `
+          <button onclick="startProd('${s.id}')" class="text-sm bg-purple-500 text-white px-3 py-1.5 rounded-lg hover:bg-purple-600">생산 시작</button>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- 메타 정보 -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-gray-50 rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-gray-900">${panels.length}</div>
+        <div class="text-xs text-gray-500">컷 수</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-gray-900">${s.target_duration ? s.target_duration + '초' : '-'}</div>
+        <div class="text-xs text-gray-500">목표 시간</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-3 text-center">
+        <div class="text-2xl font-bold text-gray-900">${(s.characters_used || []).length}</div>
+        <div class="text-xs text-gray-500">캐릭터</div>
+      </div>
+    </div>
+
+    ${s.characters_used && s.characters_used.length ? `
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-2">사용 캐릭터</h4>
+      <div class="flex gap-2 flex-wrap">
+        ${s.characters_used.map(c => `<span class="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-lg">${c}</span>`).join('')}
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- Q5 자가 체크 -->
+    ${s.q5_self_check ? `
+    <div class="bg-blue-50 rounded-xl p-4">
+      <h4 class="text-sm font-medium text-blue-800 mb-2">Q5 자가 체크</h4>
+      <div class="space-y-1 text-xs text-blue-700">
+        ${Object.entries(s.q5_self_check).map(([k,v]) => `<div class="flex justify-between"><span>${k}</span><span class="font-bold">${v}/10</span></div>`).join('')}
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- 패널 목록 -->
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-3">대본 컷 (${panels.length}컷)</h4>
+      <div class="space-y-3">
+        ${panels.map((p, i) => `
+        <div class="panel-card">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-amber-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">${i+1}</span>
+            <span class="text-xs text-gray-500">${p.scene_description || ''}</span>
+          </div>
+          ${p.dialogue ? `<div class="text-sm text-gray-800 mb-1"><span class="font-medium text-amber-700">${p.character || '나레이션'}:</span> ${p.dialogue}</div>` : ''}
+          ${p.visual_direction ? `<div class="text-xs text-gray-400 mt-1">화면: ${p.visual_direction}</div>` : ''}
+          ${p.bgm_note ? `<div class="text-xs text-purple-400 mt-1">BGM: ${p.bgm_note}</div>` : ''}
+          ${p.duration ? `<div class="text-xs text-gray-400 mt-1">${p.duration}초</div>` : ''}
+        </div>
+        `).join('')}
+        ${!panels.length ? '<div class="text-center text-gray-400 py-4 text-sm">패널 데이터가 없습니다</div>' : ''}
+      </div>
+    </div>
+
+    ${s.human_note ? `
+    <div class="bg-orange-50 rounded-xl p-4">
+      <h4 class="text-sm font-medium text-orange-800 mb-1">리뷰 노트</h4>
+      <p class="text-sm text-orange-700">${s.human_note}</p>
+    </div>
+    ` : ''}
+  </div>`;
+}
+
+// ─── 상태 변경 ───
+async function submitForReview(id) {
+  if (!confirm('검토 요청하시겠습니까?')) return;
+  await API.updateScript(id, { status: 'review', reviewed_at: null });
+  await loadScripts();
+  selectScript(id);
+}
+
+async function approveScript(id) {
+  if (!confirm('대본을 승인하시겠습니까?')) return;
+  await API.updateScript(id, { status: 'approved', reviewed_at: new Date().toISOString() });
+  await loadScripts();
+  selectScript(id);
+}
+
+async function requestRevision(id) {
+  const note = prompt('수정 요청 내용:');
+  if (note === null) return;
+  await API.updateScript(id, { status: 'revision_requested', human_note: note, reviewed_at: new Date().toISOString() });
+  await loadScripts();
+  selectScript(id);
+}
+
+async function startProd(scriptId) {
+  if (!confirm('이 대본으로 생산을 시작하시겠습니까?')) return;
+  try {
+    const res = await API.startProduction(scriptId);
+    alert('생산이 시작되었습니다!');
+    loadScripts();
+  } catch (e) {
+    alert('생산 시작 실패: ' + e.message);
+  }
+}
+
+// ─── 대본 생성 (승인된 소재 선택) ───
+async function showApprovedTopics() {
+  document.getElementById('topicModal').classList.remove('hidden');
+  const el = document.getElementById('topicList');
+  try {
+    const topics = await API.getTopics('approved');
+    if (!topics.length) {
+      el.innerHTML = '<div class="text-center text-gray-400 py-8">승인된 소재가 없습니다.<br><a href="index.html" class="text-amber-500 underline">소재 관리에서 승인해주세요</a></div>';
+      return;
+    }
+    el.innerHTML = topics.map(t => `
+    <div class="border border-gray-200 rounded-xl p-3 hover:border-amber-500 cursor-pointer transition-colors" onclick="generateScript('${t.id}')">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">${API.CATEGORY_MAP[t.category] || t.category}</span>
+        <span class="text-xs text-gray-400">공감 ${t.empathy_score?.toFixed(1) || '-'}</span>
+      </div>
+      <h4 class="text-sm font-medium text-gray-900">${t.title}</h4>
+      ${t.suggested_titles ? `<p class="text-xs text-gray-400 mt-1">제안: ${(t.suggested_titles || []).slice(0,2).join(' / ')}</p>` : ''}
+    </div>
+    `).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="text-center text-red-400 py-8">오류: ${e.message}</div>`;
+  }
+}
+
+function closeTopicModal() {
+  document.getElementById('topicModal').classList.add('hidden');
+}
+
+async function generateScript(topicId) {
+  if (!confirm('이 소재로 대본을 생성하시겠습니까?\n(AI가 대본을 자동 생성합니다)')) return;
+  closeTopicModal();
+  document.getElementById('scriptDetail').innerHTML = `
+  <div class="text-center py-24">
+    <div class="animate-spin w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+    <p class="text-gray-500">AI가 대본을 생성하고 있습니다...</p>
+    <p class="text-xs text-gray-400 mt-1">30초~1분 소요</p>
+  </div>`;
+  try {
+    const res = await API.generateScript(topicId);
+    alert('대본 생성 완료!');
+    await loadScripts();
+    if (allScripts.length) selectScript(allScripts[0].id);
+  } catch (e) {
+    alert('대본 생성 실패: ' + e.message);
+    document.getElementById('scriptDetail').innerHTML = `<div class="text-center text-red-400 py-24">대본 생성 실패: ${e.message}</div>`;
+  }
+}
+
+// 초기 로드
+loadScripts();
+</script>
+</body>
+</html>

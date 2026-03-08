@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 — 썰툰</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/env.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-sm mx-auto px-6">
+  <div class="text-center mb-8">
+    <div class="text-4xl mb-3">🎬</div>
+    <h1 class="text-xl font-bold text-gray-900">썰툰 스튜디오</h1>
+    <p class="text-sm text-gray-400 mt-1">직장인 공감 썰툰 관리</p>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+    <form onsubmit="login(event)">
+      <label class="block text-sm font-medium text-gray-700 mb-2">비밀번호</label>
+      <input
+        type="password"
+        id="password"
+        autocomplete="current-password"
+        placeholder="비밀번호 입력"
+        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 mb-4"
+        autofocus
+      >
+      <div id="errMsg" class="text-red-500 text-xs mb-3 hidden">비밀번호가 틀렸습니다.</div>
+      <button type="submit" id="loginBtn"
+        class="w-full bg-amber-500 text-white py-3 rounded-xl text-sm font-medium hover:bg-amber-600 transition-colors">
+        로그인
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+function login(e) {
+  e.preventDefault();
+  const pw = document.getElementById('password').value;
+  const errEl = document.getElementById('errMsg');
+
+  if (pw === ST_ENV.ADMIN_PASSWORD) {
+    sessionStorage.setItem('st_auth', 'true');
+    const params = new URLSearchParams(location.search);
+    location.href = params.get('next') || '/ssultoon/';
+  } else {
+    errEl.classList.remove('hidden');
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+  }
+}
+</script>
+</body>
+</html>

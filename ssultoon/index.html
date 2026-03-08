@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>소재 관리 — 썰툰 스튜디오</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: '#f59e0b', 'brand-dark': '#d97706' } } }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .card.selected { border-color: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
+    .score-bar { transition: width 0.6s ease; }
+  </style>
+  <script src="js/env.js"></script>
+  <script src="js/auth-guard.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- 헤더 -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center hover:bg-amber-600 transition-colors">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-lg font-bold text-gray-900">썰툰 스튜디오</h1>
+        <p class="text-xs text-gray-500">직장인 공감 썰툰 소재 관리</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="openAddModal()" class="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg hover:bg-amber-600 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        소재 등록
+      </button>
+      <button onclick="refreshData()" class="text-sm border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        새로고침
+      </button>
+      <a href="scripts.html" class="text-sm text-gray-600 hover:text-amber-600">대본</a>
+      <a href="production.html" class="text-sm text-gray-600 hover:text-amber-600">생산</a>
+      <a href="characters.html" class="text-sm text-gray-600 hover:text-amber-600">캐릭터</a>
+      <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500 transition-colors" title="로그아웃">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 통계 카드 -->
+<div class="max-w-7xl mx-auto px-4 py-4">
+  <div class="grid grid-cols-4 gap-4 mb-4">
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs text-gray-500 mb-1">전체 소재</p>
+      <p class="text-2xl font-bold text-gray-900" id="statTotal">-</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs text-gray-500 mb-1">검토 대기</p>
+      <p class="text-2xl font-bold text-amber-500" id="statPending">-</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs text-gray-500 mb-1">승인됨</p>
+      <p class="text-2xl font-bold text-emerald-600" id="statApproved">-</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-xs text-gray-500 mb-1">대본 생성 대기</p>
+      <p class="text-2xl font-bold text-blue-600" id="statReady">-</p>
+    </div>
+  </div>
+</div>
+
+<!-- 필터 + 메인 -->
+<main class="max-w-7xl mx-auto px-4 pb-8">
+  <!-- 상태 필터 -->
+  <div class="flex items-center gap-2 mb-3">
+    <button onclick="setStatusFilter(null)" class="status-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors bg-amber-500 text-white border-amber-500" data-status="all">전체</button>
+    <button onclick="setStatusFilter('pending')" class="status-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors bg-white text-gray-600 border-gray-200" data-status="pending">검토 대기</button>
+    <button onclick="setStatusFilter('approved')" class="status-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors bg-white text-gray-600 border-gray-200" data-status="approved">승인</button>
+    <button onclick="setStatusFilter('rejected')" class="status-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors bg-white text-gray-600 border-gray-200" data-status="rejected">반려</button>
+    <button onclick="setStatusFilter('producing')" class="status-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors bg-white text-gray-600 border-gray-200" data-status="producing">생산중</button>
+    <span class="mx-2 text-gray-300">|</span>
+    <select id="categoryFilter" onchange="setCategoryFilter(this.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1.5">
+      <option value="">카테고리 전체</option>
+    </select>
+  </div>
+
+  <!-- 카드 그리드 + 상세 패널 -->
+  <div class="flex gap-6">
+    <!-- 카드 그리드 -->
+    <div id="topicGrid" class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="text-center text-gray-400 py-12 col-span-2">로딩 중...</div>
+    </div>
+
+    <!-- 상세 패널 -->
+    <div id="detailPanel" class="hidden w-[400px] flex-shrink-0">
+      <div class="bg-white rounded-2xl border border-gray-200 p-5 sticky top-20 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 id="detailTitle" class="text-base font-bold text-gray-900 flex-1 mr-2"></h3>
+          <button onclick="closeDetail()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="detailBody"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 소재 등록 모달 -->
+<div id="addModal" class="fixed inset-0 z-50 hidden">
+  <div class="absolute inset-0 bg-black/30" onclick="closeAddModal()"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl p-6">
+    <h2 class="text-lg font-bold text-gray-900 mb-4">소재 직접 등록</h2>
+    <form onsubmit="submitTopic(event)">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">제목 (공감 훅)</label>
+          <input type="text" id="addTitle" required placeholder="직장인들이 복권 사는 이유" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+          <select id="addCategory" required class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <option value="">선택</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">원본 내용 / 소재 설명</label>
+          <textarea id="addSourceText" rows="4" placeholder="커뮤니티에서 본 글이나 떠오른 아이디어..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">출처 URL (선택)</label>
+          <input type="url" id="addSourceUrl" placeholder="https://..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">우선순위</label>
+          <select id="addPriority" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+            <option value="normal">보통</option>
+            <option value="high">높음</option>
+            <option value="low">낮음</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button type="button" onclick="closeAddModal()" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50">취소</button>
+        <button type="submit" id="addSubmitBtn" class="flex-1 bg-amber-500 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-amber-600">등록</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/ssultoon-api.js"></script>
+<script>
+// ─── 상태 ───
+let allTopics = [];
+let currentStatus = null;
+let currentCategory = '';
+let selectedTopic = null;
+
+const STATUS_BADGE = {
+  pending:   { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '검토 대기' },
+  approved:  { bg: 'bg-emerald-100', text: 'text-emerald-800', label: '승인' },
+  rejected:  { bg: 'bg-red-100', text: 'text-red-800', label: '반려' },
+  producing: { bg: 'bg-blue-100', text: 'text-blue-800', label: '생산중' },
+  published: { bg: 'bg-purple-100', text: 'text-purple-800', label: '게시됨' }
+};
+
+const PRIORITY_ICON = { high: '🔴', normal: '🟡', low: '⚪' };
+
+// ─── 초기화 ───
+document.addEventListener('DOMContentLoaded', () => {
+  // 카테고리 셀렉트 채우기
+  const catSelect = document.getElementById('categoryFilter');
+  const addCatSelect = document.getElementById('addCategory');
+  for (const [k, v] of Object.entries(API.CATEGORY_MAP)) {
+    catSelect.innerHTML += `<option value="${k}">${v}</option>`;
+    addCatSelect.innerHTML += `<option value="${k}">${v}</option>`;
+  }
+  refreshData();
+});
+
+async function refreshData() {
+  try {
+    allTopics = await API.getTopics();
+    updateStats();
+    renderGrid();
+  } catch(e) {
+    console.error('Load failed:', e);
+    document.getElementById('topicGrid').innerHTML = `<div class="text-red-500 text-center py-12 col-span-2">로드 실패: ${e.message}</div>`;
+  }
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = allTopics.length;
+  document.getElementById('statPending').textContent = allTopics.filter(t => t.status === 'pending').length;
+  document.getElementById('statApproved').textContent = allTopics.filter(t => t.status === 'approved').length;
+  document.getElementById('statReady').textContent = allTopics.filter(t => t.status === 'approved').length;
+}
+
+// ─── 필터 ───
+function setStatusFilter(status) {
+  currentStatus = status;
+  document.querySelectorAll('.status-btn').forEach(btn => {
+    const isActive = (status === null && btn.dataset.status === 'all') || btn.dataset.status === status;
+    btn.className = `status-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${
+      isActive ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-600 border-gray-200'
+    }`;
+  });
+  renderGrid();
+}
+
+function setCategoryFilter(cat) {
+  currentCategory = cat;
+  renderGrid();
+}
+
+// ─── 카드 그리드 ───
+function renderGrid() {
+  let filtered = allTopics;
+  if (currentStatus) filtered = filtered.filter(t => t.status === currentStatus);
+  if (currentCategory) filtered = filtered.filter(t => t.category === currentCategory);
+
+  const grid = document.getElementById('topicGrid');
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="text-gray-400 text-center py-12 col-span-2">소재가 없습니다</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(t => {
+    const badge = STATUS_BADGE[t.status] || STATUS_BADGE.pending;
+    const catLabel = API.CATEGORY_MAP[t.category] || t.category || '미분류';
+    const score = (t.empathy_score || 0).toFixed(1);
+    const isSelected = selectedTopic && selectedTopic.id === t.id;
+
+    return `
+      <div class="card bg-white rounded-xl border ${isSelected ? 'border-amber-500' : 'border-gray-200'} p-4 ${isSelected ? 'selected' : ''}"
+           onclick="selectTopic('${t.id}')">
+        <div class="flex items-start justify-between mb-2">
+          <span class="text-xs px-2 py-0.5 rounded-full ${badge.bg} ${badge.text} font-medium">${badge.label}</span>
+          <span class="text-xs text-gray-400">${PRIORITY_ICON[t.priority] || ''} ${catLabel}</span>
+        </div>
+        <h3 class="text-sm font-bold text-gray-900 mb-2 line-clamp-2">${escHtml(t.title)}</h3>
+        <div class="flex items-center gap-3 text-xs text-gray-500">
+          <div class="flex items-center gap-1">
+            <span class="font-medium text-amber-600">${score}</span>
+            <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-amber-400 rounded-full score-bar" style="width:${Math.min(score * 10, 100)}%"></div>
+            </div>
+          </div>
+          <span>${t.source === 'manual' ? '직접 등록' : t.source || ''}</span>
+          <span class="ml-auto">${timeAgo(t.created_at)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── 상세 패널 ───
+function selectTopic(id) {
+  selectedTopic = allTopics.find(t => t.id === id);
+  if (!selectedTopic) return;
+
+  const panel = document.getElementById('detailPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('detailTitle').textContent = selectedTopic.title;
+
+  const t = selectedTopic;
+  const badge = STATUS_BADGE[t.status] || STATUS_BADGE.pending;
+  const catLabel = API.CATEGORY_MAP[t.category] || t.category || '미분류';
+
+  let empathyPoints = '';
+  if (t.empathy_points && Array.isArray(t.empathy_points)) {
+    empathyPoints = t.empathy_points.map(p => `<span class="inline-block text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full mr-1 mb-1">${escHtml(p)}</span>`).join('');
+  }
+
+  let suggestedTitles = '';
+  if (t.suggested_titles && Array.isArray(t.suggested_titles)) {
+    suggestedTitles = t.suggested_titles.map((s, i) => `<div class="text-sm text-gray-700 mb-1">${i + 1}. ${escHtml(s)}</div>`).join('');
+  }
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="space-y-4">
+      <!-- 상태/카테고리 -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs px-2 py-0.5 rounded-full ${badge.bg} ${badge.text}">${badge.label}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">${catLabel}</span>
+        <span class="text-xs text-gray-400 ml-auto">${new Date(t.created_at).toLocaleDateString('ko-KR')}</span>
+      </div>
+
+      <!-- 공감 점수 -->
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-2">공감 점수</p>
+        <div class="text-3xl font-bold text-amber-500 mb-2">${(t.empathy_score || 0).toFixed(1)}</div>
+        <div class="space-y-1.5">
+          ${scoreRow('커뮤니티 반응', t.community_reaction)}
+          ${scoreRow('보편성', t.universality)}
+          ${scoreRow('과장 가능성', t.exaggeration_potential)}
+          ${scoreRow('시각화 적합도', t.visual_fit)}
+          ${scoreRow('시리즈 확장성', t.series_potential)}
+        </div>
+      </div>
+
+      <!-- 원본 내용 -->
+      ${t.source_text ? `
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">원본 내용</p>
+        <p class="text-sm text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">${escHtml(t.source_text)}</p>
+        ${t.source_url ? `<a href="${t.source_url}" target="_blank" class="text-xs text-blue-500 hover:underline mt-1 inline-block">출처 보기</a>` : ''}
+      </div>` : ''}
+
+      <!-- 공감 포인트 -->
+      ${empathyPoints ? `
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">공감 포인트</p>
+        <div class="flex flex-wrap">${empathyPoints}</div>
+      </div>` : ''}
+
+      <!-- AI 제안 제목 -->
+      ${suggestedTitles ? `
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">AI 제안 제목</p>
+        ${suggestedTitles}
+      </div>` : ''}
+
+      <!-- AI 분석 -->
+      ${t.ai_analysis ? `
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">AI 분석</p>
+        <p class="text-sm text-gray-600">${escHtml(t.ai_analysis)}</p>
+      </div>` : ''}
+
+      <!-- 메모 -->
+      ${t.reviewer_note ? `
+      <div>
+        <p class="text-xs font-medium text-gray-500 mb-1">관리자 메모</p>
+        <p class="text-sm text-gray-600 bg-blue-50 rounded-lg p-3">${escHtml(t.reviewer_note)}</p>
+      </div>` : ''}
+
+      <!-- 액션 -->
+      ${t.status === 'pending' ? `
+      <div class="pt-2 border-t border-gray-100">
+        <textarea id="reviewNote" rows="2" placeholder="메모 (선택)" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        <div class="flex gap-2">
+          <button onclick="rejectTopic('${t.id}')" class="flex-1 border border-red-200 text-red-600 py-2 rounded-lg text-sm hover:bg-red-50">반려</button>
+          <button onclick="approveTopic('${t.id}')" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm hover:bg-emerald-700 font-medium">승인</button>
+        </div>
+      </div>` : ''}
+
+      ${t.status === 'approved' ? `
+      <div class="pt-2 border-t border-gray-100">
+        <button onclick="generateScript('${t.id}')" class="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm hover:bg-blue-700 font-medium flex items-center justify-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          대본 생성
+        </button>
+      </div>` : ''}
+    </div>
+  `;
+
+  renderGrid(); // 선택 상태 반영
+}
+
+function closeDetail() {
+  selectedTopic = null;
+  document.getElementById('detailPanel').classList.add('hidden');
+  renderGrid();
+}
+
+function scoreRow(label, value) {
+  const v = value || 0;
+  const pct = Math.min(v * 10, 100);
+  return `
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-500 w-20">${label}</span>
+      <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-full bg-amber-400 rounded-full score-bar" style="width:${pct}%"></div>
+      </div>
+      <span class="text-xs text-gray-600 w-6 text-right">${v.toFixed(1)}</span>
+    </div>
+  `;
+}
+
+// ─── 액션 ───
+async function approveTopic(id) {
+  const note = document.getElementById('reviewNote')?.value || '';
+  try {
+    await API.approveTopic(id, note);
+    await refreshData();
+    selectTopic(id);
+  } catch(e) { alert('승인 실패: ' + e.message); }
+}
+
+async function rejectTopic(id) {
+  const note = document.getElementById('reviewNote')?.value || '';
+  if (!note && !confirm('메모 없이 반려하시겠습니까?')) return;
+  try {
+    await API.rejectTopic(id, note);
+    await refreshData();
+    closeDetail();
+  } catch(e) { alert('반려 실패: ' + e.message); }
+}
+
+async function generateScript(topicId) {
+  if (!confirm('이 소재로 대본을 생성하시겠습니까?')) return;
+  try {
+    await API.updateTopic(topicId, { status: 'producing' });
+    await API.generateScript(topicId);
+    alert('대본 생성 요청 완료. 대본 페이지에서 확인하세요.');
+    await refreshData();
+    closeDetail();
+  } catch(e) { alert('대본 생성 실패: ' + e.message); }
+}
+
+// ─── 소재 등록 모달 ───
+function openAddModal() {
+  document.getElementById('addModal').classList.remove('hidden');
+  document.getElementById('addTitle').focus();
+}
+function closeAddModal() {
+  document.getElementById('addModal').classList.add('hidden');
+}
+
+async function submitTopic(e) {
+  e.preventDefault();
+  const btn = document.getElementById('addSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+
+  try {
+    const data = {
+      title: document.getElementById('addTitle').value,
+      category: document.getElementById('addCategory').value,
+      source_text: document.getElementById('addSourceText').value || null,
+      source_url: document.getElementById('addSourceUrl').value || null,
+      source: 'manual',
+      priority: document.getElementById('addPriority').value,
+      status: 'pending'
+    };
+    await API.createTopic(data);
+    closeAddModal();
+    e.target.reset();
+    await refreshData();
+  } catch(err) {
+    alert('등록 실패: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '등록';
+  }
+}
+
+// ─── 유틸 ───
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.floor(h / 24);
+  return `${d}일 전`;
+}
+
+function logout() {
+  sessionStorage.removeItem('st_auth');
+  location.href = 'login.html';
+}
+</script>
+</body>
+</html>

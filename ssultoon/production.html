@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>생산 관리 — 썰툰 스튜디오</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: '#f59e0b', 'brand-dark': '#d97706' } } }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+    .card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .card.selected { border-color: #8b5cf6; box-shadow: 0 0 0 2px #8b5cf6; }
+    .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .step-done { background: #10b981; color: white; }
+    .step-active { background: #8b5cf6; color: white; animation: pulse 2s infinite; }
+    .step-pending { background: #e5e7eb; color: #9ca3af; }
+    .step-failed { background: #ef4444; color: white; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  </style>
+  <script src="js/env.js"></script>
+  <script src="js/auth-guard.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- 헤더 -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center hover:bg-purple-600 transition-colors">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-lg font-bold text-gray-900">생산 관리</h1>
+        <p class="text-xs text-gray-500">이미지 · TTS · 영상 조립 · 업로드</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="loadProductions()" class="text-sm border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50">새로고침</button>
+      <a href="index.html" class="text-sm text-gray-600 hover:text-amber-600">소재</a>
+      <a href="scripts.html" class="text-sm text-gray-600 hover:text-amber-600">대본</a>
+      <a href="characters.html" class="text-sm text-gray-600 hover:text-amber-600">캐릭터</a>
+      <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500" title="로그아웃">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 필터 -->
+<div class="max-w-7xl mx-auto px-4 py-3">
+  <div class="flex gap-2 flex-wrap">
+    <button onclick="filterStatus(null)" class="filter-btn active text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="all">전체</button>
+    <button onclick="filterStatus('pending')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="pending">대기</button>
+    <button onclick="filterStatus('image_generating')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="image_generating">이미지 생성중</button>
+    <button onclick="filterStatus('tts_generating')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="tts_generating">TTS 생성중</button>
+    <button onclick="filterStatus('assembling')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="assembling">조립중</button>
+    <button onclick="filterStatus('approved')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="approved">완료</button>
+    <button onclick="filterStatus('failed')" class="filter-btn text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white" data-status="failed">실패</button>
+  </div>
+</div>
+
+<!-- 메인 -->
+<main class="max-w-7xl mx-auto px-4 pb-8">
+  <div class="flex gap-6">
+    <!-- 생산 목록 -->
+    <div id="prodList" class="w-1/3 space-y-3">
+      <div class="text-center text-gray-400 py-12">생산 목록을 불러오는 중...</div>
+    </div>
+
+    <!-- 상세 -->
+    <div id="prodDetail" class="flex-1 bg-white rounded-2xl border border-gray-200 p-6 shadow-sm min-h-[600px]">
+      <div class="text-center text-gray-400 py-24">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <p>왼쪽에서 생산 항목을 선택하세요</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/ssultoon-api.js"></script>
+<script>
+const STATUS_LABEL = {
+  pending: '대기', image_generating: '이미지 생성중', image_done: '이미지 완료',
+  tts_generating: 'TTS 생성중', tts_done: 'TTS 완료',
+  assembling: '영상 조립중', assembly_done: '조립 완료',
+  final_review: '최종 검토', approved: '완료',
+  revision_requested: '수정요청', failed: '실패'
+};
+const STATUS_COLOR = {
+  pending: 'bg-gray-100 text-gray-700',
+  image_generating: 'bg-blue-100 text-blue-700', image_done: 'bg-blue-100 text-blue-700',
+  tts_generating: 'bg-indigo-100 text-indigo-700', tts_done: 'bg-indigo-100 text-indigo-700',
+  assembling: 'bg-purple-100 text-purple-700', assembly_done: 'bg-purple-100 text-purple-700',
+  final_review: 'bg-yellow-100 text-yellow-700', approved: 'bg-green-100 text-green-700',
+  revision_requested: 'bg-orange-100 text-orange-700', failed: 'bg-red-100 text-red-700'
+};
+
+// 생산 파이프라인 단계
+const PIPELINE = ['pending', 'image_generating', 'image_done', 'tts_generating', 'tts_done', 'assembling', 'assembly_done', 'final_review', 'approved'];
+
+let allProductions = [];
+let currentFilter = null;
+let selectedProdId = null;
+
+function logout() {
+  sessionStorage.removeItem('st_auth');
+  location.href = 'login.html';
+}
+
+// ─── 목록 ───
+async function loadProductions() {
+  try {
+    allProductions = await API.getProductions(currentFilter);
+    renderProdList();
+  } catch (e) {
+    document.getElementById('prodList').innerHTML = `<div class="text-center text-red-400 py-12">오류: ${e.message}</div>`;
+  }
+}
+
+function renderProdList() {
+  const el = document.getElementById('prodList');
+  if (!allProductions.length) {
+    el.innerHTML = `<div class="text-center text-gray-400 py-12">
+      생산 항목이 없습니다<br>
+      <a href="scripts.html" class="text-amber-500 underline text-sm">대본 관리에서 생산을 시작하세요</a>
+    </div>`;
+    return;
+  }
+  el.innerHTML = allProductions.map(p => {
+    const script = p.st_scripts || {};
+    const topic = script.st_topics || {};
+    const sel = p.id === selectedProdId ? 'selected' : '';
+    return `
+    <div class="card bg-white rounded-xl border border-gray-200 p-4 ${sel}" onclick="selectProd('${p.id}')">
+      <div class="flex items-start justify-between mb-2">
+        <span class="text-xs px-2 py-0.5 rounded-full ${STATUS_COLOR[p.status] || 'bg-gray-100'}">${STATUS_LABEL[p.status] || p.status}</span>
+        <span class="text-xs text-gray-400">${p.cost_total ? '₩' + Math.round(p.cost_total).toLocaleString() : ''}</span>
+      </div>
+      <h3 class="font-medium text-sm text-gray-900 line-clamp-2 mb-1">${script.youtube_title || topic.title || '제목 없음'}</h3>
+      <div class="flex items-center gap-2 text-xs text-gray-400">
+        ${p.total_duration ? `<span>${Math.round(p.total_duration)}초</span>` : ''}
+        ${p.tts_service ? `<span>TTS: ${p.tts_service}</span>` : ''}
+      </div>
+      <div class="text-xs text-gray-400 mt-1">${new Date(p.created_at).toLocaleDateString('ko')}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterStatus(status) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    const isActive = status === null ? b.dataset.status === 'all' : b.dataset.status === status;
+    b.classList.toggle('bg-purple-500', isActive);
+    b.classList.toggle('text-white', isActive);
+    b.classList.toggle('border-purple-500', isActive);
+    b.classList.toggle('bg-white', !isActive);
+    b.classList.toggle('text-gray-700', !isActive);
+  });
+  loadProductions();
+}
+
+// ─── 상세 ───
+async function selectProd(id) {
+  selectedProdId = id;
+  renderProdList();
+  const p = allProductions.find(x => x.id === id);
+  if (!p) return;
+
+  const script = p.st_scripts || {};
+  const topic = script.st_topics || {};
+  const panels = p.panel_images || [];
+  const audios = p.panel_audios || [];
+
+  // 파이프라인 진행률
+  const currentIdx = PIPELINE.indexOf(p.status);
+  const isFailed = p.status === 'failed';
+  const isRevision = p.status === 'revision_requested';
+
+  const el = document.getElementById('prodDetail');
+  el.innerHTML = `
+  <div class="space-y-6">
+    <!-- 헤더 -->
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-xs px-2 py-0.5 rounded-full ${STATUS_COLOR[p.status]}">${STATUS_LABEL[p.status]}</span>
+        </div>
+        <h2 class="text-lg font-bold text-gray-900">${script.youtube_title || '제목 없음'}</h2>
+        <p class="text-sm text-gray-500 mt-0.5">원본 소재: ${topic.title || '-'}</p>
+      </div>
+      <div class="flex gap-2">
+        ${p.status === 'final_review' ? `
+          <button onclick="approveProd('${p.id}')" class="text-sm bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600">최종 승인</button>
+          <button onclick="revisionProd('${p.id}')" class="text-sm bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600">수정요청</button>
+        ` : ''}
+        ${p.status === 'approved' ? `
+          <button onclick="goUpload('${p.id}')" class="text-sm bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600">YouTube 업로드</button>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- 파이프라인 -->
+    <div class="bg-gray-50 rounded-xl p-4">
+      <h4 class="text-xs font-medium text-gray-500 mb-3">생산 파이프라인</h4>
+      <div class="flex items-center gap-1">
+        ${['이미지', 'TTS', '조립', '검토', '완료'].map((label, i) => {
+          const stepIndices = [[1,2], [3,4], [5,6], [7], [8]];
+          const stepMax = Math.max(...stepIndices[i]);
+          let cls = 'step-pending';
+          if (isFailed) cls = currentIdx >= stepIndices[i][0] ? 'step-failed' : 'step-pending';
+          else if (currentIdx >= stepMax) cls = 'step-done';
+          else if (currentIdx >= stepIndices[i][0]) cls = 'step-active';
+          return `
+            <div class="flex flex-col items-center flex-1">
+              <div class="step-dot ${cls}">${i+1}</div>
+              <span class="text-[10px] text-gray-400 mt-1">${label}</span>
+            </div>
+            ${i < 4 ? '<div class="flex-1 h-0.5 bg-gray-200 -mt-4"></div>' : ''}`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- 비용 -->
+    <div class="grid grid-cols-4 gap-3">
+      <div class="bg-gray-50 rounded-xl p-3 text-center">
+        <div class="text-lg font-bold text-gray-900">${p.cost_images ? '₩' + Math.round(p.cost_images) : '-'}</div>
+        <div class="text-xs text-gray-500">이미지</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-3 text-center">
+        <div class="text-lg font-bold text-gray-900">${p.cost_tts ? '₩' + Math.round(p.cost_tts) : '-'}</div>
+        <div class="text-xs text-gray-500">TTS</div>
+      </div>
+      <div class="bg-gray-50 rounded-xl p-3 text-center">
+        <div class="text-lg font-bold text-gray-900">${p.cost_assembly ? '₩' + Math.round(p.cost_assembly) : '-'}</div>
+        <div class="text-xs text-gray-500">조립</div>
+      </div>
+      <div class="bg-purple-50 rounded-xl p-3 text-center">
+        <div class="text-lg font-bold text-purple-700">${p.cost_total ? '₩' + Math.round(p.cost_total) : '-'}</div>
+        <div class="text-xs text-purple-500">합계</div>
+      </div>
+    </div>
+
+    <!-- 이미지 패널 -->
+    ${panels.length ? `
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-3">생성된 이미지 (${panels.length}장)</h4>
+      <div class="grid grid-cols-4 gap-2">
+        ${panels.map((img, i) => `
+        <div class="relative group">
+          <img src="${img.image_url}" alt="Panel ${i+1}" class="w-full aspect-[9/16] object-cover rounded-lg border border-gray-200">
+          <div class="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">#${i+1}</div>
+          ${img.has_speech_bubble ? '<div class="absolute top-1 right-1 bg-amber-500 text-white text-[10px] px-1 rounded">말풍선</div>' : ''}
+        </div>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- TTS 오디오 -->
+    ${audios.length ? `
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-3">TTS 오디오 (${audios.length}개, 합계 ${p.total_duration ? Math.round(p.total_duration) + '초' : '-'})</h4>
+      <div class="space-y-2">
+        ${audios.map((a, i) => `
+        <div class="flex items-center gap-3 bg-gray-50 rounded-lg p-2">
+          <span class="text-xs font-bold text-purple-600 w-6">#${i+1}</span>
+          <audio controls src="${a.audio_url}" class="flex-1 h-8"></audio>
+          <span class="text-xs text-gray-400">${a.duration ? a.duration + '초' : ''}</span>
+        </div>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- 최종 영상 -->
+    ${p.final_video_url ? `
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-3">최종 영상</h4>
+      <video controls src="${p.final_video_url}" class="w-full max-w-sm rounded-xl border border-gray-200"></video>
+    </div>
+    ` : ''}
+
+    <!-- 썸네일 -->
+    ${p.thumbnail_urls && p.thumbnail_urls.length ? `
+    <div>
+      <h4 class="text-sm font-medium text-gray-700 mb-3">썸네일 후보</h4>
+      <div class="flex gap-2">
+        ${p.thumbnail_urls.map((url, i) => `
+        <div class="relative cursor-pointer ${i === (p.selected_thumbnail || 0) ? 'ring-2 ring-purple-500 rounded-lg' : ''}" onclick="selectThumb('${p.id}', ${i})">
+          <img src="${url}" alt="Thumb ${i+1}" class="w-24 h-14 object-cover rounded-lg border border-gray-200">
+          ${i === (p.selected_thumbnail || 0) ? '<div class="absolute -top-1 -right-1 bg-purple-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center">V</div>' : ''}
+        </div>
+        `).join('')}
+      </div>
+    </div>
+    ` : ''}
+
+    <!-- 리뷰 노트 -->
+    ${p.review_note ? `
+    <div class="bg-orange-50 rounded-xl p-4">
+      <h4 class="text-sm font-medium text-orange-800 mb-1">리뷰 노트</h4>
+      <p class="text-sm text-orange-700">${p.review_note}</p>
+    </div>
+    ` : ''}
+  </div>`;
+}
+
+// ─── 액션 ───
+async function approveProd(id) {
+  if (!confirm('최종 승인하시겠습니까?')) return;
+  try {
+    await API.patch('/rest/v1/st_productions?id=eq.' + id, { status: 'approved', completed_at: new Date().toISOString() });
+    await loadProductions();
+    selectProd(id);
+  } catch (e) { alert('실패: ' + e.message); }
+}
+
+async function revisionProd(id) {
+  const note = prompt('수정 요청 내용:');
+  if (note === null) return;
+  try {
+    await API.patch('/rest/v1/st_productions?id=eq.' + id, { status: 'revision_requested', review_note: note });
+    await loadProductions();
+    selectProd(id);
+  } catch (e) { alert('실패: ' + e.message); }
+}
+
+async function selectThumb(id, idx) {
+  try {
+    await API.patch('/rest/v1/st_productions?id=eq.' + id, { selected_thumbnail: idx });
+    const p = allProductions.find(x => x.id === id);
+    if (p) p.selected_thumbnail = idx;
+    selectProd(id);
+  } catch (e) { alert('실패: ' + e.message); }
+}
+
+async function goUpload(prodId) {
+  alert('YouTube 업로드 기능은 아직 준비 중입니다.');
+}
+
+// 초기 로드
+loadProductions();
+</script>
+</body>
+</html>
