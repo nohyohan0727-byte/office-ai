@@ -40,9 +40,11 @@ npm-debug.log*
 **/env.js
 !**/js/env.example.js
 !**/env.example.js
-# discovery/ssultoon env.js는 anon key만 포함 → 배포 필요
+# discovery env.js는 anon key만 포함 → 배포 필요
 !discovery/js/env.js
-!ssultoon/js/env.js
+
+# 썰툰: 로컬 개발 중 — 운영 배포 준비 완료 시 이 줄 제거
+ssultoon/
 
 # 스크립트 내 시크릿 (service_role/admin 키 포함)
 launchkit/n8n/create_workflows.py
