@@ -4,4 +4,7 @@ const DISC_ENV = {
   SC_REVIEW_WEBHOOK: 'https://jknetworks.app.n8n.cloud/webhook/sc-review',
   SC_CALENDAR_WEBHOOK: 'https://jknetworks.app.n8n.cloud/webhook/sc-calendar',
   SC_RECOMMEND_WEBHOOK: 'https://jknetworks.app.n8n.cloud/webhook/sc-recommend-run',
+  N8N_API_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJlMTM4NWNiNC1mZmVkLTQ5YmItYjdlYi1iZWZkMGZmZWEwOGUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzcwNjk1NTY2LCJleHAiOjE3Nzg0MjUyMDB9.uIz72k9V_t5Z-AX3airrdYhkWDZLBdxv4cOnUmGoRd8',
+  SC_COLLECT_WORKFLOW_ID: '7EjyzL8AUvuAAvU3',
+  N8N_BASE: 'https://jknetworks.app.n8n.cloud',
 };

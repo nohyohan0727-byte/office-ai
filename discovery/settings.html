@@ -12,8 +12,10 @@
 <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
   <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <a href="index.html" class="text-gray-400 hover:text-gray-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      <a href="index.html" class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-colors">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.75 3.75 0 01-5.373 0l-.347-.347z"/>
+        </svg>
       </a>
       <h1 class="text-lg font-bold text-gray-900">설정</h1>
     </div>
@@ -571,26 +573,78 @@ async function saveCronSchedule() {
   }
 }
 
+let _runPollTimer = null;
+
 async function runNow() {
   const btn = document.getElementById('runNowBtn');
   const statusEl = document.getElementById('cronStatus');
-  btn.disabled = true; btn.textContent = '실행 중...';
-  statusEl.className = 'mt-2 text-xs text-center text-gray-500';
-  statusEl.textContent = '파이프라인 시작 중... (완료까지 5~15분 소요)'; statusEl.classList.remove('hidden');
+  if (_runPollTimer) { clearInterval(_runPollTimer); _runPollTimer = null; }
+
+  btn.disabled = true; btn.textContent = '⏳ 실행 중...';
+  statusEl.className = 'mt-2 text-sm text-center text-gray-500 bg-gray-50 rounded-lg py-2 px-3';
+  statusEl.textContent = '🚀 파이프라인 시작 중...'; statusEl.classList.remove('hidden');
+
+  const triggerTime = new Date().toISOString();
+
   try {
     await fetch('https://jknetworks.app.n8n.cloud/webhook/sc-collect-trends-run', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ trigger: 'manual' })
     });
-    statusEl.className = 'mt-2 text-xs text-center text-green-600';
-    statusEl.textContent = '✓ 파이프라인 시작! 완료 시 텔레그램으로 결과가 전송됩니다.';
   } catch(e) {
-    statusEl.className = 'mt-2 text-xs text-center text-red-500';
-    statusEl.textContent = '실행 오류: ' + e.message;
-  } finally {
+    statusEl.className = 'mt-2 text-sm text-center text-red-500 bg-red-50 rounded-lg py-2 px-3';
+    statusEl.textContent = '❌ 실행 오류: ' + e.message;
     btn.disabled = false; btn.textContent = '▶ 지금 실행';
-    setTimeout(() => statusEl.classList.add('hidden'), 8000);
+    return;
   }
+
+  // n8n execution 상태 폴링 (최대 20분)
+  statusEl.textContent = '⚙️ 파이프라인 실행 중... (완료까지 5~15분 소요)';
+  let pollCount = 0;
+  const maxPolls = 120; // 10초 간격 × 120 = 20분
+
+  _runPollTimer = setInterval(async () => {
+    pollCount++;
+    if (pollCount > maxPolls) {
+      clearInterval(_runPollTimer); _runPollTimer = null;
+      statusEl.className = 'mt-2 text-sm text-center text-yellow-600 bg-yellow-50 rounded-lg py-2 px-3';
+      statusEl.textContent = '⚠️ 시간 초과 — n8n 대시보드에서 직접 확인해주세요.';
+      btn.disabled = false; btn.textContent = '▶ 지금 실행';
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${DISC_ENV.N8N_BASE}/api/v1/executions?workflowId=${DISC_ENV.SC_COLLECT_WORKFLOW_ID}&limit=5`,
+        { headers: { 'X-N8N-API-KEY': DISC_ENV.N8N_API_KEY } }
+      );
+      const data = await res.json();
+      const execs = data.data || [];
+      // 트리거 시간 이후에 시작된 실행 찾기
+      const myExec = execs.find(e => new Date(e.startedAt) >= new Date(triggerTime));
+      if (!myExec) return; // 아직 실행 등록 안됨
+
+      const elapsed = Math.round((Date.now() - new Date(myExec.startedAt)) / 1000);
+      const elapsedStr = elapsed < 60 ? `${elapsed}초` : `${Math.floor(elapsed/60)}분 ${elapsed%60}초`;
+
+      if (!myExec.finished) {
+        statusEl.textContent = `⚙️ 실행 중... (경과: ${elapsedStr})`;
+        return;
+      }
+
+      // 완료됨
+      clearInterval(_runPollTimer); _runPollTimer = null;
+      btn.disabled = false; btn.textContent = '▶ 지금 실행';
+
+      if (myExec.status === 'error' || myExec.data?.resultData?.error) {
+        statusEl.className = 'mt-2 text-sm text-center text-red-600 bg-red-50 rounded-lg py-2 px-3';
+        statusEl.textContent = `❌ 실행 실패 (${elapsedStr} 소요) — 텔레그램 또는 n8n 대시보드에서 오류를 확인하세요.`;
+      } else {
+        statusEl.className = 'mt-2 text-sm text-center text-green-600 bg-green-50 rounded-lg py-2 px-3';
+        statusEl.textContent = `✅ 파이프라인 완료! (${elapsedStr} 소요) — 텔레그램으로 결과가 전송되었습니다.`;
+      }
+      setTimeout(() => statusEl.classList.add('hidden'), 15000);
+    } catch(e) { /* 폴링 오류는 무시하고 계속 */ }
+  }, 10000);
 }
 
 // ── 배점 탭 ──────────────────────────────────
