@@ -73,6 +73,32 @@
         <div id="cronStatus" class="mt-2 text-xs text-center hidden"></div>
       </div>
     </div>
+
+    <!-- 파이프라인 카테고리 선택 -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+        <h2 class="text-sm font-semibold text-gray-700">파이프라인 카테고리</h2>
+        <p class="text-xs text-gray-400 mt-0.5">선택한 카테고리만 수집·분석·추천합니다 (카테고리당 최대 <span id="perCatCount">10</span>건)</p>
+      </div>
+      <div class="p-4">
+        <!-- 전체 선택 -->
+        <label class="flex items-center gap-2.5 mb-3 pb-3 border-b border-gray-100 cursor-pointer select-none">
+          <input type="checkbox" id="cat-check-all" onchange="toggleAllCategories(this.checked)"
+            class="w-4 h-4 rounded accent-indigo-600 cursor-pointer">
+          <span class="text-sm font-semibold text-gray-800">전체 선택</span>
+          <span id="catSelectedCount" class="ml-auto text-xs text-gray-400"></span>
+        </label>
+        <!-- 카테고리별 체크박스 -->
+        <div class="grid grid-cols-2 gap-2" id="categoryCheckboxes"></div>
+        <div class="flex gap-2 mt-4">
+          <button onclick="saveActiveCategories()" id="catSaveBtn"
+            class="flex-1 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 font-medium transition-colors">
+            카테고리 저장
+          </button>
+        </div>
+        <div id="catSaveStatus" class="text-xs text-center mt-2 hidden"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ── 탭2: 점수 배점 ── -->
@@ -327,7 +353,115 @@ function DEFAULT_WEIGHTS() {
   return { ...(CATEGORY_PRESETS[activeCategory] || CATEGORY_PRESETS.default) };
 }
 
-// ── 카테고리 버튼 초기화 ──────────────────────────────────
+// ── 파이프라인 카테고리 체크박스 ──────────────────────────────────
+const CAT_COLORS = {
+  health: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+  entertainment: 'text-pink-700 bg-pink-50 border-pink-200',
+  education: 'text-blue-700 bg-blue-50 border-blue-200',
+  gaming: 'text-purple-700 bg-purple-50 border-purple-200',
+  food: 'text-orange-700 bg-orange-50 border-orange-200',
+  travel: 'text-cyan-700 bg-cyan-50 border-cyan-200',
+  beauty: 'text-rose-700 bg-rose-50 border-rose-200',
+  sports: 'text-amber-700 bg-amber-50 border-amber-200',
+  tech: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+  finance: 'text-teal-700 bg-teal-50 border-teal-200',
+  global_issues: 'text-red-700 bg-red-50 border-red-200',
+};
+
+// 파이프라인에서 사용할 카테고리 목록 (health 별도 추가)
+const PIPELINE_CATEGORIES = [
+  { key: 'health',         label: '건강/운동',   emoji: '💪' },
+  { key: 'entertainment',  label: '연예/엔터',   emoji: '🎭' },
+  { key: 'education',      label: '교육/정보',   emoji: '📚' },
+  { key: 'gaming',         label: '게임',        emoji: '🎮' },
+  { key: 'food',           label: '요리/음식',   emoji: '🍳' },
+  { key: 'travel',         label: '여행',        emoji: '✈️' },
+  { key: 'beauty',         label: '뷰티/패션',   emoji: '💄' },
+  { key: 'sports',         label: '스포츠',      emoji: '⚽' },
+  { key: 'tech',           label: 'IT/기술',     emoji: '💻' },
+  { key: 'finance',        label: '금융/투자',   emoji: '📈' },
+  { key: 'global_issues',  label: '국제/이슈',   emoji: '🌍' },
+];
+
+let activeCategories = []; // 선택된 카테고리 키 배열
+
+function initCategoryCheckboxes() {
+  const container = document.getElementById('categoryCheckboxes');
+  container.innerHTML = PIPELINE_CATEGORIES.map(c => {
+    const color = CAT_COLORS[c.key] || 'text-gray-700 bg-gray-50 border-gray-200';
+    return `
+    <label class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer select-none transition-all ${color} hover:opacity-80" id="catlabel-${c.key}">
+      <input type="checkbox" id="catcheck-${c.key}" value="${c.key}"
+        onchange="onCategoryCheck()"
+        class="w-4 h-4 rounded accent-indigo-600 cursor-pointer flex-shrink-0">
+      <span class="text-xs font-medium">${c.emoji} ${c.label}</span>
+    </label>`;
+  }).join('');
+}
+
+function onCategoryCheck() {
+  activeCategories = PIPELINE_CATEGORIES
+    .filter(c => document.getElementById('catcheck-' + c.key)?.checked)
+    .map(c => c.key);
+  updateCategoryCheckUI();
+}
+
+function toggleAllCategories(checked) {
+  PIPELINE_CATEGORIES.forEach(c => {
+    const el = document.getElementById('catcheck-' + c.key);
+    if (el) el.checked = checked;
+  });
+  onCategoryCheck();
+}
+
+function updateCategoryCheckUI() {
+  const total = PIPELINE_CATEGORIES.length;
+  const selected = activeCategories.length;
+  const allCheck = document.getElementById('cat-check-all');
+  if (allCheck) {
+    allCheck.checked = selected === total;
+    allCheck.indeterminate = selected > 0 && selected < total;
+  }
+  const countEl = document.getElementById('catSelectedCount');
+  if (countEl) countEl.textContent = `${selected}/${total} 선택`;
+}
+
+function loadCategoryCheckboxes(savedCategories) {
+  // 저장된 카테고리 적용 (없으면 전체 선택)
+  const toCheck = savedCategories?.length ? savedCategories : PIPELINE_CATEGORIES.map(c => c.key);
+  PIPELINE_CATEGORIES.forEach(c => {
+    const el = document.getElementById('catcheck-' + c.key);
+    if (el) el.checked = toCheck.includes(c.key);
+  });
+  onCategoryCheck();
+}
+
+async function saveActiveCategories() {
+  const btn = document.getElementById('catSaveBtn');
+  const statusEl = document.getElementById('catSaveStatus');
+  if (!activeCategories.length) {
+    statusEl.className = 'text-xs text-center mt-2 text-red-500';
+    statusEl.textContent = '최소 1개 이상 선택해야 합니다.';
+    statusEl.classList.remove('hidden');
+    return;
+  }
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    await API.updateSetting('active_categories', JSON.stringify(activeCategories));
+    statusEl.className = 'text-xs text-center mt-2 text-green-600';
+    statusEl.textContent = `✓ ${activeCategories.length}개 카테고리 저장. 다음 파이프라인 실행부터 적용됩니다.`;
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 5000);
+  } catch(e) {
+    statusEl.className = 'text-xs text-center mt-2 text-red-500';
+    statusEl.textContent = '저장 실패: ' + e.message;
+    statusEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; btn.textContent = '카테고리 저장';
+  }
+}
+
+// ── 카테고리 버튼 초기화 (점수배점 탭용) ──────────────────────────────────
 function initCategoryBtns() {
   const container = document.getElementById('categoryBtns');
   const TOOLTIPS = {
@@ -597,6 +731,13 @@ async function loadSettings() {
     allSettings = await API.getSettings();
     renderForm();
     await loadWeights();
+    // 저장된 active_categories 로드
+    const savedCats = allSettings['active_categories'];
+    loadCategoryCheckboxes(savedCats ? JSON.parse(savedCats) : null);
+    // 카테고리당 개수 표시
+    if (allSettings['recommendation_count']) {
+      document.getElementById('perCatCount').textContent = allSettings['recommendation_count'];
+    }
   } catch(e) {
     document.getElementById('settingsForm').innerHTML = `<p class="text-red-500 text-sm p-5">${e.message}</p>`;
   }
@@ -645,6 +786,7 @@ async function logout() {
 
 // ── 초기화 ──────────────────────────────────
 initCategoryBtns();
+initCategoryCheckboxes();
 const savedTab = localStorage.getItem('disc_settings_tab') || 'schedule';
 switchTab(savedTab);
 loadSettings();
