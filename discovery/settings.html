@@ -15,73 +15,416 @@
     </a>
     <h1 class="text-lg font-bold text-gray-900">설정</h1>
   </div>
+  <!-- 탭 -->
+  <div class="max-w-3xl mx-auto px-4 flex gap-0 border-t border-gray-100">
+    <button onclick="switchTab('schedule')" id="tab-schedule"
+      class="tab-btn px-5 py-2.5 text-sm font-medium border-b-2 transition-colors">
+      스케줄
+    </button>
+    <button onclick="switchTab('weights')" id="tab-weights"
+      class="tab-btn px-5 py-2.5 text-sm font-medium border-b-2 transition-colors">
+      점수 배점
+    </button>
+    <button onclick="switchTab('analysis')" id="tab-analysis"
+      class="tab-btn px-5 py-2.5 text-sm font-medium border-b-2 transition-colors">
+      분석 설정
+    </button>
+  </div>
 </header>
 
-<main class="max-w-3xl mx-auto px-4 py-6 space-y-5">
+<main class="max-w-3xl mx-auto px-4 py-6">
 
-  <!-- 스케줄 설정 섹션 -->
-  <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-    <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
-      <h2 class="text-sm font-semibold text-gray-700">자동 실행 스케줄</h2>
-      <p class="text-xs text-gray-400 mt-0.5">매일 자동으로 파이프라인이 실행되는 시간 (KST)</p>
-    </div>
-    <div class="p-5">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-600">시</label>
-          <select id="cronHour" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <!-- JS로 채움 -->
-          </select>
-        </div>
-        <span class="text-gray-400 font-bold">:</span>
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-600">분</label>
-          <select id="cronMinute" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <!-- JS로 채움 -->
-          </select>
-        </div>
-        <span class="text-xs text-gray-400 ml-1">KST 기준</span>
+  <!-- ── 탭1: 스케줄 ── -->
+  <div id="panel-schedule" class="tab-panel space-y-4">
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+        <h2 class="text-sm font-semibold text-gray-700">자동 실행 스케줄</h2>
+        <p class="text-xs text-gray-400 mt-0.5">매일 자동으로 파이프라인이 실행되는 시간 (KST)</p>
       </div>
-      <div class="flex gap-2">
-        <button onclick="saveCronSchedule()" id="cronSaveBtn"
-          class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-          스케줄 저장
-        </button>
-        <button onclick="runNow()" id="runNowBtn"
-          class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
-          ▶ 지금 실행
-        </button>
+      <div class="p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600">시</label>
+            <select id="cronHour" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+          <span class="text-gray-400 font-bold">:</span>
+          <div class="flex items-center gap-2">
+            <label class="text-sm text-gray-600">분</label>
+            <select id="cronMinute" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+          <span class="text-xs text-gray-400 ml-1">KST 기준</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="saveCronSchedule()" id="cronSaveBtn"
+            class="flex-1 bg-indigo-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
+            스케줄 저장
+          </button>
+          <button onclick="runNow()" id="runNowBtn"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+            ▶ 지금 실행
+          </button>
+        </div>
+        <div id="cronStatus" class="mt-2 text-xs text-center hidden"></div>
       </div>
-      <div id="cronStatus" class="mt-2 text-xs text-center hidden"></div>
     </div>
   </div>
 
-  <!-- 분석 설정 섹션 -->
-  <div id="settingsForm" class="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100"></div>
-  <button onclick="saveSettings()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700">
-    설정 저장
-  </button>
-  <div id="saveStatus" class="text-center text-sm text-green-600 hidden">저장됨!</div>
+  <!-- ── 탭2: 점수 배점 ── -->
+  <div id="panel-weights" class="tab-panel hidden space-y-4">
+
+    <!-- 개별 입력 -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-700">기회 점수 배점</h2>
+          <p class="text-xs text-gray-400 mt-0.5">각 항목의 가중치 (합계: 100%)</p>
+        </div>
+        <div id="weightSum" class="text-sm font-bold text-gray-500">합계: 100%</div>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <!-- 가중치 항목 -->
+        <div class="p-4 flex items-center gap-4">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-gray-800">수요 (Demand)</div>
+            <div class="text-xs text-gray-400">검색량 × 크로스소스 가중치</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_demand" min="0" max="100" step="1" oninput="updateWeightSum()"
+              class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span class="text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <div class="p-4 flex items-center gap-4">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-gray-800">공급 부족 (Supply Gap)</div>
+            <div class="text-xs text-gray-400">수요 대비 기존 콘텐츠 부족 정도</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_supply_gap" min="0" max="100" step="1" oninput="updateWeightSum()"
+              class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span class="text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <div class="p-4 flex items-center gap-4">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-gray-800">성장세 (Growth)</div>
+            <div class="text-xs text-gray-400">최근 검색량 증가율</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_growth" min="0" max="100" step="1" oninput="updateWeightSum()"
+              class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span class="text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <div class="p-4 flex items-center gap-4">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-gray-800">차별화 (Differentiation)</div>
+            <div class="text-xs text-gray-400">AI 분석: 차별화 각도 가능성</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_differentiation" min="0" max="100" step="1" oninput="updateWeightSum()"
+              class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span class="text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <div class="p-4 flex items-center gap-4">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-gray-800">지속가능성 (Longevity)</div>
+            <div class="text-xs text-gray-400">AI 분석: evergreen 가능성</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_longevity" min="0" max="100" step="1" oninput="updateWeightSum()"
+              class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span class="text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <div class="p-4 flex items-center gap-4">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-gray-800">진입장벽 (Entry Barrier)</div>
+            <div class="text-xs text-gray-400">소형 채널 진입 가능성 (높을수록 유리)</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_entry_barrier" min="0" max="100" step="1" oninput="updateWeightSum()"
+              class="w-16 text-center border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <span class="text-sm text-gray-400">%</span>
+          </div>
+        </div>
+        <div class="p-4 flex items-center gap-4 bg-amber-50">
+          <div class="flex-1">
+            <div class="text-sm font-medium text-amber-800">이벤트 보너스 최대 (Calendar Bonus)</div>
+            <div class="text-xs text-amber-600">캘린더 연관 시 추가 점수 (합계에 포함 안 됨)</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input type="number" id="w_calendar_bonus" min="0" max="30" step="1"
+              class="w-16 text-center border border-amber-200 rounded-lg px-2 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white">
+            <span class="text-sm text-amber-600">점</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JSON 일괄 편집 -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-700">JSON 일괄 편집</h2>
+          <p class="text-xs text-gray-400 mt-0.5">직접 JSON으로 입력 후 적용</p>
+        </div>
+        <button onclick="syncJsonFromInputs()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+          ↑ 위에서 가져오기
+        </button>
+      </div>
+      <div class="p-4">
+        <textarea id="weightsJson" rows="8"
+          class="w-full text-xs font-mono border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+        <div id="jsonError" class="text-red-500 text-xs mt-1 hidden"></div>
+        <button onclick="applyJson()"
+          class="mt-3 w-full py-2 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-900 font-medium">
+          JSON 적용 → 위 입력창에 반영
+        </button>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button onclick="resetWeights()" class="flex-1 py-3 border border-gray-300 text-gray-600 text-sm rounded-xl font-medium hover:bg-gray-50">
+        기본값으로 초기화
+      </button>
+      <button onclick="saveWeights()" class="flex-1 py-3 bg-indigo-600 text-white text-sm rounded-xl font-medium hover:bg-indigo-700">
+        배점 저장
+      </button>
+    </div>
+    <div id="weightStatus" class="text-center text-sm hidden"></div>
+  </div>
+
+  <!-- ── 탭3: 분석 설정 ── -->
+  <div id="panel-analysis" class="tab-panel hidden space-y-4">
+    <div id="settingsForm" class="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100"></div>
+    <button onclick="saveSettings()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium hover:bg-indigo-700">
+      설정 저장
+    </button>
+    <div id="saveStatus" class="text-center text-sm text-green-600 hidden">저장됨!</div>
+  </div>
+
 </main>
 
 <script src="js/auth-guard.js"></script>
 <script src="js/env.js"></script>
 <script src="js/discovery-api.js"></script>
 <script>
+
+// ── 기본값 ──────────────────────────────────
+const DEFAULT_WEIGHTS = {
+  demand: 25,
+  supply_gap: 25,
+  growth: 15,
+  differentiation: 10,
+  longevity: 15,
+  entry_barrier: 10,
+  calendar_bonus: 15
+};
+
+// ── 탭 전환 ──────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('border-indigo-600', 'text-indigo-600');
+    b.classList.add('border-transparent', 'text-gray-500');
+  });
+  document.getElementById('panel-' + name).classList.remove('hidden');
+  const btn = document.getElementById('tab-' + name);
+  btn.classList.remove('border-transparent', 'text-gray-500');
+  btn.classList.add('border-indigo-600', 'text-indigo-600');
+  localStorage.setItem('disc_settings_tab', name);
+}
+
+// ── 스케줄 탭 ──────────────────────────────
+(function initCronUI() {
+  const hourSel = document.getElementById('cronHour');
+  const minSel = document.getElementById('cronMinute');
+  for (let h = 0; h < 24; h++) {
+    const o = document.createElement('option');
+    o.value = h; o.textContent = String(h).padStart(2, '0');
+    if (h === 9) o.selected = true;
+    hourSel.appendChild(o);
+  }
+  [0, 10, 20, 30, 40, 50].forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = String(m).padStart(2, '0');
+    if (m === 0) o.selected = true;
+    minSel.appendChild(o);
+  });
+})();
+
+async function saveCronSchedule() {
+  const btn = document.getElementById('cronSaveBtn');
+  const statusEl = document.getElementById('cronStatus');
+  const hour = parseInt(document.getElementById('cronHour').value);
+  const minute = parseInt(document.getElementById('cronMinute').value);
+  btn.disabled = true; btn.textContent = '변경 중...';
+  statusEl.className = 'mt-2 text-xs text-center text-gray-500';
+  statusEl.textContent = '스케줄 변경 중...'; statusEl.classList.remove('hidden');
+  try {
+    const res = await fetch('https://jknetworks.app.n8n.cloud/webhook/sc-update-cron', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hour, minute })
+    });
+    const data = await res.json();
+    statusEl.className = data.status === 'success'
+      ? 'mt-2 text-xs text-center text-green-600'
+      : 'mt-2 text-xs text-center text-red-500';
+    statusEl.textContent = data.status === 'success' ? `✓ ${data.message}` : '오류: ' + (data.message || '');
+  } catch(e) {
+    statusEl.className = 'mt-2 text-xs text-center text-red-500';
+    statusEl.textContent = '네트워크 오류: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '스케줄 저장';
+    setTimeout(() => statusEl.classList.add('hidden'), 5000);
+  }
+}
+
+async function runNow() {
+  const btn = document.getElementById('runNowBtn');
+  const statusEl = document.getElementById('cronStatus');
+  btn.disabled = true; btn.textContent = '실행 중...';
+  statusEl.className = 'mt-2 text-xs text-center text-gray-500';
+  statusEl.textContent = '파이프라인 시작 중... (완료까지 5~15분 소요)'; statusEl.classList.remove('hidden');
+  try {
+    await fetch('https://jknetworks.app.n8n.cloud/webhook/sc-collect-trends-run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trigger: 'manual' })
+    });
+    statusEl.className = 'mt-2 text-xs text-center text-green-600';
+    statusEl.textContent = '✓ 파이프라인 시작! 완료 시 텔레그램으로 결과가 전송됩니다.';
+  } catch(e) {
+    statusEl.className = 'mt-2 text-xs text-center text-red-500';
+    statusEl.textContent = '실행 오류: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '▶ 지금 실행';
+    setTimeout(() => statusEl.classList.add('hidden'), 8000);
+  }
+}
+
+// ── 배점 탭 ──────────────────────────────────
+const WEIGHT_KEYS = ['demand', 'supply_gap', 'growth', 'differentiation', 'longevity', 'entry_barrier'];
+
+function getInputWeights() {
+  const w = {};
+  WEIGHT_KEYS.forEach(k => { w[k] = parseInt(document.getElementById('w_' + k)?.value || 0) || 0; });
+  w.calendar_bonus = parseInt(document.getElementById('w_calendar_bonus')?.value || 0) || 0;
+  return w;
+}
+
+function setInputWeights(w) {
+  WEIGHT_KEYS.forEach(k => {
+    const el = document.getElementById('w_' + k);
+    if (el) el.value = w[k] ?? DEFAULT_WEIGHTS[k];
+  });
+  const cb = document.getElementById('w_calendar_bonus');
+  if (cb) cb.value = w.calendar_bonus ?? DEFAULT_WEIGHTS.calendar_bonus;
+  updateWeightSum();
+}
+
+function updateWeightSum() {
+  const w = getInputWeights();
+  const sum = WEIGHT_KEYS.reduce((s, k) => s + (w[k] || 0), 0);
+  const el = document.getElementById('weightSum');
+  el.textContent = '합계: ' + sum + '%';
+  el.className = sum === 100
+    ? 'text-sm font-bold text-green-600'
+    : (sum > 100 ? 'text-sm font-bold text-red-500' : 'text-sm font-bold text-amber-500');
+  syncJsonFromInputs();
+}
+
+function syncJsonFromInputs() {
+  const w = getInputWeights();
+  document.getElementById('weightsJson').value = JSON.stringify(w, null, 2);
+  document.getElementById('jsonError').classList.add('hidden');
+}
+
+function applyJson() {
+  const errEl = document.getElementById('jsonError');
+  try {
+    const w = JSON.parse(document.getElementById('weightsJson').value);
+    setInputWeights(w);
+    errEl.classList.add('hidden');
+  } catch(e) {
+    errEl.textContent = 'JSON 파싱 오류: ' + e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+function resetWeights() {
+  setInputWeights(DEFAULT_WEIGHTS);
+}
+
+async function loadWeights() {
+  try {
+    const rows = await API.getSettings();
+    const keys = ['score_weight_demand','score_weight_supply_gap','score_weight_growth',
+      'score_weight_differentiation','score_weight_longevity','score_weight_entry_barrier','calendar_bonus_max'];
+    const w = { ...DEFAULT_WEIGHTS };
+    if (rows['score_weight_demand']) w.demand = parseFloat(rows['score_weight_demand']);
+    if (rows['score_weight_supply_gap']) w.supply_gap = parseFloat(rows['score_weight_supply_gap']);
+    if (rows['score_weight_growth']) w.growth = parseFloat(rows['score_weight_growth']);
+    if (rows['score_weight_differentiation']) w.differentiation = parseFloat(rows['score_weight_differentiation']);
+    if (rows['score_weight_longevity']) w.longevity = parseFloat(rows['score_weight_longevity']);
+    if (rows['score_weight_entry_barrier']) w.entry_barrier = parseFloat(rows['score_weight_entry_barrier']);
+    if (rows['calendar_bonus_max']) w.calendar_bonus = parseFloat(rows['calendar_bonus_max']);
+    setInputWeights(w);
+  } catch(e) {
+    setInputWeights(DEFAULT_WEIGHTS);
+  }
+}
+
+async function saveWeights() {
+  const w = getInputWeights();
+  const sum = WEIGHT_KEYS.reduce((s, k) => s + (w[k] || 0), 0);
+  const statusEl = document.getElementById('weightStatus');
+
+  if (sum !== 100) {
+    statusEl.className = 'text-center text-sm text-red-500';
+    statusEl.textContent = `합계가 ${sum}%입니다. 합계가 정확히 100%여야 합니다.`;
+    statusEl.classList.remove('hidden');
+    return;
+  }
+
+  const keyMap = {
+    demand: 'score_weight_demand', supply_gap: 'score_weight_supply_gap',
+    growth: 'score_weight_growth', differentiation: 'score_weight_differentiation',
+    longevity: 'score_weight_longevity', entry_barrier: 'score_weight_entry_barrier',
+    calendar_bonus: 'calendar_bonus_max'
+  };
+
+  try {
+    for (const [wKey, sKey] of Object.entries(keyMap)) {
+      await API.updateSetting(sKey, String(w[wKey]));
+    }
+    statusEl.className = 'text-center text-sm text-green-600';
+    statusEl.textContent = '✓ 배점 저장 완료! 다음 파이프라인 실행부터 적용됩니다.';
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 4000);
+  } catch(e) {
+    statusEl.className = 'text-center text-sm text-red-500';
+    statusEl.textContent = '저장 실패: ' + e.message;
+    statusEl.classList.remove('hidden');
+  }
+}
+
+// ── 분석 설정 탭 ──────────────────────────────
 const FIELDS = [
   { key: 'recommendation_count', label: '일일 추천 개수', type: 'number', hint: '매일 추천할 주제 수 (기본: 10)', min: 1, max: 20 },
   { key: 'opportunity_min_cutoff', label: '최소 기회 점수', type: 'number', hint: '이 점수 이상만 추천에 포함 (기본: 40)', min: 0, max: 100 },
   { key: 'analysis_deep_top_n', label: '심층 분석 대상 수', type: 'number', hint: 'basic 분석 중 deep 분석할 상위 N개 (기본: 20)', min: 5, max: 50 },
-  { key: 'calendar_bonus_max', label: '캘린더 보너스 최대치', type: 'number', hint: '캘린더 이벤트 연관 시 추가 점수 최대값 (기본: 15)', min: 0, max: 30 },
-  { key: 'collection_regions', label: '수집 지역', type: 'json', hint: 'JSON 배열 형태: ["east_asia", "north_america", "global"]' },
+  { key: 'collection_regions', label: '수집 지역', type: 'json', hint: 'JSON 배열: ["east_asia", "north_america", "global"]' },
 ];
 
-let settings = {};
+let allSettings = {};
 
 async function loadSettings() {
   try {
-    settings = await API.getSettings();
+    allSettings = await API.getSettings();
     renderForm();
+    await loadWeights();
   } catch(e) {
     document.getElementById('settingsForm').innerHTML = `<p class="text-red-500 text-sm p-5">${e.message}</p>`;
   }
@@ -95,7 +438,7 @@ function renderForm() {
       <input
         type="${f.type === 'json' ? 'text' : 'number'}"
         id="setting_${f.key}"
-        value="${f.type === 'json' ? (settings[f.key] || '[]') : (settings[f.key] || '')}"
+        value="${f.type === 'json' ? (allSettings[f.key] || '[]') : (allSettings[f.key] || '')}"
         ${f.min !== undefined ? `min="${f.min}"` : ''}
         ${f.max !== undefined ? `max="${f.max}"` : ''}
         class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
@@ -106,110 +449,24 @@ function renderForm() {
 
 async function saveSettings() {
   const btn = document.querySelector('button[onclick="saveSettings()"]');
-  btn.disabled = true;
-  btn.textContent = '저장 중...';
-
+  btn.disabled = true; btn.textContent = '저장 중...';
   try {
     for (const f of FIELDS) {
       const val = document.getElementById(`setting_${f.key}`)?.value?.trim();
-      if (val !== undefined && val !== '') {
-        await API.updateSetting(f.key, val);
-      }
+      if (val !== undefined && val !== '') await API.updateSetting(f.key, val);
     }
     document.getElementById('saveStatus').classList.remove('hidden');
     setTimeout(() => document.getElementById('saveStatus').classList.add('hidden'), 3000);
   } catch(e) {
     alert('저장 실패: ' + e.message);
   } finally {
-    btn.disabled = false;
-    btn.textContent = '설정 저장';
+    btn.disabled = false; btn.textContent = '설정 저장';
   }
 }
 
-// ── Cron 스케줄 UI ──────────────────────────
-(function initCronUI() {
-  const hourSel = document.getElementById('cronHour');
-  const minSel = document.getElementById('cronMinute');
-  for (let h = 0; h < 24; h++) {
-    const o = document.createElement('option');
-    o.value = h;
-    o.textContent = String(h).padStart(2, '0');
-    if (h === 9) o.selected = true;
-    hourSel.appendChild(o);
-  }
-  [0, 10, 20, 30, 40, 50].forEach(m => {
-    const o = document.createElement('option');
-    o.value = m;
-    o.textContent = String(m).padStart(2, '0');
-    if (m === 0) o.selected = true;
-    minSel.appendChild(o);
-  });
-})();
-
-async function saveCronSchedule() {
-  const btn = document.getElementById('cronSaveBtn');
-  const statusEl = document.getElementById('cronStatus');
-  const hour = parseInt(document.getElementById('cronHour').value);
-  const minute = parseInt(document.getElementById('cronMinute').value);
-
-  btn.disabled = true;
-  btn.textContent = '변경 중...';
-  statusEl.className = 'mt-2 text-xs text-center text-gray-500';
-  statusEl.textContent = '스케줄 변경 중...';
-  statusEl.classList.remove('hidden');
-
-  try {
-    const res = await fetch('https://jknetworks.app.n8n.cloud/webhook/sc-update-cron', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hour, minute })
-    });
-    const data = await res.json();
-    if (data.status === 'success') {
-      statusEl.className = 'mt-2 text-xs text-center text-green-600';
-      statusEl.textContent = `✓ ${data.message}`;
-    } else {
-      statusEl.className = 'mt-2 text-xs text-center text-red-500';
-      statusEl.textContent = '오류: ' + (data.message || '알 수 없는 오류');
-    }
-  } catch(e) {
-    statusEl.className = 'mt-2 text-xs text-center text-red-500';
-    statusEl.textContent = '네트워크 오류: ' + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '스케줄 저장';
-    setTimeout(() => statusEl.classList.add('hidden'), 5000);
-  }
-}
-
-async function runNow() {
-  const btn = document.getElementById('runNowBtn');
-  const statusEl = document.getElementById('cronStatus');
-
-  btn.disabled = true;
-  btn.textContent = '실행 중...';
-  statusEl.className = 'mt-2 text-xs text-center text-gray-500';
-  statusEl.textContent = '파이프라인 시작 중... (완료까지 5~15분 소요)';
-  statusEl.classList.remove('hidden');
-
-  try {
-    await fetch('https://jknetworks.app.n8n.cloud/webhook/sc-collect-trends-run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ trigger: 'manual' })
-    });
-    statusEl.className = 'mt-2 text-xs text-center text-green-600';
-    statusEl.textContent = '✓ 파이프라인 시작! 완료 시 텔레그램으로 결과가 전송됩니다.';
-  } catch(e) {
-    statusEl.className = 'mt-2 text-xs text-center text-red-500';
-    statusEl.textContent = '실행 오류: ' + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '▶ 지금 실행';
-    setTimeout(() => statusEl.classList.add('hidden'), 8000);
-  }
-}
-
+// ── 초기화 ──────────────────────────────────
+const savedTab = localStorage.getItem('disc_settings_tab') || 'schedule';
+switchTab(savedTab);
 loadSettings();
 </script>
 </body>
