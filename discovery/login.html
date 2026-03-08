@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>로그인 — Discovery</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/env.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center">
 
@@ -26,7 +28,7 @@
         autofocus
       >
       <div id="errMsg" class="text-red-500 text-xs mb-3 hidden">비밀번호가 틀렸습니다.</div>
-      <button type="submit"
+      <button type="submit" id="loginBtn"
         class="w-full bg-indigo-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">
         로그인
       </button>
@@ -35,21 +37,34 @@
 </div>
 
 <script>
-// 비밀번호 변경 시 이 값을 수정하세요
-const CORRECT_PASSWORD = 'sc-admin2026';
+const ADMIN_EMAIL = 'admin@office-ai.app';
+const _sb = supabase.createClient(DISC_ENV.SUPABASE_URL, DISC_ENV.SUPABASE_ANON_KEY);
 
-function login(e) {
+async function login(e) {
   e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('errMsg');
   const pw = document.getElementById('password').value;
-  if (pw === CORRECT_PASSWORD) {
-    sessionStorage.setItem('disc_auth', '1');
+
+  btn.disabled = true;
+  btn.textContent = '확인 중...';
+  errEl.classList.add('hidden');
+
+  const { data, error } = await _sb.auth.signInWithPassword({
+    email: ADMIN_EMAIL,
+    password: pw
+  });
+
+  if (error) {
+    errEl.classList.remove('hidden');
+    document.getElementById('password').value = '';
+    document.getElementById('password').focus();
+    btn.disabled = false;
+    btn.textContent = '로그인';
+  } else {
     const params = new URLSearchParams(location.search);
     const next = params.get('next') || '/discovery/';
     location.href = next;
-  } else {
-    document.getElementById('errMsg').classList.remove('hidden');
-    document.getElementById('password').value = '';
-    document.getElementById('password').focus();
   }
 }
 </script>
