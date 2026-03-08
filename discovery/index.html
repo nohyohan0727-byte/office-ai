@@ -59,6 +59,9 @@
       <a href="calendar.html" class="text-sm text-gray-600 hover:text-indigo-600">캘린더</a>
       <a href="queue.html" class="text-sm text-gray-600 hover:text-indigo-600">승인 큐</a>
       <a href="settings.html" class="text-sm text-gray-600 hover:text-indigo-600">설정</a>
+      <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500 transition-colors" title="로그아웃">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
     </div>
   </div>
 </header>
@@ -191,6 +194,12 @@
 <script src="js/auth-guard.js"></script>
 <script src="js/discovery-api.js"></script>
 <script>
+const _sbMain = supabase.createClient(DISC_ENV.SUPABASE_URL, DISC_ENV.SUPABASE_ANON_KEY);
+async function logout() {
+  await _sbMain.auth.signOut();
+  location.href = '/discovery/login.html';
+}
+
 let recommendations = [];
 let selectedRec = null;
 let radarChartInstance = null;

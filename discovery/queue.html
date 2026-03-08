@@ -10,12 +10,17 @@
 <body class="bg-gray-50 min-h-screen">
 
 <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-    <a href="index.html" class="text-gray-400 hover:text-gray-600">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-    </a>
-    <h1 class="text-lg font-bold text-gray-900">승인 큐</h1>
-    <span id="queueCount" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"></span>
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <h1 class="text-lg font-bold text-gray-900">승인 큐</h1>
+      <span id="queueCount" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"></span>
+    </div>
+    <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500 transition-colors" title="로그아웃">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    </button>
   </div>
 </header>
 
@@ -27,6 +32,9 @@
 <script src="js/auth-guard.js"></script>
 <script src="js/discovery-api.js"></script>
 <script>
+const _sbQueue = supabase.createClient(DISC_ENV.SUPABASE_URL, DISC_ENV.SUPABASE_ANON_KEY);
+async function logout() { await _sbQueue.auth.signOut(); location.href = '/discovery/login.html'; }
+
 async function loadQueue() {
   try {
     const items = await API.getApprovedQueue();

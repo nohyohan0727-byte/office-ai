@@ -17,9 +17,14 @@
       </a>
       <h1 class="text-lg font-bold text-gray-900">캘린더 이벤트</h1>
     </div>
-    <button onclick="openAddModal()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
-      + 이벤트 추가
-    </button>
+    <div class="flex items-center gap-2">
+      <button onclick="openAddModal()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
+        + 이벤트 추가
+      </button>
+      <button onclick="logout()" class="text-sm text-gray-400 hover:text-red-500 transition-colors p-1.5" title="로그아웃">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -100,6 +105,9 @@
 <script src="js/auth-guard.js"></script>
 <script src="js/discovery-api.js"></script>
 <script>
+const _sbCal = supabase.createClient(DISC_ENV.SUPABASE_URL, DISC_ENV.SUPABASE_ANON_KEY);
+async function logout() { await _sbCal.auth.signOut(); location.href = '/discovery/login.html'; }
+
 let editingEvent = null;
 
 // 월 필터 초기화
