@@ -61,7 +61,7 @@ const API = (() => {
 
     // 승인된 큐
     async getApprovedQueue() {
-      return get(`/rest/v1/sc_recommendations?status=eq.approved&select=id,date,rank,sc_analysis(opportunity_score,suggested_format,suggested_angle,sc_trends(title,status)),sc_reviews(reviewer_note,priority,style_hint,reviewed_at)&order=sc_reviews(reviewed_at).desc`);
+      return get(`/rest/v1/sc_recommendations?status=eq.approved&select=id,date,rank,sc_analysis(opportunity_score,suggested_format,suggested_angle,sc_trends(title,status)),sc_reviews(reviewer_note,priority,style_hint,reviewed_at)&order=date.desc,rank.asc`);
     },
 
     // 설정
