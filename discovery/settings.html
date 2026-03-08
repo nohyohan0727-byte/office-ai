@@ -72,21 +72,94 @@
   <!-- ── 탭2: 점수 배점 ── -->
   <div id="panel-weights" class="tab-panel hidden space-y-4">
 
-    <!-- 개별 입력 -->
+    <!-- 카테고리 선택 -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+        <h2 class="text-sm font-semibold text-gray-700">콘텐츠 카테고리</h2>
+        <p class="text-xs text-gray-400 mt-0.5">카테고리별로 배점 기준이 다르게 적용됩니다. 선택 후 배점을 수정·저장하세요.</p>
+      </div>
+      <div class="p-4">
+        <div class="flex flex-wrap gap-2" id="categoryBtns"></div>
+        <p class="text-xs text-gray-400 mt-3">* 현재 선택된 카테고리의 배점이 파이프라인에 적용됩니다.</p>
+      </div>
+    </div>
+
+    <!-- 데이터 소스 현황 -->
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-gray-100 bg-gray-50">
+        <h2 class="text-sm font-semibold text-gray-700">데이터 소스 현황</h2>
+        <p class="text-xs text-gray-400 mt-0.5">어떤 소스에서 무슨 데이터를 수집해 어떤 배점 항목에 반영하는지</p>
+      </div>
+      <div class="divide-y divide-gray-100">
+        <!-- 구글 트렌드 -->
+        <div class="p-4 flex gap-4 items-start">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-gray-800">구글 트렌드 RSS</span>
+              <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">실시간 급상승</span>
+            </div>
+            <div class="text-xs text-gray-500 mb-2">급상승 검색어 RSS 피드 → 키워드 + 트래픽 급상승 지표 수집</div>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-100">수요 (검색량)</span>
+              <span class="text-xs px-2 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">성장세 (트래픽 급상승)</span>
+            </div>
+          </div>
+        </div>
+        <!-- 유튜브 -->
+        <div class="p-4 flex gap-4 items-start">
+          <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.2 5 12 5 12 5s-4.2 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.6 2 11.2v1.5c0 1.6.2 3.2.2 3.2s.2 1.4.8 2c.8.8 1.8.8 2.3.9C6.8 19 12 19 12 19s4.2 0 7-.2c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.6.2-3.2v-1.5C22 9.6 21.8 8 21.8 8zM9.7 14.5V9.5l5.3 2.5-5.3 2.5z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-gray-800">유튜브 Data API</span>
+              <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">영상 메타데이터</span>
+            </div>
+            <div class="text-xs text-gray-500 mb-2">검색 결과 영상 수·조회수·댓글 수집 → 공급 포화도 및 경쟁 강도 측정</div>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-100">수요 (조회수)</span>
+              <span class="text-xs px-2 py-0.5 bg-orange-50 text-orange-700 rounded border border-orange-100">공급부족 (경쟁 콘텐츠 수)</span>
+              <span class="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded border border-purple-100">차별화 (댓글·채널 분석)</span>
+            </div>
+          </div>
+        </div>
+        <!-- 네이버 DataLab -->
+        <div class="p-4 flex gap-4 items-start">
+          <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-gray-800">네이버 DataLab</span>
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">국내 검색 트렌드</span>
+            </div>
+            <div class="text-xs text-gray-500 mb-2">국내 검색량 시계열 데이터 → 7일/14일 비교로 성장세 계산</div>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-100">수요 (국내 검색량)</span>
+              <span class="text-xs px-2 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">성장세 (7일 vs 14일 비교)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기회 점수 배점 -->
     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       <div class="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
         <div>
           <h2 class="text-sm font-semibold text-gray-700">기회 점수 배점</h2>
-          <p class="text-xs text-gray-400 mt-0.5">각 항목의 가중치 (합계: 100%)</p>
+          <p class="text-xs text-gray-400 mt-0.5">각 항목의 가중치 (합계: 100%) — <span id="currentCategoryLabel" class="text-indigo-600 font-medium">기본</span> 카테고리</p>
         </div>
         <div id="weightSum" class="text-sm font-bold text-gray-500">합계: 100%</div>
       </div>
       <div class="divide-y divide-gray-100">
-        <!-- 가중치 항목 -->
         <div class="p-4 flex items-center gap-4">
           <div class="flex-1">
             <div class="text-sm font-medium text-gray-800">수요 (Demand)</div>
-            <div class="text-xs text-gray-400">검색량 × 크로스소스 가중치</div>
+            <div class="text-xs text-gray-400">구글 급상승 + 유튜브 조회수 + 네이버 검색량</div>
           </div>
           <div class="flex items-center gap-1.5">
             <input type="number" id="w_demand" min="0" max="100" step="1" oninput="updateWeightSum()"
@@ -97,7 +170,7 @@
         <div class="p-4 flex items-center gap-4">
           <div class="flex-1">
             <div class="text-sm font-medium text-gray-800">공급 부족 (Supply Gap)</div>
-            <div class="text-xs text-gray-400">수요 대비 기존 콘텐츠 부족 정도</div>
+            <div class="text-xs text-gray-400">유튜브 경쟁 콘텐츠 수 대비 수요</div>
           </div>
           <div class="flex items-center gap-1.5">
             <input type="number" id="w_supply_gap" min="0" max="100" step="1" oninput="updateWeightSum()"
@@ -108,7 +181,7 @@
         <div class="p-4 flex items-center gap-4">
           <div class="flex-1">
             <div class="text-sm font-medium text-gray-800">성장세 (Growth)</div>
-            <div class="text-xs text-gray-400">최근 검색량 증가율</div>
+            <div class="text-xs text-gray-400">구글 트래픽 급상승 + 네이버 7일 vs 14일 비교</div>
           </div>
           <div class="flex items-center gap-1.5">
             <input type="number" id="w_growth" min="0" max="100" step="1" oninput="updateWeightSum()"
@@ -119,7 +192,7 @@
         <div class="p-4 flex items-center gap-4">
           <div class="flex-1">
             <div class="text-sm font-medium text-gray-800">차별화 (Differentiation)</div>
-            <div class="text-xs text-gray-400">AI 분석: 차별화 각도 가능성</div>
+            <div class="text-xs text-gray-400">유튜브 댓글·채널 AI 분석 → 각도 가능성</div>
           </div>
           <div class="flex items-center gap-1.5">
             <input type="number" id="w_differentiation" min="0" max="100" step="1" oninput="updateWeightSum()"
@@ -187,7 +260,7 @@
 
     <div class="flex gap-3">
       <button onclick="resetWeights()" class="flex-1 py-3 border border-gray-300 text-gray-600 text-sm rounded-xl font-medium hover:bg-gray-50">
-        기본값으로 초기화
+        카테고리 기본값으로
       </button>
       <button onclick="saveWeights()" class="flex-1 py-3 bg-indigo-600 text-white text-sm rounded-xl font-medium hover:bg-indigo-700">
         배점 저장
@@ -212,16 +285,92 @@
 <script src="js/discovery-api.js"></script>
 <script>
 
-// ── 기본값 ──────────────────────────────────
-const DEFAULT_WEIGHTS = {
-  demand: 25,
-  supply_gap: 25,
-  growth: 15,
-  differentiation: 10,
-  longevity: 15,
-  entry_barrier: 10,
-  calendar_bonus: 15
+// ── 카테고리 프리셋 ──────────────────────────────────
+const CATEGORIES = [
+  { key: 'default',         label: '기본',       emoji: '⚙️' },
+  { key: 'entertainment',   label: '연예/엔터',   emoji: '🎭' },
+  { key: 'education',       label: '교육/정보',   emoji: '📚' },
+  { key: 'gaming',          label: '게임',        emoji: '🎮' },
+  { key: 'food',            label: '요리/음식',   emoji: '🍳' },
+  { key: 'travel',          label: '여행',        emoji: '✈️' },
+  { key: 'beauty',          label: '뷰티/패션',   emoji: '💄' },
+  { key: 'sports',          label: '스포츠',      emoji: '⚽' },
+  { key: 'tech',            label: 'IT/기술',     emoji: '💻' },
+  { key: 'finance',         label: '금융/투자',   emoji: '📈' },
+  { key: 'global_issues',   label: '국제/이슈',   emoji: '🌍' },
+];
+
+const CATEGORY_PRESETS = {
+  default:       { demand:25, supply_gap:25, growth:15, differentiation:10, longevity:15, entry_barrier:10, calendar_bonus:15 },
+  entertainment: { demand:35, supply_gap:15, growth:25, differentiation:10, longevity:5,  entry_barrier:10, calendar_bonus:20 },
+  education:     { demand:20, supply_gap:20, growth:10, differentiation:15, longevity:25, entry_barrier:10, calendar_bonus:10 },
+  gaming:        { demand:30, supply_gap:20, growth:20, differentiation:15, longevity:10, entry_barrier:5,  calendar_bonus:15 },
+  food:          { demand:25, supply_gap:20, growth:10, differentiation:20, longevity:20, entry_barrier:5,  calendar_bonus:15 },
+  travel:        { demand:25, supply_gap:20, growth:15, differentiation:20, longevity:10, entry_barrier:10, calendar_bonus:20 },
+  beauty:        { demand:30, supply_gap:15, growth:25, differentiation:20, longevity:5,  entry_barrier:5,  calendar_bonus:15 },
+  sports:        { demand:30, supply_gap:20, growth:20, differentiation:10, longevity:10, entry_barrier:10, calendar_bonus:20 },
+  tech:          { demand:20, supply_gap:25, growth:15, differentiation:20, longevity:15, entry_barrier:5,  calendar_bonus:10 },
+  finance:       { demand:20, supply_gap:25, growth:15, differentiation:15, longevity:20, entry_barrier:5,  calendar_bonus:10 },
+  // 국제/이슈: 전쟁·환율·지정학 등 급변 이슈 → 성장세(급등 감지)와 수요 최우선, 지속가능성 낮음
+  global_issues: { demand:30, supply_gap:15, growth:35, differentiation:10, longevity:5,  entry_barrier:5,  calendar_bonus:25 },
 };
+
+let activeCategory = localStorage.getItem('disc_active_category') || 'default';
+
+function DEFAULT_WEIGHTS() {
+  return { ...(CATEGORY_PRESETS[activeCategory] || CATEGORY_PRESETS.default) };
+}
+
+// ── 카테고리 버튼 초기화 ──────────────────────────────────
+function initCategoryBtns() {
+  const container = document.getElementById('categoryBtns');
+  const TOOLTIPS = {
+    global_issues: '전쟁·환율·지정학 등 급변 국제 이슈: 성장세(35%) 최우선, 이벤트 보너스(25점) 강화',
+    entertainment: '연예·드라마·아이돌: 수요(35%) + 성장세(25%) 중심, 지속가능성 낮음',
+    finance:       '금융·주식·코인: 공급부족(25%) + 지속가능성(20%) 중시',
+    default:       '범용 기본 배점: 수요(25%) + 공급부족(25%) 균형',
+  };
+  container.innerHTML = CATEGORIES.map(c => `
+    <button onclick="selectCategory('${c.key}')" id="cat-${c.key}"
+      title="${TOOLTIPS[c.key] || ''}"
+      class="category-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors">
+      <span>${c.emoji}</span><span>${c.label}</span>
+    </button>
+  `).join('');
+  updateCategoryUI();
+}
+
+function updateCategoryUI() {
+  CATEGORIES.forEach(c => {
+    const btn = document.getElementById('cat-' + c.key);
+    if (!btn) return;
+    if (c.key === activeCategory) {
+      btn.className = 'category-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-indigo-600 text-white border-indigo-600';
+    } else {
+      btn.className = 'category-btn flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600';
+    }
+  });
+  const cat = CATEGORIES.find(c => c.key === activeCategory);
+  const lbl = document.getElementById('currentCategoryLabel');
+  if (lbl && cat) lbl.textContent = cat.emoji + ' ' + cat.label;
+}
+
+async function selectCategory(key) {
+  activeCategory = key;
+  localStorage.setItem('disc_active_category', key);
+  updateCategoryUI();
+  // 해당 카테고리 저장된 배점 로드 시도, 없으면 프리셋
+  try {
+    const rows = await API.getSettings();
+    const catKey = 'category_weights_' + key;
+    if (rows[catKey]) {
+      const w = JSON.parse(rows[catKey]);
+      setInputWeights(w);
+      return;
+    }
+  } catch(e) {}
+  setInputWeights(CATEGORY_PRESETS[key] || CATEGORY_PRESETS.default);
+}
 
 // ── 탭 전환 ──────────────────────────────────
 function switchTab(name) {
@@ -354,25 +503,34 @@ function applyJson() {
 }
 
 function resetWeights() {
-  setInputWeights(DEFAULT_WEIGHTS);
+  setInputWeights(CATEGORY_PRESETS[activeCategory] || CATEGORY_PRESETS.default);
 }
 
 async function loadWeights() {
   try {
     const rows = await API.getSettings();
-    const keys = ['score_weight_demand','score_weight_supply_gap','score_weight_growth',
-      'score_weight_differentiation','score_weight_longevity','score_weight_entry_barrier','calendar_bonus_max'];
-    const w = { ...DEFAULT_WEIGHTS };
-    if (rows['score_weight_demand']) w.demand = parseFloat(rows['score_weight_demand']);
-    if (rows['score_weight_supply_gap']) w.supply_gap = parseFloat(rows['score_weight_supply_gap']);
-    if (rows['score_weight_growth']) w.growth = parseFloat(rows['score_weight_growth']);
-    if (rows['score_weight_differentiation']) w.differentiation = parseFloat(rows['score_weight_differentiation']);
-    if (rows['score_weight_longevity']) w.longevity = parseFloat(rows['score_weight_longevity']);
-    if (rows['score_weight_entry_barrier']) w.entry_barrier = parseFloat(rows['score_weight_entry_barrier']);
-    if (rows['calendar_bonus_max']) w.calendar_bonus = parseFloat(rows['calendar_bonus_max']);
-    setInputWeights(w);
+    // 현재 카테고리 저장값 우선, 없으면 기존 global score_weight_* 호환
+    const catKey = 'category_weights_' + activeCategory;
+    if (rows[catKey]) {
+      setInputWeights(JSON.parse(rows[catKey]));
+      return;
+    }
+    // 하위 호환: 기본 카테고리일 때 기존 키 읽기
+    if (activeCategory === 'default') {
+      const w = { ...CATEGORY_PRESETS.default };
+      if (rows['score_weight_demand']) w.demand = parseFloat(rows['score_weight_demand']);
+      if (rows['score_weight_supply_gap']) w.supply_gap = parseFloat(rows['score_weight_supply_gap']);
+      if (rows['score_weight_growth']) w.growth = parseFloat(rows['score_weight_growth']);
+      if (rows['score_weight_differentiation']) w.differentiation = parseFloat(rows['score_weight_differentiation']);
+      if (rows['score_weight_longevity']) w.longevity = parseFloat(rows['score_weight_longevity']);
+      if (rows['score_weight_entry_barrier']) w.entry_barrier = parseFloat(rows['score_weight_entry_barrier']);
+      if (rows['calendar_bonus_max']) w.calendar_bonus = parseFloat(rows['calendar_bonus_max']);
+      setInputWeights(w);
+    } else {
+      setInputWeights(CATEGORY_PRESETS[activeCategory] || CATEGORY_PRESETS.default);
+    }
   } catch(e) {
-    setInputWeights(DEFAULT_WEIGHTS);
+    setInputWeights(CATEGORY_PRESETS[activeCategory] || CATEGORY_PRESETS.default);
   }
 }
 
@@ -388,19 +546,27 @@ async function saveWeights() {
     return;
   }
 
-  const keyMap = {
-    demand: 'score_weight_demand', supply_gap: 'score_weight_supply_gap',
-    growth: 'score_weight_growth', differentiation: 'score_weight_differentiation',
-    longevity: 'score_weight_longevity', entry_barrier: 'score_weight_entry_barrier',
-    calendar_bonus: 'calendar_bonus_max'
-  };
-
   try {
-    for (const [wKey, sKey] of Object.entries(keyMap)) {
-      await API.updateSetting(sKey, String(w[wKey]));
+    // 카테고리별 JSON으로 저장
+    const catKey = 'category_weights_' + activeCategory;
+    await API.updateSetting(catKey, JSON.stringify(w));
+
+    // 기본 카테고리면 기존 global 키도 함께 업데이트 (n8n 호환)
+    if (activeCategory === 'default') {
+      const keyMap = {
+        demand: 'score_weight_demand', supply_gap: 'score_weight_supply_gap',
+        growth: 'score_weight_growth', differentiation: 'score_weight_differentiation',
+        longevity: 'score_weight_longevity', entry_barrier: 'score_weight_entry_barrier',
+        calendar_bonus: 'calendar_bonus_max'
+      };
+      for (const [wKey, sKey] of Object.entries(keyMap)) {
+        await API.updateSetting(sKey, String(w[wKey]));
+      }
     }
+
+    const cat = CATEGORIES.find(c => c.key === activeCategory);
     statusEl.className = 'text-center text-sm text-green-600';
-    statusEl.textContent = '✓ 배점 저장 완료! 다음 파이프라인 실행부터 적용됩니다.';
+    statusEl.textContent = `✓ [${cat?.label || activeCategory}] 배점 저장 완료! 다음 파이프라인 실행부터 적용됩니다.`;
     statusEl.classList.remove('hidden');
     setTimeout(() => statusEl.classList.add('hidden'), 4000);
   } catch(e) {
@@ -465,6 +631,7 @@ async function saveSettings() {
 }
 
 // ── 초기화 ──────────────────────────────────
+initCategoryBtns();
 const savedTab = localStorage.getItem('disc_settings_tab') || 'schedule';
 switchTab(savedTab);
 loadSettings();
