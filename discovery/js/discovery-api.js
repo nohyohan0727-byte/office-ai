@@ -34,10 +34,23 @@ const API = (() => {
   }
 
   return {
-    // 오늘의 추천 목록 (deep 분석 포함)
-    async getRecommendations(date) {
+    // 해당 날짜의 run_seq 목록 조회
+    async getRunVersions(date) {
       const d = date || new Date().toISOString().split('T')[0];
-      return get(`/rest/v1/sc_recommendations?date=eq.${d}&select=id,rank,status,sc_analysis(id,opportunity_score,demand_score,supply_gap_score,growth_score,differentiation_score,longevity_score,entry_barrier_score,calendar_bonus,longevity_type,suggested_angle,suggested_format,format_reasoning,target_audience,recommended_tone,recommended_duration,comment_gap_analysis,existing_video_analysis,sc_trends(id,title,source,category,related_keywords,status,raw_data,sc_analysis(calendar_event_id,sc_calendar_events(title))))&order=rank.asc`);
+      try {
+        const rows = await get(`/rest/v1/sc_recommendations?date=eq.${d}&select=run_seq&order=run_seq.asc&limit=200`);
+        if (!Array.isArray(rows)) return [1];
+        const seqs = [...new Set(rows.map(r => r.run_seq || 1))].sort((a,b) => a-b);
+        return seqs.length ? seqs : [1];
+      } catch(e) { return [1]; }
+    },
+
+    // 오늘의 추천 목록 (deep 분석 포함, run_seq 필터)
+    async getRecommendations(date, runSeq) {
+      const d = date || new Date().toISOString().split('T')[0];
+      let filter = `/rest/v1/sc_recommendations?date=eq.${d}`;
+      if (runSeq && runSeq > 0) filter += `&run_seq=eq.${runSeq}`;
+      return get(`${filter}&select=id,rank,status,run_seq,sc_analysis(id,opportunity_score,demand_score,supply_gap_score,growth_score,differentiation_score,longevity_score,entry_barrier_score,calendar_bonus,longevity_type,suggested_angle,suggested_format,format_reasoning,target_audience,recommended_tone,recommended_duration,comment_gap_analysis,existing_video_analysis,sc_trends(id,title,source,category,related_keywords,status,raw_data,sc_analysis(calendar_event_id,sc_calendar_events(title))))&order=rank.asc`);
     },
 
     // 다가오는 이벤트 (14일 이내)

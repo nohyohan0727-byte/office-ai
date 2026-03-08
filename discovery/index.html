@@ -52,6 +52,8 @@
     </div>
     <div class="flex items-center gap-3">
       <input type="date" id="datePicker" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <select id="runVersionPicker" class="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden" onchange="onVersionChange()">
+      </select>
       <button onclick="refreshData()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 flex items-center gap-1">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         새로고침
@@ -212,11 +214,62 @@ let recommendations = [];
 let selectedRec = null;
 let radarChartInstance = null;
 let activeCategoryFilter = null;
+let currentRunSeq = null;
 
 // 날짜 초기화
 const datePicker = document.getElementById('datePicker');
 datePicker.value = new Date().toISOString().split('T')[0];
-datePicker.addEventListener('change', () => loadData(datePicker.value));
+datePicker.addEventListener('change', () => {
+  currentRunSeq = null;
+  loadData(datePicker.value);
+});
+
+async function updateVersionPicker(date) {
+  const picker = document.getElementById('runVersionPicker');
+  try {
+    const versions = await API.getRunVersions(date);
+    if (versions.length <= 1) {
+      picker.classList.add('hidden');
+      currentRunSeq = versions[0] || null;
+      return;
+    }
+    picker.innerHTML = versions.map(v =>
+      `<option value="${v}"${v === currentRunSeq ? ' selected' : ''}>${v}회차</option>`
+    ).join('');
+    if (!currentRunSeq || !versions.includes(currentRunSeq)) {
+      currentRunSeq = versions[versions.length - 1]; // 최신 회차 기본
+      picker.value = currentRunSeq;
+    }
+    picker.classList.remove('hidden');
+  } catch(e) {
+    picker.classList.add('hidden');
+  }
+}
+
+function onVersionChange() {
+  const picker = document.getElementById('runVersionPicker');
+  currentRunSeq = parseInt(picker.value);
+  loadRecsForCurrentVersion(datePicker.value);
+}
+
+async function loadRecsForCurrentVersion(date) {
+  document.getElementById('statusText').textContent = '데이터 로딩 중...';
+  document.getElementById('cardsGrid').innerHTML = '';
+  try {
+    const recs = await API.getRecommendations(date, currentRunSeq);
+    recommendations = recs || [];
+    activeCategoryFilter = null;
+    renderCategoryFilter(recommendations);
+    renderCards(recommendations);
+    const seqLabel = currentRunSeq > 1 ? ` (${currentRunSeq}회차)` : '';
+    const count = recommendations.length;
+    document.getElementById('statusText').textContent = `${date}${seqLabel} 기준 추천 ${count}건`;
+    document.getElementById('recCount').textContent = `${count}건`;
+    document.getElementById('recCount').classList.remove('hidden');
+  } catch(e) {
+    document.getElementById('statusText').textContent = '로딩 실패: ' + e.message;
+  }
+}
 
 async function loadData(date) {
   document.getElementById('statusText').textContent = '데이터 로딩 중...';
@@ -224,21 +277,13 @@ async function loadData(date) {
   document.getElementById('cardsGrid').innerHTML = '';
 
   try {
-    const [recs, events] = await Promise.all([
-      API.getRecommendations(date),
+    const [, events] = await Promise.all([
+      updateVersionPicker(date),
       API.getUpcomingEvents(14)
     ]);
 
-    recommendations = recs || [];
-    activeCategoryFilter = null;
     renderEventBanner(events || []);
-    renderCategoryFilter(recommendations);
-    renderCards(recommendations);
-
-    const count = recommendations.length;
-    document.getElementById('statusText').textContent = `${date} 기준 추천 ${count}건`;
-    document.getElementById('recCount').textContent = `${count}건`;
-    document.getElementById('recCount').classList.remove('hidden');
+    await loadRecsForCurrentVersion(date);
   } catch(e) {
     document.getElementById('statusText').textContent = '로딩 실패: ' + e.message;
   }
